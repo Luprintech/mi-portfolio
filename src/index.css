@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+/* Gradiente animado real */
+.gradient-border {
+  position: relative;
+  padding: 5px; /* grosor del borde */
+  border-radius: 9999px;
+  background: linear-gradient(45deg, #ec4899, #22d3ee, #a855f7, #ec4899);
+  background-size: 400% 400%;
+  animation: borderGradientMove 6s linear infinite;
+}
+
+@keyframes borderGradientMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Fondo interno detrás de la imagen */
+.gradient-border-inner {
+  background-color: #0b1120;
+  border-radius: 9999px;
+  padding: 4px;
+}
+
+
+

@@ -1,0 +1,144 @@
+[
+  {
+    "archivo": "Tanjiro Knitted.mp4",
+    "nombre": "Tanjiro efecto Crochet",
+    "tipo": "Crochet",
+    "descripcion": "Figura de Tanjiro Kamado impresa en 3D.",
+    "material": "PLA+",
+    "tiempo": "8 horas",
+    "color": "Negro y verde",
+    "orientacion": "vertical"
+  },
+
+  {
+    "archivo": "Link Knitted.mp4",
+    "nombre": "Link efecto Crochet",
+    "tipo": "Crochet",
+    "descripcion": "Link impreso en 3D.",
+    "material": "PLA verde, blanco y marrón",
+    "tiempo": "6 horas",
+    "color": "Multicolor",
+    "orientacion": "vertical"
+  },
+
+  {
+    "archivo": "Harry Potter Knitted.mp4",
+    "nombre": "Harry Potter efecto Crochet",
+    "tipo": "Crochet",
+    "descripcion": "Harry Potter impreso en 3D.",
+    "material": "PLA marrón, negro y amarillo",
+    "tiempo": "7 horas",
+    "color": "Multicolor",
+    "orientacion": "vertical"
+  }, 
+
+  {
+    "archivo": "Naruto Knitted.mp4",
+    "nombre": "Naruto efecto Crochet",
+    "tipo": "Crochet",
+    "descripcion": "Naruto impreso en 3D.",
+    "material": "PLA naranja, negro y blanco",
+    "tiempo": "8 horas",
+    "color": "Multicolor",
+    "orientacion": "vertical"
+  },
+
+  {
+    "archivo": "Gojo Satoru Knitted.mp4",
+    "nombre": "Gojo Satoru efecto Crochet",
+    "tipo": "Crochet",
+    "descripcion": "Gojo Satoru impreso en 3D.",
+    "material": "PLA blanco, negro y azul",
+    "tiempo": "8 horas",
+    "color": "Multicolor",
+    "orientacion": "vertical"
+  },
+
+  {
+    "archivo": "Eeve Knitted.mp4",
+    "nombre": "Eeve efecto Crochet",
+    "tipo": "Crochet",
+    "descripcion": "Eeve impreso en 3D.",
+    "material": "PLA blanco, negro y azul",
+    "tiempo": "8 horas",
+    "color": "Multicolor",
+    "orientacion": "vertical"
+  },
+
+  {
+    "archivo": "Juego Del Calamar Knitted.mp4",
+    "nombre": "Juego Del Calamar efecto Crochet",
+    "tipo": "Crochet",
+    "descripcion": "Juego Del Calamar impreso en 3D.",
+    "material": "PLA blanco, negro y azul",
+    "tiempo": "8 horas",
+    "color": "Multicolor",
+    "orientacion": "vertical"
+  },
+
+  {
+    "archivo": "Aday Funko.mp4",
+    "nombre": "Aday Funko Personalizado",
+    "tipo": "Funko",
+    "descripcion": "Figura modelada con IA, impresa en 3D y pintada a Mano. Incluye la caja",
+    "material": "PLA blanco",
+    "tiempo": "20 horas",
+    "color": "Pintado a Mano",
+    "orientacion": "vertical"
+  },
+
+  {
+    "archivo": "Africa Funko.mp4",
+    "nombre": "África Funko Personalizado",
+    "tipo": "Funko",
+    "descripcion": "Figura modelada con IA, impresa en 3D y pintada a Mano. Incluye la caja",
+    "material": "PLA blanco",
+    "tiempo": "20 horas",
+    "color": "Pintado a Mano",
+    "orientacion": "vertical"
+  },
+
+  {
+    "archivo": "Farolillo.mp4",
+    "nombre": "Farolillo Estilo Japonés",
+    "tipo": "Hogar",
+    "descripcion": "Farolillo Estilo Japonés impreso en 3D",
+    "material": "PLA Marrón y Beig",
+    "tiempo": "20 horas",
+    "color": "Marrón y Beig",
+    "orientacion": "vertical"
+  },
+
+    {
+    "archivo": "lamparita.mp4",
+    "nombre": "Lamparita Minimalista",
+    "tipo": "Hogar",
+    "descripcion": "Lamparita Minimalista impresa en 3D",
+    "material": "Pla Blanco y efecto madera",
+    "tiempo": "20 horas",
+    "color": "blanco y efecto madera",
+    "orientacion": "vertical"
+  },
+
+  {
+    "archivo": "catan.mp4",
+    "nombre": "Catan",
+    "tipo": "Juegos de Mesa",
+    "descripcion": "Juego de mesa Catan impreso en 3D y pintado a mano",
+    "material": "Pla",
+    "tiempo": "20 horas",
+    "color": "Pintado a Mano",
+    "orientacion": "vertical"
+  },
+
+    {
+    "archivo": "ajedrez.mp4",
+    "nombre": "Ajedrez",
+    "tipo": "Juegos de Mesa",
+    "descripcion": "Ajedrez impreso en 3D",
+    "material": "Pla",
+    "tiempo": "20 horas",
+    "color": "blanco y morado",
+    "orientacion": "vertical"
+  }
+]
