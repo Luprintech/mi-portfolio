@@ -1,0 +1,54 @@
+import { motion as Motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
+import { getAllWebProjects } from "../../data/webProjects";
+import ProjectCard from "../../components/ProjectCard";
+
+export default function PortfolioDesarrolloWeb() {
+  const { t } = useTranslation();
+  // 📦 Obtenemos TODOS los proyectos desde el archivo centralizado
+  const proyectos = getAllWebProjects();
+
+  return (
+    <div className="min-h-screen bg-[#0f172a] text-white py-28 px-6 md:px-16 relative overflow-x-hidden selection:bg-violet-500/30">
+      {/* Background radial y noise */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-violet-900/10 via-[#0f172a] to-[#0f172a] pointer-events-none z-0" />
+      <div className="absolute inset-0 bg-noise opacity-[0.02] mix-blend-overlay pointer-events-none z-0" />
+      
+      {/* CABECERA */}
+      <Motion.div
+        initial={{ opacity: 0, y: -40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        className="relative z-10 max-w-6xl mx-auto text-center mb-16"
+      >
+        <h1 className="text-4xl md:text-5xl font-extrabold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 to-cyan-400">
+          {t('portfolio.web_title')}
+        </h1>
+        <p className="text-gray-400 text-lg max-w-3xl mx-auto leading-relaxed">
+          {t('portfolio.web_desc')}
+        </p>
+      </Motion.div>
+
+      {/* GRID DE PROYECTOS - 2 columnas consistente con home */}
+      <Motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.4, duration: 0.8 }}
+        className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-6xl mx-auto"
+      >
+        {proyectos.map((proyecto, index) => (
+          <ProjectCard key={proyecto.id} project={proyecto} index={index} />
+        ))}
+      </Motion.div>
+
+      {/* Mensaje si no hay proyectos */}
+      {proyectos.length === 0 && (
+        <div className="text-center text-gray-400 mt-20">
+          <p className="text-xl">
+            {t('portfolio.web_empty')}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}

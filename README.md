@@ -1,250 +1,82 @@
-# 🚀 Luprintech | Tecnología e Innovación
+# Ecosistema Digital Personal - Portfolio
 
-<div align="center">
+Plataforma unificada para la presentación de perfil profesional, documentación técnica técnica y portafolio de desarrollo. Desarrollado con una arquitectura desacoplada Frontend/Backend para permitir una óptima escalabilidad, aplicar seguridad y mantener un entorno de despliegue controlado.
 
-[![React](https://img.shields.io/badge/React-19.1.1-61DAFB?style=for-the-badge&logo=react&logoColor=white)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-7.1.7-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
-[![TailwindCSS](https://img.shields.io/badge/Tailwind-4.1.16-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Framer Motion](https://img.shields.io/badge/Framer_Motion-12.23.24-FF0080?style=for-the-badge&logo=framer&logoColor=white)](https://www.framer.com/motion/)
+## Stack Tecnológico
 
-**Portfolio profesional en React con animaciones modernas y diseño futurista**
+**Frontend**: React, Vite, Tailwind CSS, Framer Motion.
+**Backend**: Node.js, Express.
+**Integraciones y Seguridad**: Nodemailer, Helmet, Express-Rate-Limit, Express-Validator, CORS.
 
-[Ver Demo](#) • [Reportar Bug](#) • [Solicitar Feature](#)
+## Arquitectura del Proyecto
 
-</div>
+El proyecto está diseñado bajo un modelo de cliente-servidor con total separación de responsabilidades:
 
----
+- `/frontend`: SPA (Single Page Application) que consume una única API local o remota. Componentizado para permitir ampliación horizontal.
+- `/backend`: Servicio API RESTful puro con endpoints protegidos encargado del procesamiento de datos y la comunicación externa (SMTP).
 
-## 📖 Sobre el Proyecto
+## Características Principales
 
-**Luprintech** es un sitio web portfolio profesional que combina:
-- 💻 **Desarrollo Web** moderno y responsivo
-- 🧠 **Inteligencia Artificial** aplicada a proyectos creativos
-- 🖨️ **Impresión 3D** y fabricación digital
-- 🛠️ **Soporte TI** especializado
+- **Identidad Visual Consistente**: Theme oscuro de alta fidelidad, unificado mediante tokens transversales, con manejo avanzado de interactividad a través de Framer Motion.
+- **Micro-interacciones**: Optimización de carga visual para evitar Layout Shifts, usando técnicas como Backdrop Blur, transparencias anidadas y gradientes abstractos (`radiales` y `ruido` estático CSS).
+- **Procesamiento de Formularios Seguro**: Comunicación HTTP hacia la API usando estado de red `idle, submitting, success, error`.
 
-El sitio presenta un diseño futurista con gradientes vibrantes (fuchsia/cyan), partículas animadas, efectos parallax y transiciones fluidas creadas con Framer Motion.
+## Implementaciones de Seguridad (Backend)
 
----
+1. **Proxy Trust**: Configuración nativa de Express (`app.set('trust proxy', 1)`) para prevenir falsos positivos de Rate Limiting cuando se sirve desde Nginx u orquestadores como Render/Railway.
+2. **Límite de Payload (DoS)**: Restricción del parser JSON natural a 10kb por petición, mitigando intentos de ataque de denegación de servicio a nivel de memoria RAM enviando cadenas corruptas.
+3. **Control de Frecuencia (Rate Limiting)**: Bloqueo de peticiones al endpoint por IP, establecido métricamente a un máximo de 5 envíos cada ventana de 10 minutos.
+4. **Cabeceras HTTP y CORS**: Integración de Helmet para mitigar ataques como Clickjacking o Cross-Site Scripting. Reglas de CORS restrictivas con lista blanca de orígenes.
+5. **Sanitización Transversal**: Filtros con `express-validator` aplicando `trim`, `escape` y verificación estructural estricta antes de pasar la validación al Service Controller.
+6. **Honeypotting y Ofuscación**: Prevención perimetral en frontend usando campos ciegos con `tabIndex="-1"` y rotura programática de las URL tipo `mailto:` para eludir scrapers pasivos.
 
-## ✨ Características Principales
+## Ejecución en Desarrollo (Local)
 
-### 🎨 Diseño & UX
-- **Diseño Dark Mode** con paleta de colores fuchsia/cyan
-- **Animaciones suaves** con Framer Motion
-- **Efectos Parallax Tilt** en tarjetas interactivas
-- **Typewriter effect** en el hero con texto rotativo
-- **Carrusel infinito** de tecnologías con Swiper
-- **Gradientes animados** y auras giratorias
+El despliegue local requiere encender dos servidores aislados. Asume tener instalados Node.js v18+ y gestor de paquetes (npm o similar).
 
-### 📱 Páginas y Secciones
-- **Home**: Hero con foto animada, servicios destacados, proyectos y videos
-- **About**: Timeline de experiencia, herramientas y componente Luprincat
-- **Services**: Desarrollo Web, IA, Impresión 3D, Soporte TI
-- **Portfolio**: Muestra de proyectos realizados
-- **Blog**: Sección de artículos y contenido
-- **Contact**: Formulario de contacto
-
-### 🛠️ Componentes Reutilizables
-- `Navbar`: Navegación responsive con animaciones
-- `Footer`: Pie de página con enlaces sociales
-- `Timeline`: Línea temporal de experiencia
-- `ToolsGrid`: Grid de herramientas y tecnologías
-- `ModalMedia`: Modal para visualización de medios
-- `Luprincat`: Componente especial animado
-
----
-
-## 🚀 Tecnologías Utilizadas
-
-### Core
-- **React 19.1.1** - Biblioteca de UI moderna
-- **Vite 7.1.7** - Build tool ultrarrápido
-- **React Router DOM 7.9.5** - Navegación SPA
-
-### Estilos
-- **Tailwind CSS 4.1.16** - Framework CSS utility-first
-- **PostCSS & Autoprefixer** - Procesamiento CSS
-
-### Animaciones & Efectos
-- **Framer Motion 12.23.24** - Animaciones declarativas
-- **React Parallax Tilt** - Efectos 3D interactivos
-- **React Simple Typewriter** - Efecto de máquina de escribir
-- **@tsparticles/react** - Sistema de partículas
-
-### UI Components
-- **React Icons 5.5.0** - Biblioteca de iconos
-- **Swiper 12.0.3** - Carruseles modernos
-
-### Desarrollo
-- **ESLint 9.36.0** - Linter de código
-- **@vitejs/plugin-react** - Plugin oficial de React para Vite
-
----
-
-## 📦 Instalación
-
-### Prerrequisitos
-- **Node.js** (versión 18 o superior)
-- **npm** o **yarn**
-
-### Pasos de Instalación
-
-1. **Clonar el repositorio**
-   ```bash
-   git clone https://github.com/tu-usuario/luprintech.git
-   cd luprintech
-   ```
-
-2. **Instalar dependencias**
-   ```bash
-   npm install
-   ```
-
-3. **Ejecutar en desarrollo**
-   ```bash
-   npm run dev
-   ```
-   El sitio estará disponible en `http://localhost:5173`
-
-4. **Construir para producción**
-   ```bash
-   npm run build
-   ```
-
-5. **Previsualizar build de producción**
-   ```bash
-   npm run preview
-   ```
-
----
-
-## 📂 Estructura del Proyecto
-
-```
-Mi web/
-├── public/                 # Recursos estáticos
-│   ├── favicon.ico
-│   └── ...
-├── src/
-│   ├── assets/            # Imágenes y recursos
-│   │   └── mifoto.png
-│   ├── components/        # Componentes reutilizables
-│   │   ├── Navbar.jsx
-│   │   ├── Footer.jsx
-│   │   ├── Timeline.jsx
-│   │   ├── ToolsGrid.jsx
-│   │   ├── Luprincat.jsx
-│   │   ├── ModalMedia.jsx
-│   │   └── icons.jsx
-│   ├── pages/             # Páginas de la aplicación
-│   │   ├── Home.jsx
-│   │   ├── About.jsx
-│   │   ├── Services.jsx
-│   │   ├── Portfolio.jsx
-│   │   ├── Blog.jsx
-│   │   ├── Contact.jsx
-│   │   ├── services/      # Páginas de servicios
-│   │   │   ├── DevWeb.jsx
-│   │   │   ├── IA.jsx
-│   │   │   ├── Impresion3D.jsx
-│   │   │   └── SoporteTI.jsx
-│   │   └── portfolio/     # Páginas de portfolio
-│   ├── routes/            # Configuración de rutas
-│   │   └── AppRoutes.jsx
-│   ├── App.jsx            # Componente principal
-│   ├── main.jsx           # Punto de entrada
-│   └── index.css          # Estilos globales
-├── index.html             # HTML template
-├── vite.config.js         # Configuración de Vite
-├── eslint.config.js       # Configuración de ESLint
-├── package.json
-└── README.md
-```
-
----
-
-## 🎨 Paleta de Colores
-
-El diseño utiliza una paleta futurista:
-
-- **Fondo Principal**: `#0b1120` (Dark navy)
-- **Primario**: `#ec4899` (Fuchsia) → `#22d3ee` (Cyan)
-- **Secundario**: `#a855f7` (Purple)
-- **Acentos**: `#34d399` (Emerald), `#fbbf24` (Yellow)
-- **Texto**: `#f3f4f6` (Gray-100)
-
----
-
-## 🎯 Scripts Disponibles
+### Backend
 
 ```bash
-npm run dev      # Inicia servidor de desarrollo
-npm run build    # Construye para producción
-npm run preview  # Previsualiza build de producción
-npm run lint     # Ejecuta ESLint
+cd backend
+npm install
+cp .env.example .env
+npm start
+```
+*Asegúrate de configurar los parámetros SMTP dentro del nuevo archivo .env antes de iniciar.*
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+cp .env.example .env
+npm run dev
 ```
 
----
+## Configuración de Entorno (.env)
 
-## 🌟 Características Destacadas
+**Para Backend:**
+- `FRONTEND_URL`: URL base de origen aceptada bajo el CORS.
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`: Validaciones y autenticación del sistema hacia el servidor SMTP de reenvío.
+- `CONTACT_EMAIL`, `PORT`: Puerto local y enrutamiento final del email parseado.
 
-### Hero Section
-- Foto de perfil con efecto **Tilt 3D**
-- Aura giratoria con gradiente animado
-- Texto dinámico con **Typewriter effect**
-- 4 roles rotativos: Desarrolladora Web, Creadora de Contenido, Maker, IA
+**Para Frontend:**
+- `VITE_API_URL`: Ubicación raíz del backend. Vital si el backend se externaliza.
 
-### Servicios
-Tarjetas interactivas con hover effects para:
-- 💻 Desarrollo Web
-- 🧠 Inteligencia Artificial
-- 🛠️ Soporte TI
-- 🖨️ Impresión 3D
+## Despliegue en Producción
 
-### Carrusel de Tecnologías
-Movimiento continuo infinito mostrando:
-React, Docker, Nginx, WordPress, Tailwind, Node.js, HTML5, CSS3
+Como resultado de esta arquitectura técnica dividida, el despliegue requiere dos ambientes:
 
-### Videos Embebidos
-Sección "Luprintech en acción" con videos de YouTube:
-- Funko Pop con IA e Impresión 3D
-- Migración de SO a SSD
+- **Frontend HTTP Estático (Recomendado: Vercel o Netlify)**: Inyectar variable `VITE_API_URL` apuntando a la IP/Endpoint del Backend durante el proceso de build.
+- **Backend Node Persistente (Recomendado: Railway, Render o VPS genérico)**: El entorno debe mantener vivo el proceso `node server.js`. Si se opta por VPS autogestionado, requiere PM2 o Systemd + Proxy Inverso con Nginx acoplado junto con Certbot para HTTPS.
 
----
+## Decisiones Técnicas
 
-## 🤝 Contribuir
+- Se prefirió **Node.js con Express modular** en lugar de Vercel Serverless Functions para el Backend. Las funciones Serverless sufren cuellos de botella temporales conocidos como "Cold Starts". Cuando se envían peticiones a SMTP la latencia inicial y tiempos de respuesta variables suelen provocar colapsos del proceso.
+- La **separación total Front/Back** permite no ligar estricatamente a React la arquitectura final, dejando el terreno allanado para eventuales adiciones con Flutter, Next o migraciones de vista nativas en el futuro donde el Node operaría como un verdadero punto de verdad sin modificaciones.
 
-Las contribuciones son bienvenidas. Para cambios importantes:
+## Optimizaciones Futuras
 
-1. Fork el proyecto
-2. Crea tu rama de features (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add: nueva característica'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
-
----
-
-## 📧 Contacto
-
-**Lupe** - Luprintech
-
-- 🌐 Web: [luprintech.com](#)
-- 📧 Email: [contacto@luprintech.com](#)
-- 💼 LinkedIn: [linkedin.com/in/luprintech](#)
-
----
-
-## 📝 Licencia
-
-Este proyecto es privado y de uso personal.
-
----
-
-<div align="center">
-
-**Hecho con ❤️ por Lupe usando React y Vite**
-
-⭐ Si te gusta este proyecto, ¡dale una estrella!
-
-</div>
+- Sistema de Testing end-to-end con Cypress o Playwright sobre las views principales.
+- Implementar validaciones en TypeScript a lo largo del backend para evitar casteo dinámico o tipos no estáticos, mejorando la robustez de Express-Validator.
+- Integración de Logger centralizado (ej. Winston o Pino) en reemplazo del flujo natural para tener perfiles de monitorización persistentes ante caídas.

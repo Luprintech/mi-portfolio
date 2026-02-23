@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+/* Gradiente animado real */
+.gradient-border {
+  position: relative;
+  padding: 5px; /* grosor del borde */
+  border-radius: 9999px;
+  background: linear-gradient(45deg, #ec4899, #22d3ee, #a855f7, #ec4899);
+  background-size: 400% 400%;
+  animation: borderGradientMove 6s linear infinite;
+}
+
+@keyframes borderGradientMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Fondo interno detrás de la imagen */
+.gradient-border-inner {
+  background-color: #0b1120;
+  border-radius: 9999px;
+  padding: 4px;
+}
+
+/* Skip link para accesibilidad */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #ec4899;
+  color: white;
+  padding: 8px 16px;
+  text-decoration: none;
+  border-radius: 0 0 8px 0;
+  font-weight: 600;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Animation delay utility */
+.animation-delay-150 {
+  animation-delay: 150ms;
+}
+
+/* Respetar preferencias de accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .gradient-border {
+    animation: none;
+  }
+}
+
+/* --- ECOSISTEMA DIGITAL PERSONAL --- */
+/* Textura Noise ligera */
+.bg-noise {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Grid técico muy sutil */
+.bg-grid-pattern {
+  background-size: 50px 50px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+}
