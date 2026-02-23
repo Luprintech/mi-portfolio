@@ -73,7 +73,7 @@ export default function Timeline() {
 
       {/* Línea vertical animada */}
       <div
-        className={`absolute left-1/2 top-8 bottom-8 -translate-x-1/2 w-1 z-0
+        className={`absolute left-[38px] md:left-1/2 top-8 bottom-8 md:-translate-x-1/2 w-1 z-0
         bg-gradient-to-b ${lineGradient} animate-pulse blur-[1.5px] rounded-full`}
         style={{ boxShadow: "0 0 48px #d946ef55, 0 0 38px #22d3ee88" }}
       />
@@ -97,12 +97,12 @@ function TimelineItem({ year, title, icon, desc, index }) {
       viewport={{ once: true, margin: "-80px" }}
       transition={{ duration: 0.6, ease: "easeOut", delay: index * 0.1 }}
       className={`
-        relative mb-16 group flex md:items-center gap-0
-        ${isLeft ? "md:flex-row" : "md:flex-row-reverse"}
+        relative mb-16 group flex md:items-center
+        ${isLeft ? "flex-row md:flex-row" : "flex-row md:flex-row-reverse"}
       `}
     >
       {/* Punto+icono */}
-      <div className="shrink-0 flex flex-col items-center z-20">
+      <div className="shrink-0 flex flex-col items-center z-20 ml-2 md:ml-0">
         <span
           className={`flex items-center justify-center w-16 h-16 rounded-full
             border-4 border-fuchsia-400 bg-[#0f172a] shadow-lg shadow-fuchsia-500/20
@@ -126,8 +126,8 @@ function TimelineItem({ year, title, icon, desc, index }) {
           boxShadow: "0 0 16px #d946ef88, 0 0 18px #22d3ee55",
         }}
         className={`
-          flex-1 mx-4 md:mx-10 bg-slate-900/70 border border-fuchsia-500/40
-          shadow-lg shadow-cyan-500/10 rounded-2xl px-8 py-6 backdrop-blur-xl
+          flex-1 ml-4 mr-0 md:mx-10 bg-slate-900/70 border border-fuchsia-500/40
+          shadow-lg shadow-cyan-500/10 rounded-2xl px-5 py-5 md:px-8 md:py-6 backdrop-blur-xl
           hover:border-cyan-300/50 transition-all
           ${isLeft ? "md:ml-0 md:mr-10" : "md:mr-0 md:ml-10"}
         `}

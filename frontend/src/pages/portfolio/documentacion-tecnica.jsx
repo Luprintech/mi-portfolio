@@ -26,7 +26,7 @@ export default function PortfolioDocumentacion() {
       </Motion.div>
 
       <div className="relative z-10 max-w-4xl mx-auto mb-16">
-        <div className="bg-slate-900/60 border border-slate-700/50 p-8 md:p-12 rounded-2xl shadow-[0_0_20px_rgba(34,211,238,0.05)] text-gray-300 text-lg leading-relaxed backdrop-blur-sm">
+        <div className="bg-slate-900/60 border border-slate-700/50 p-6 sm:p-8 md:p-12 rounded-2xl shadow-[0_0_20px_rgba(34,211,238,0.05)] text-gray-300 text-lg leading-relaxed backdrop-blur-sm">
           <p className="mb-6 text-justify">
             {t('portfolio.docs_desc')}
           </p>
@@ -53,7 +53,7 @@ export default function PortfolioDocumentacion() {
         initial={{ opacity: 0, scale: 0.95 }}
         whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true }}
-        className="relative z-10 max-w-4xl mx-auto bg-slate-900/80 border border-fuchsia-500/30 rounded-2xl p-10 text-center shadow-[0_0_30px_rgba(236,72,153,0.1)] hover:shadow-[0_0_50px_rgba(34,211,238,0.2)] transition-all backdrop-blur-md"
+        className="relative z-10 max-w-4xl mx-auto bg-slate-900/80 border border-fuchsia-500/30 rounded-2xl p-6 sm:p-10 text-center shadow-[0_0_30px_rgba(236,72,153,0.1)] hover:shadow-[0_0_50px_rgba(34,211,238,0.2)] transition-all backdrop-blur-md"
       >
         <FaYoutube className="text-6xl text-red-500 mx-auto mb-6" />
         <h2 className="text-2xl font-bold mb-8">{t('portfolio.docs_yt_title')}</h2>

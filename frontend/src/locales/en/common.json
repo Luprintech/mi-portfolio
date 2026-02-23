@@ -6,7 +6,8 @@
     "portfolio": "Portfolio",
     "contact": "Contact",
     "sub_web": "Web Development",
-    "sub_docs": "Technical Documentation"
+    "sub_docs": "Technical Documentation",
+    "cv": "Download CV"
   },
   "hero": {
     "title": "Full Stack Web Developer",
@@ -21,7 +22,8 @@
     "cta_title": "Shall we start a new project?",
     "cta_desc": "I am available for new technical challenges, whether developing from scratch or improving an existing platform.",
     "contact_btn": "Contact Me",
-    "linkedin_btn": "Visit my LinkedIn"
+    "linkedin_btn": "Visit my LinkedIn",
+    "cv_btn": "Download CV (.pdf)"
   },
   "services": {
     "fullstack_title": "Full Stack Development",

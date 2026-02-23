@@ -52,7 +52,7 @@ export default function ProjectCard({ project, index = 0 }) {
       </div>
 
       {/* Contenido */}
-      <div className="flex flex-col flex-grow p-8">
+      <div className="flex flex-col flex-grow p-6 md:p-8">
         <div className="flex-grow">
           {/* Título */}
           <h3 className="text-2xl font-bold text-white mb-3 leading-tight group-hover:text-fuchsia-300 transition-colors duration-300">

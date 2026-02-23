@@ -99,6 +99,20 @@ export default function Navbar() {
             <NavLink to="/blog" className="px-3 py-2 rounded hover:text-cyan-300 transition">Blog</NavLink>
             <NavLink to="/contacto" className="px-3 py-2 rounded hover:text-cyan-300 transition">{t('nav.contact')}</NavLink>
             
+            {/* Botón de CV (Escritorio) */}
+            <a
+              href="/CV_Guadalupe_Cano.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-2 px-4 py-1.5 rounded-full font-medium text-sm text-cyan-300 border border-cyan-500/50 hover:bg-cyan-500/10 transition-colors flex items-center gap-1"
+            >
+              <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+              </svg>
+              {t('nav.cv')}
+            </a>
+
             {/* Separador e i18n Switcher */}
             <div className="h-5 w-px bg-slate-700/50 mx-2 hidden lg:block"></div>
             <LanguageSwitcher />
@@ -165,6 +179,21 @@ export default function Navbar() {
 
               <NavLink to="/blog" className="block py-2 border-b border-slate-700" onClick={() => setMenuOpen(false)}>Blog</NavLink>
               <NavLink to="/contacto" className="block py-2 border-b border-slate-700" onClick={() => setMenuOpen(false)}>{t('nav.contact')}</NavLink>
+              
+              {/* Botón de CV (Mobile) */}
+              <a
+                href="/CV_Guadalupe_Cano.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block py-2 border-b border-slate-700 text-cyan-400 font-semibold flex items-center gap-2"
+                onClick={() => setMenuOpen(false)}
+              >
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                  <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                </svg>
+                {t('nav.cv')}
+              </a>
               
               {/* i18n mobile switcher */}
               <div className="py-4 flex justify-end">

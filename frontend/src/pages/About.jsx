@@ -118,7 +118,7 @@ export default function SobreMi() {
                 <img
                   src={mifoto}
                   alt="Lupe - Guadalupe Cano"
-                  className="w-72 h-[430px] object-cover rounded-2xl"
+                  className="w-64 md:w-72 h-[380px] md:h-[430px] object-cover rounded-2xl"
                 />
               </div>
             </Tilt>

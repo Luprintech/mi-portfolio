@@ -206,18 +206,32 @@ export default function Home() {
             {t('home.cta_desc')}
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center">
             <a
               href="/contacto"
               className="px-8 py-3 rounded-lg font-semibold text-white bg-gradient-to-r from-fuchsia-600 to-cyan-600 hover:from-fuchsia-500 hover:to-cyan-500 shadow-md transition-all duration-300 transform hover:-translate-y-1"
             >
               {t('home.contact_btn')}
             </a>
+            
+            <a
+              href="/CV_Guadalupe_Cano.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-8 py-3 rounded-lg font-semibold text-cyan-300 border border-cyan-500/50 bg-[#0f172a]/50 hover:bg-cyan-500/10 shadow-[0_0_15px_rgba(6,182,212,0.1)] hover:shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2"
+            >
+              <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+              </svg>
+              {t('home.cv_btn')}
+            </a>
+
             <a
               href="https://www.linkedin.com/in/guadalupe-cano-moyano/"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-8 py-3 rounded-lg font-semibold border border-slate-600 text-slate-300 hover:text-white hover:border-slate-400 transition-all duration-300"
+              className="px-8 py-3 rounded-lg font-semibold border border-slate-600 text-slate-300 hover:text-white hover:border-slate-400 transition-all duration-300 transform hover:-translate-y-1"
             >
               {t('home.linkedin_btn')}
             </a>

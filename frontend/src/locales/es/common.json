@@ -6,7 +6,8 @@
     "portfolio": "Portfolio",
     "contact": "Contacto",
     "sub_web": "Desarrollo Web",
-    "sub_docs": "Documentación Técnica"
+    "sub_docs": "Documentación Técnica",
+    "cv": "Descargar CV"
   },
   "hero": {
     "title": "Desarrolladora Web Full Stack",
@@ -21,7 +22,8 @@
     "cta_title": "¿Empezamos un nuevo proyecto?",
     "cta_desc": "Estoy disponible para nuevos desafíos técnicos, ya sea desarrollando desde cero o mejorando una plataforma existente.",
     "contact_btn": "Contáctame",
-    "linkedin_btn": "Visitar mi LinkedIn"
+    "linkedin_btn": "Visitar mi LinkedIn",
+    "cv_btn": "Descargar CV (.pdf)"
   },
   "services": {
     "fullstack_title": "Desarrollo Full Stack",

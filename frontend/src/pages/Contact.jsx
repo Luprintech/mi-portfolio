@@ -89,7 +89,7 @@ export default function Contact() {
             transition={{ delay: 0.2, duration: 0.8 }}
             className="lg:col-span-2 space-y-8"
           >
-            <div className="bg-slate-900/50 backdrop-blur-md p-8 rounded-2xl border border-slate-700/50 hover:border-fuchsia-500/30 transition-all duration-300 shadow-xl">
+            <div className="bg-slate-900/50 backdrop-blur-md p-6 md:p-8 rounded-2xl border border-slate-700/50 hover:border-fuchsia-500/30 transition-all duration-300 shadow-xl">
               <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
                 <span className="w-1 h-8 bg-gradient-to-b from-fuchsia-500 to-cyan-400 rounded-full"></span>
                 {t('contact.direct_ways')}
@@ -119,7 +119,7 @@ export default function Contact() {
               </div>
             </div>
 
-            <div className="bg-slate-900/50 backdrop-blur-md p-8 rounded-2xl border border-slate-700/50 hover:border-cyan-500/30 transition-all duration-300 shadow-xl">
+            <div className="bg-slate-900/50 backdrop-blur-md p-6 md:p-8 rounded-2xl border border-slate-700/50 hover:border-cyan-500/30 transition-all duration-300 shadow-xl">
               <h3 className="text-xl font-bold text-white mb-6">{t('contact.profiles_title')}</h3>
               <div className="flex gap-4">
                 <a 
@@ -161,7 +161,7 @@ export default function Contact() {
             transition={{ delay: 0.4, duration: 0.8 }}
             className="lg:col-span-3"
           >
-            <div className="bg-slate-900/50 backdrop-blur-md p-8 md:p-10 rounded-2xl border border-slate-700/50 shadow-2xl relative overflow-hidden">
+            <div className="bg-slate-900/50 backdrop-blur-md p-6 md:p-10 rounded-2xl border border-slate-700/50 shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-fuchsia-500 via-purple-500 to-cyan-500" />
               
               <h3 className="text-2xl font-bold text-white mb-8">{t('contact.form_title')}</h3>
