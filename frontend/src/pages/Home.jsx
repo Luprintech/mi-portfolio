@@ -7,10 +7,10 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
 import "swiper/css";
 import miFoto from "../assets/mifoto.png";
-import { getFeaturedProjects } from "../data/webProjects";
 import { getFeaturedServices } from "../data/services";
 import ProjectCard from "../components/ProjectCard";
 import ServicesGrid from "../components/ServicesGrid";
+import { useProjects } from "../hooks/useProjects";
 
 const techs = [
   {
@@ -51,6 +51,7 @@ const techs = [
 
 export default function Home() {
   const { t } = useTranslation();
+  const { featuredProjects, loading } = useProjects();
 
   return (
     <div className="min-h-screen bg-[#0f172a] text-white font-sans relative overflow-x-hidden selection:bg-violet-500/30">
@@ -184,9 +185,13 @@ export default function Home() {
         </div>
         
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-            {getFeaturedProjects().map((proyecto, i) => (
-              <ProjectCard key={proyecto.id} project={proyecto} index={i} />
-            ))}
+            {loading ? (
+              <p className="text-gray-400">Cargando proyectos...</p>
+            ) : (
+              featuredProjects.map((proyecto, i) => (
+                <ProjectCard key={proyecto.id} project={proyecto} index={i} />
+              ))
+            )}
           </div>
         </div>
       </section>

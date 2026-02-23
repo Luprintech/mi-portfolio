@@ -9,8 +9,19 @@ import { useTranslation } from "react-i18next";
  * @param {number} index - Índice para animación escalonada
  */
 export default function ProjectCard({ project, index = 0 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language || 'es';
   const hasMultipleLinks = Array.isArray(project.links);
+  
+  // Respaldo para soportar proyectos tanto de i18n como de la DB literal
+  const getProjectField = (fieldBase) => {
+    const directField = project[`${fieldBase}_${lang}`];
+    if (directField) return directField;
+    const fallbackField = project[`${fieldBase}_es`];
+    if (fallbackField) return fallbackField;
+    // Si no está el texto literal, tiramos del sistema de keys antiguo (t(project.fieldBase))
+    return t(project[fieldBase]);
+  };
   
   const getIcon = (type) => {
     switch (type) {
@@ -42,8 +53,8 @@ export default function ProjectCard({ project, index = 0 }) {
       {/* Imagen */}
       <div className="relative h-[280px] bg-[#0f172a] overflow-hidden flex-shrink-0">
         <img
-          src={project.imagen}
-          alt={`Preview of project ${t(project.titulo)}`}
+          src={project.imagen?.startsWith('/uploads') ? `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${project.imagen}` : project.imagen}
+          alt={`Preview of project ${getProjectField('titulo')}`}
           loading="lazy"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
         />
@@ -56,11 +67,11 @@ export default function ProjectCard({ project, index = 0 }) {
         <div className="flex-grow">
           {/* Título */}
           <h3 className="text-2xl font-bold text-white mb-3 leading-tight group-hover:text-fuchsia-300 transition-colors duration-300">
-            {t(project.titulo)}
+            {getProjectField('titulo')}
           </h3>
           
           <p className="text-base text-gray-300 leading-relaxed mb-6">
-            {t(project.shortDescription) || t(project.descripcion)}
+            {getProjectField('shortDescription') || getProjectField('descripcion')}
           </p>
         </div>
 
@@ -98,7 +109,7 @@ export default function ProjectCard({ project, index = 0 }) {
                       : "bg-gradient-to-r from-fuchsia-500 to-cyan-500 hover:from-fuchsia-400 hover:to-cyan-400 text-white shadow-lg shadow-fuchsia-500/25 hover:shadow-fuchsia-500/40"
                   }`}
                 >
-                  {t(linkObj.labelKey)}
+                  {t(linkObj.labelKey || 'projects.view_app')}
                   {getIcon(linkObj.type)}
                 </a>
               ))

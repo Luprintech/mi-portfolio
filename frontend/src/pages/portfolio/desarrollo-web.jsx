@@ -1,12 +1,11 @@
 import { motion as Motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import { getAllWebProjects } from "../../data/webProjects";
 import ProjectCard from "../../components/ProjectCard";
+import { useProjects } from "../../hooks/useProjects";
 
 export default function PortfolioDesarrolloWeb() {
   const { t } = useTranslation();
-  // 📦 Obtenemos TODOS los proyectos desde el archivo centralizado
-  const proyectos = getAllWebProjects();
+  const { projects, loading } = useProjects();
 
   return (
     <div className="min-h-screen bg-[#0f172a] text-white py-28 px-6 md:px-16 relative overflow-x-hidden selection:bg-violet-500/30">
@@ -36,13 +35,17 @@ export default function PortfolioDesarrolloWeb() {
         transition={{ delay: 0.4, duration: 0.8 }}
         className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-6xl mx-auto"
       >
-        {proyectos.map((proyecto, index) => (
-          <ProjectCard key={proyecto.id} project={proyecto} index={index} />
-        ))}
+        {loading ? (
+          <p className="text-gray-400 text-center col-span-2">Cargando proyectos...</p>
+        ) : (
+          projects.map((proyecto, index) => (
+            <ProjectCard key={proyecto.id} project={proyecto} index={index} />
+          ))
+        )}
       </Motion.div>
 
       {/* Mensaje si no hay proyectos */}
-      {proyectos.length === 0 && (
+      {!loading && projects.length === 0 && (
         <div className="text-center text-gray-400 mt-20">
           <p className="text-xl">
             {t('portfolio.web_empty')}

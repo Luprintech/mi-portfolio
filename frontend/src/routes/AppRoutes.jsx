@@ -15,6 +15,7 @@ const ServiceSoporte = lazy(() => import("../pages/services/SoporteTI"));
 const ServiceImpresion = lazy(() => import("../pages/services/Impresion3D"));
 const Blog = lazy(() => import("../pages/Blog"));
 const Contact = lazy(() => import("../pages/Contact"));
+const Admin = lazy(() => import("../pages/Admin"));
 
 // Loading fallback con animación
 const PageLoader = () => (
@@ -136,6 +137,14 @@ export default function AppRoutes() {
             element={
               <Motion.div {...pageTransition}>
                 <Contact />
+              </Motion.div>
+            }
+          />
+          <Route
+            path="/admin-secreto"
+            element={
+              <Motion.div {...pageTransition}>
+                <Admin />
               </Motion.div>
             }
           />
