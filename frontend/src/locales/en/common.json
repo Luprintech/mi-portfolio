@@ -14,14 +14,14 @@
     "description": "I transform functional requirements into solid and scalable web applications. My approach combines rigorous technical development in <strong>Backend and Frontend</strong> with the research capacity needed to solve <strong>infrastructure and automation</strong> challenges."
   },
   "home": {
-    "ecosystem_title": "Technological Ecosystem",
-    "projects_title": "Technical Projects",
-    "projects_subtitle": "Selection of developments that demonstrate the ability to solve real problems and mastery of the stack.",
-    "view_all_projects": "View full portfolio →",
-    "cta_title": "Looking for a technical profile for your team?",
-    "cta_desc": "I am available to join web development projects where I can contribute clean code, a desire to learn, and a software engineering-oriented mindset.",
-    "contact_btn": "Contact now",
-    "linkedin_btn": "View LinkedIn"
+    "ecosystem_title": "My Work Ecosystem",
+    "projects_title": "Featured Projects",
+    "projects_subtitle": "A selection of my best web development and architecture works.",
+    "view_all_projects": "View all projects",
+    "cta_title": "Shall we start a new project?",
+    "cta_desc": "I am available for new technical challenges, whether developing from scratch or improving an existing platform.",
+    "contact_btn": "Contact Me",
+    "linkedin_btn": "Visit my LinkedIn"
   },
   "services": {
     "fullstack_title": "Full Stack Development",
@@ -159,5 +159,20 @@
     "docs_quote": "This space reflects my practical and self-taught approach: experimenting, investigating, and pushing ideas until they work in production.",
     "docs_yt_title": "Audiovisual Documentation",
     "docs_yt_btn": "View Luprintech channel"
+  },
+  "portfolio_index": {
+    "title": "Projects and Technical Log",
+    "subtitle": "Explore my web architecture-focused developments and check out the documentation where I break down workflows and complex integrations.",
+    "card1_title": "Full Stack Development",
+    "card1_desc": "Web applications, REST APIs, comprehensive platforms and architectures, developed with modern technologies and robust methodologies tailored to business needs.",
+    "card2_title": "Technical Documentation",
+    "card2_desc": "Video-log record strictly oriented towards development, where I outline workflows, system infrastructures, automations, and business logic."
+  },
+  "blog": {
+    "title": "Logbook under construction",
+    "desc": "Soon I will share technical articles and structured notes here."
+  },
+  "footer": {
+    "rights": "All rights reserved."
   }
 }

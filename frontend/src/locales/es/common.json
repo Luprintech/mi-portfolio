@@ -14,14 +14,14 @@
     "description": "Transformo requerimientos funcionales en aplicaciones web sólidas y escalables. Mi enfoque combina un desarrollo técnico riguroso en Backend y Frontend con la capacidad de investigación necesaria para resolver desafíos de infraestructura y automatización."
   },
   "home": {
-    "ecosystem_title": "Ecosistema Tecnológico",
-    "projects_title": "Proyectos Técnicos",
-    "projects_subtitle": "Selección de desarrollos que demuestran capacidad de resolución de problemas reales y dominio del stack.",
-    "view_all_projects": "Ver portfolio completo →",
-    "cta_title": "¿Buscas perfil técnico para tu equipo?",
-    "cta_desc": "Estoy disponible para incorporarme a proyectos de desarrollo web donde pueda aportar código limpio, ganas de aprender y una mentalidad orientada a la ingeniería de software.",
-    "contact_btn": "Contactar ahora",
-    "linkedin_btn": "Ver LinkedIn"
+    "ecosystem_title": "Mi Ecosistema de Trabajo",
+    "projects_title": "Proyectos Descados",
+    "projects_subtitle": "Una selección de mis mejores trabajos de desarrollo y arquitectura web.",
+    "view_all_projects": "Ver todos los proyectos",
+    "cta_title": "¿Empezamos un nuevo proyecto?",
+    "cta_desc": "Estoy disponible para nuevos desafíos técnicos, ya sea desarrollando desde cero o mejorando una plataforma existente.",
+    "contact_btn": "Contáctame",
+    "linkedin_btn": "Visitar mi LinkedIn"
   },
   "services": {
     "fullstack_title": "Desarrollo Full Stack",
@@ -161,5 +161,20 @@
     "docs_quote": "Este espacio refleja mi enfoque práctico y autodidacta: experimentar, investigar y llevar las ideas hasta que funcionan en producción.",
     "docs_yt_title": "Documentación Audiovisual",
     "docs_yt_btn": "Ver canal Luprintech"
+  },
+  "portfolio_index": {
+    "title": "Proyectos y Registro Técnico",
+    "subtitle": "Explora mis desarrollos enfocados en arquitectura web y consulta la documentación donde desgloso flujos de trabajo e integraciones complejas.",
+    "card1_title": "Desarrollo Full Stack",
+    "card1_desc": "Aplicaciones web, APIs REST, plataformas y arquitecturas integrales, desarrolladas con tecnologías modernas y metodologías robustas acorde a necesidades del negocio.",
+    "card2_title": "Documentación Técnica",
+    "card2_desc": "Registro en formato videoblog orientado estrictamente al desarrollo, en el que detallo flujos de trabajo, infraestructuras de sistemas, automatizaciones y lógica de negocio."
+  },
+  "blog": {
+    "title": "Bitácora en construcción",
+    "desc": "Próximamente compartiré aquí artículos técnicos y notas estructuradas."
+  },
+  "footer": {
+    "rights": "Todos los derechos reservados."
   }
 }

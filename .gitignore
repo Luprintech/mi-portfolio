@@ -23,6 +23,7 @@ backend/.env
 # Vite
 dist-ssr
 *.local
+.vite
 
 # OS
 .DS_Store
@@ -36,3 +37,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+eslint*.txt
+eslint*_results.json

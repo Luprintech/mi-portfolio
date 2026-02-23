@@ -1,8 +1,10 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { motion as Motion } from 'framer-motion';
 import { FaCode, FaYoutube } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
 
 export default function Portfolio() {
+  const { t } = useTranslation();
   const location = useLocation();
   const isRoot = location.pathname === '/portfolio' || location.pathname === '/portfolio/';
 
@@ -21,10 +23,10 @@ export default function Portfolio() {
           >
           <div className="text-center mb-16">
             <h1 className="text-4xl md:text-5xl font-extrabold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-500 to-cyan-400">
-              Proyectos y Registro Técnico
+              {t('portfolio_index.title')}
             </h1>
             <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Explora mis desarrollos enfocados en arquitectura web y consulta la documentación donde desgloso flujos de trabajo e integraciones complejas.
+              {t('portfolio_index.subtitle')}
             </p>
           </div>
 
@@ -37,10 +39,10 @@ export default function Portfolio() {
               <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 blur-[50px] rounded-full group-hover:bg-cyan-500/20 transition-all"></div>
               <FaCode className="text-4xl text-cyan-400 mb-6" />
               <h2 className="text-2xl font-bold text-white mb-3 group-hover:text-cyan-300 transition-colors">
-                Desarrollo Full Stack
+                {t('portfolio_index.card1_title')}
               </h2>
               <p className="text-gray-400 text-sm leading-relaxed relative z-10">
-                Aplicaciones web, APIs REST, plataformas y arquitecturas integrales, desarrolladas con tecnologías modernas y metodologías robustas acorde a necesidades del negocio.
+                {t('portfolio_index.card1_desc')}
               </p>
             </Link>
 
@@ -52,10 +54,10 @@ export default function Portfolio() {
               <div className="absolute top-0 right-0 w-32 h-32 bg-fuchsia-500/10 blur-[50px] rounded-full group-hover:bg-fuchsia-500/20 transition-all"></div>
               <FaYoutube className="text-4xl text-fuchsia-400 mb-6" />
               <h2 className="text-2xl font-bold text-white mb-3 group-hover:text-fuchsia-300 transition-colors">
-                Documentación Técnica
+                {t('portfolio_index.card2_title')}
               </h2>
               <p className="text-gray-400 text-sm leading-relaxed relative z-10">
-                Registro en formato videoblog orientado estrictamente al desarrollo, en el que detallo flujos de trabajo, infraestructuras de sistemas, automatizaciones y lógica de negocio.
+                {t('portfolio_index.card2_desc')}
               </p>
             </Link>
           </div>
