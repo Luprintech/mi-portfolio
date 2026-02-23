@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
 export function useProjects() {
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -9,12 +7,13 @@ export function useProjects() {
     useEffect(() => {
         const fetchProjects = async () => {
             try {
-                const res = await fetch(`${API_URL}/api/projects`);
+                const res = await fetch("/projects.json");
+                if (!res.ok) throw new Error("Añade el projects.json a la carpeta public");
                 const data = await res.json();
+                
                 if (Array.isArray(data)) {
                     setProjects(data);
                 } else {
-                    console.error("API didn't return an array", data);
                     setProjects([]);
                 }
             } catch (error) {
@@ -28,9 +27,12 @@ export function useProjects() {
         fetchProjects();
     }, []);
 
+    const featuredProjects = projects.filter(p => p.featured).slice(0, 2);
+
     return {
         projects,
-        featuredProjects: Array.isArray(projects) ? projects.filter(p => p.featured).slice(0, 2) : [],
+        featuredProjects,
         loading
     };
 }
+

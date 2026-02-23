@@ -21,22 +21,22 @@ export default function ServicesGrid({ services, showLinks = false }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1, duration: 0.5 }}
             whileHover={{ scale: 1.05 }}
-            className={`bg-slate-800/70 p-6 rounded-2xl text-center shadow-lg transition-all flex flex-col justify-between items-center min-h-[180px] md:min-h-[200px] ${service.hoverShadow} ${showLinks ? 'cursor-pointer' : ''}`}
+            className={`h-full bg-slate-800/70 p-6 rounded-2xl text-center shadow-lg transition-all flex flex-col items-center min-h-[180px] md:min-h-[200px] ${service.hoverShadow} ${showLinks ? 'cursor-pointer' : ''}`}
           >
-            <div className={`flex justify-center items-center mb-3 ${service.iconColor}`}>
+            <div className={`flex justify-center items-center mb-3 ${service.iconColor} shrink-0`}>
               <Icon size={service.iconSize} />
             </div>
-            <div>
-              <h3 className="text-lg font-bold mb-2">{t(service.title)}</h3>
-              <p className="text-sm opacity-80">{t(service.description)}</p>
+            <div className="flex flex-col flex-grow w-full">
+              <h3 className="text-lg font-bold mb-2 shrink-0">{t(service.title)}</h3>
+              <p className="text-sm opacity-80 flex-grow content-center">{t(service.description)}</p>
             </div>
           </motion.div>
         );
 
         return (
-          <Tilt key={service.id} tiltEnable scale={1.03}>
+          <Tilt key={service.id} tiltEnable scale={1.03} className="h-full flex flex-col">
             {showLinks ? (
-              <Link to={service.link}>
+              <Link to={service.link} className="block h-full">
                 {CardContent}
               </Link>
             ) : (

@@ -1,0 +1,10 @@
+[
+  {
+    "slug": "diseno-arquitectura-vocaccion",
+    "title": "Diseñando Vocacción: Arquitectura Conversacional y Decisiones Guiadas",
+    "date": "2026-02-23",
+    "excerpt": "Cómo estructuré la arquitectura modular de una plataforma de orientación vocacional.",
+    "tags": ["Arquitectura", "React", "Laravel"],
+    "filename": "diseno-arquitectura-vocaccion.md"
+  }
+]

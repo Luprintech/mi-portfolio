@@ -1,131 +1,78 @@
-import { motion } from "framer-motion";
-import { FaExternalLinkAlt, FaGithub, FaGlobe } from "react-icons/fa";
-import { useTranslation } from "react-i18next";
+import React from 'react';
+import { motion } from 'framer-motion';
 
-/**
- * Componente profesional para mostrar tarjetas de proyectos web
- * Diseñado según principios de jerarquía visual y ritmo
- * @param {Object} project - Proyecto a mostrar
- * @param {number} index - Índice para animación escalonada
- */
-export default function ProjectCard({ project, index = 0 }) {
-  const { t, i18n } = useTranslation();
-  const lang = i18n.language || 'es';
-  const hasMultipleLinks = Array.isArray(project.links);
-  
-  // Respaldo para soportar proyectos tanto de i18n como de la DB literal
-  const getProjectField = (fieldBase) => {
-    const directField = project[`${fieldBase}_${lang}`];
-    if (directField) return directField;
-    const fallbackField = project[`${fieldBase}_es`];
-    if (fallbackField) return fallbackField;
-    // Si no está el texto literal, tiramos del sistema de keys antiguo (t(project.fieldBase))
-    return t(project[fieldBase]);
-  };
-  
-  const getIcon = (type) => {
-    switch (type) {
-      case "github":
-        return <FaGithub className="text-sm" />;
-      case "web":
-        return <FaGlobe className="text-sm" />;
-      default:
-        return <FaExternalLinkAlt className="text-sm" />;
-    }
-  };
-
+const ProjectCard = ({ project, index = 0 }) => {
   return (
-    <motion.article
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        duration: 0.5,
-        delay: index * 0.15,
-        ease: [0.22, 1, 0.36, 1],
-      }}
-      whileHover={{ y: -4 }}
-      className={`group relative border rounded-2xl overflow-hidden shadow-xl backdrop-blur-md transition-all duration-500 flex flex-col min-h-[580px] h-full ${
-        index % 2 === 0
-          ? "bg-[#0b1220]/80 border-white/5 hover:shadow-[15px_0_30px_-15px_rgba(124,58,237,0.3)]"
-          : "bg-[#111827]/80 border-white/10 hover:shadow-[-15px_0_30px_-15px_rgba(6,182,212,0.3)]"
-      }`}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+      viewport={{ once: true, margin: "-50px" }}
+      className="group relative flex flex-col h-full bg-[#111827]/80 backdrop-blur-md rounded-2xl overflow-hidden border border-white/5 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgba(124,58,237,0.15)] hover:border-white/10 transition-all duration-300 hover:-translate-y-2"
     >
-      {/* Imagen */}
-      <div className="relative h-[280px] bg-[#0f172a] overflow-hidden flex-shrink-0">
+      {/* Contenedor de Imagen 16:9 */}
+      <div className="relative w-full aspect-video overflow-hidden bg-slate-800">
         <img
-          src={project.imagen?.startsWith('/uploads') ? `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${project.imagen}` : project.imagen}
-          alt={`Preview of project ${getProjectField('titulo')}`}
-          loading="lazy"
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+          src={project.image || "https://placehold.co/1280x720/1e293b/ffffff?text=Image+Not+Found"}
+          alt={project.title}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          onError={(e) => { e.target.src = "https://placehold.co/1280x720/1e293b/ffffff?text=Image+Not+Found" }}
         />
-        {/* Overlay gradient al hover */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        {/* Overlay Degradado inferior para ensombrecer y mezclar con el fondo */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#111827]/90 via-[#111827]/20 to-transparent pointer-events-none" />
       </div>
 
       {/* Contenido */}
-      <div className="flex flex-col flex-grow p-6 md:p-8">
-        <div className="flex-grow">
-          {/* Título */}
-          <h3 className="text-2xl font-bold text-white mb-3 leading-tight group-hover:text-fuchsia-300 transition-colors duration-300">
-            {getProjectField('titulo')}
-          </h3>
-          
-          <p className="text-base text-gray-300 leading-relaxed mb-6">
-            {getProjectField('shortDescription') || getProjectField('descripcion')}
-          </p>
+      <div className="flex flex-col flex-grow p-6 sm:p-8 relative z-10">
+        <h3 className="text-2xl font-bold tracking-tight text-white mb-3">
+          {project.title}
+        </h3>
+        
+        <p className="text-slate-300 text-sm leading-relaxed mb-6 flex-grow text-justify">
+          {project.description}
+        </p>
+
+        {/* Tech Tags */}
+        <div className="flex flex-wrap gap-2 mb-8">
+          {project.tech.map((t, i) => (
+            <span
+              key={i}
+              className="px-3 py-1 text-xs font-medium text-cyan-300 bg-cyan-500/10 border border-cyan-500/20 rounded-full"
+            >
+              {t}
+            </span>
+          ))}
         </div>
 
-        {/* Footer (siempre al fondo) */}
-        <div className="mt-auto space-y-6">
-          {/* Tech Stack - máximo 5 badges + contador */}
-          <div className="flex flex-wrap gap-2">
-            {project.tech.slice(0, 5).map((tech, i) => (
-              <span
-                key={i}
-                className="inline-flex items-center px-3 py-1.5 bg-fuchsia-500/10 text-fuchsia-300 text-[13px] font-medium rounded-lg border border-fuchsia-500/20 hover:bg-fuchsia-500/20 transition-colors"
-              >
-                {tech}
-              </span>
-            ))}
-            {project.tech.length > 5 && (
-              <span className="inline-flex items-center px-3 py-1.5 bg-slate-800 text-gray-400 text-[13px] font-medium rounded-lg border border-slate-700">
-                +{project.tech.length - 5}
-              </span>
-            )}
-          </div>
+        {/* Botones */}
+        <div className="flex flex-wrap gap-3 mt-auto">
+          {project.github && (
+            <a
+              href={project.github}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-slate-800/80 hover:bg-slate-700 border border-white/10 rounded-xl transition-colors duration-300"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+              Código
+            </a>
+          )}
 
-          {/* Botones */}
-          <div className="flex gap-3">
-            {hasMultipleLinks ? (
-              project.links.map((linkObj, idx) => (
-                <a
-                  key={idx}
-                  href={linkObj.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm transition-all duration-300 ${
-                    linkObj.type === "github"
-                      ? "bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 hover:border-slate-600"
-                      : "bg-gradient-to-r from-fuchsia-500 to-cyan-500 hover:from-fuchsia-400 hover:to-cyan-400 text-white shadow-lg shadow-fuchsia-500/25 hover:shadow-fuchsia-500/40"
-                  }`}
-                >
-                  {t(linkObj.labelKey || 'projects.view_app')}
-                  {getIcon(linkObj.type)}
-                </a>
-              ))
-            ) : (
-              <a
-                href={project.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-fuchsia-500 to-cyan-500 hover:from-fuchsia-400 hover:to-cyan-400 text-white font-semibold text-sm rounded-xl shadow-lg shadow-fuchsia-500/25 hover:shadow-fuchsia-500/40 transition-all duration-300"
-              >
-                {t('projects.view_app')} <FaExternalLinkAlt />
-              </a>
-            )}
-          </div>
+          {project.demo && (
+            <a
+              href={project.demo}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-violet-600 to-cyan-600 hover:from-violet-500 hover:to-cyan-500 rounded-xl transition-all duration-300 shadow-[0_0_15px_rgba(124,58,237,0.3)] hover:shadow-[0_0_20px_rgba(6,182,212,0.4)]"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              Live Demo
+            </a>
+          )}
         </div>
       </div>
-    </motion.article>
+    </motion.div>
   );
-}
+};
+
+export default ProjectCard;

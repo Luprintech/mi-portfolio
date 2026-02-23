@@ -71,14 +71,14 @@ export default function Timeline() {
         {t('timeline.title_main')}
       </Motion.h2>
 
-      {/* Línea vertical animada */}
-      <div
-        className={`absolute left-[38px] md:left-1/2 top-8 bottom-8 md:-translate-x-1/2 w-1 z-0
-        bg-gradient-to-b ${lineGradient} animate-pulse blur-[1.5px] rounded-full`}
-        style={{ boxShadow: "0 0 48px #d946ef55, 0 0 38px #22d3ee88" }}
-      />
-      {/* Cards animadas */}
+      {/* Contenedor relativo para la línea y las Cards animadas */}
       <div className="relative w-full max-w-3xl z-10">
+        {/* Línea vertical animada alojada dentro del contenedor, sin pisar el h2 */}
+        <div
+          className={`absolute left-[38px] md:left-1/2 top-4 bottom-8 md:-translate-x-1/2 w-1 z-0
+          bg-gradient-to-b ${lineGradient} animate-pulse blur-[1.5px] rounded-full`}
+          style={{ boxShadow: "0 0 48px #d946ef55, 0 0 38px #22d3ee88" }}
+        />
         {eventos.map((e, i) => (
           <TimelineItem key={i} {...e} index={i} />
         ))}

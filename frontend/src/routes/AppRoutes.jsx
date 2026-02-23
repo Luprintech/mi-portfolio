@@ -8,14 +8,11 @@ const About = lazy(() => import("../pages/About"));
 const Portfolio = lazy(() => import("../pages/Portfolio"));
 const PortfolioDesarrolloWeb = lazy(() => import("../pages/portfolio/desarrollo-web"));
 const PortfolioDocumentacion = lazy(() => import("../pages/portfolio/documentacion-tecnica"));
-const Services = lazy(() => import("../pages/Services"));
 const ServiceDevWeb = lazy(() => import("../pages/services/DevWeb"));
-const ServiceIA = lazy(() => import("../pages/services/IA"));
-const ServiceSoporte = lazy(() => import("../pages/services/SoporteTI"));
-const ServiceImpresion = lazy(() => import("../pages/services/Impresion3D"));
 const Blog = lazy(() => import("../pages/Blog"));
+const BlogPost = lazy(() => import("../pages/BlogPost"));
 const Contact = lazy(() => import("../pages/Contact"));
-const Admin = lazy(() => import("../pages/Admin"));
+
 
 // Loading fallback con animación
 const PageLoader = () => (
@@ -84,14 +81,6 @@ export default function AppRoutes() {
           />
 
           <Route
-            path="/servicios"
-            element={
-              <Motion.div {...pageTransition}>
-                <Services />
-              </Motion.div>
-            }
-          />
-          <Route
             path="/servicios/desarrollo-web"
             element={
               <Motion.div {...pageTransition}>
@@ -99,36 +88,20 @@ export default function AppRoutes() {
               </Motion.div>
             }
           />
-          <Route
-            path="/servicios/inteligencia-artificial"
-            element={
-              <Motion.div {...pageTransition}>
-                <ServiceIA />
-              </Motion.div>
-            }
-          />
-          <Route
-            path="/servicios/soporte-ti"
-            element={
-              <Motion.div {...pageTransition}>
-                <ServiceSoporte />
-              </Motion.div>
-            }
-          />
-          <Route
-            path="/servicios/impresion-3d"
-            element={
-              <Motion.div {...pageTransition}>
-                <ServiceImpresion />
-              </Motion.div>
-            }
-          />
-
+         
           <Route
             path="/blog"
             element={
               <Motion.div {...pageTransition}>
                 <Blog />
+              </Motion.div>
+            }
+          />
+          <Route
+            path="/blog/:slug"
+            element={
+              <Motion.div {...pageTransition}>
+                <BlogPost />
               </Motion.div>
             }
           />
@@ -140,14 +113,7 @@ export default function AppRoutes() {
               </Motion.div>
             }
           />
-          <Route
-            path="/admin-secreto"
-            element={
-              <Motion.div {...pageTransition}>
-                <Admin />
-              </Motion.div>
-            }
-          />
+         
         </Routes>
       </AnimatePresence>
     </Suspense>

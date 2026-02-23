@@ -1,0 +1,32 @@
+[
+  {
+    "id": "vocaccion",
+    "title": "Vocacción",
+    "description": "Plataforma web orientada a la orientación vocacional mediante un sistema conversacional inteligente y arquitectura modular escalable. Diseñada para transformar procesos de toma de decisiones en experiencias guiadas.",
+    "tech": ["React", "Laravel", "API REST", "Arquitectura Modular"],
+    "github": "https://github.com/Luprintech/vocaccion",
+    "demo": "https://tuvocaccion.es",
+    "image": "/images/vocaccion.jpg",
+    "featured": true
+  },
+  {
+    "id": "calculadora-3d",
+    "title": "Calculadora Presupuesto 3D",
+    "description": "Herramienta que permite calcular el coste de impresión 3D a través de un panel interactivo con parámetros como tiempos, materiales y gastos extras.",
+    "tech": ["React", "Tailwind CSS", "JavaScript"],
+    "github": "https://github.com/Luprintech/calculadora-3D",
+    "demo": "https://calculadora3d.luprintech.com/",
+    "image": "/images/calculadora3d.png",
+    "featured": true
+  },
+  {
+    "id": "luprinchef-recetas",
+    "title": "LuprinChef - Recetario",
+    "description": "Plataforma de recetas de cocina con un sistema interactivo para que los usuarios valoren comidas, compartan ideas y descubran nuevas opciones culinarias.",
+    "tech": ["Node.js", "Express", "HTML/CSS"],
+    "github": "https://github.com/Luprintech/luprinchef-recetas",
+    "demo": "https://recetas.luprintech.com/",
+    "image": "/images/luprinchef.jpg",
+    "featured": false
+  }
+]

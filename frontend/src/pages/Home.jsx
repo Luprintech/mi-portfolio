@@ -167,7 +167,7 @@ export default function Home() {
         <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-[#0b1220] to-transparent pointer-events-none" />
         
         <div className="relative z-10 max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-4">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-4">
           <div>
             <h2 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
               {t('home.projects_title')}
