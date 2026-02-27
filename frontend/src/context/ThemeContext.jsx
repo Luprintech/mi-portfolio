@@ -5,7 +5,7 @@ const ThemeContext = createContext(null)
 
 // ─── Utilidades ───────────────────────────────────────────────────────────────
 /**
- * Devuelve el tema guardado en localStorage, o la preferencia del SO, o 'dark'.
+ * Devuelve el tema guardado en localStorage, o 'light' por defecto.
  */
 function getInitialTheme() {
   try {
@@ -14,13 +14,8 @@ function getInitialTheme() {
   } catch {
     // localStorage puede no estar disponible (modo privado muy restringido)
   }
-  // Preferencia del sistema operativo
-  if (typeof window !== 'undefined' && window.matchMedia) {
-    return window.matchMedia('(prefers-color-scheme: light)').matches
-      ? 'light'
-      : 'dark'
-  }
-  return 'dark'
+  // Tema predeterminado: modo claro
+  return 'light'
 }
 
 // ─── Provider ─────────────────────────────────────────────────────────────────

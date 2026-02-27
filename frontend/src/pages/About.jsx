@@ -4,9 +4,12 @@ import Tilt from "react-parallax-tilt";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Rocket, Calendar, Layers, GraduationCap } from "lucide-react";
+import { FaBolt, FaPlug, FaDesktop, FaRobot, FaSyncAlt } from "react-icons/fa";
+import { MdSearch, MdSchool, MdAutorenew } from "react-icons/md";
+import { BsBroadcast } from "react-icons/bs";
 import mifoto from "../assets/pc.jpg";
 import Timeline from "../components/Timeline.jsx";
-import ToolsGrid from "../components/ToolsGrid.jsx";
+import TechSkills from "../components/TechSkills.jsx";
 
 /* ─── CONSTANTES ─── */
 const TABS = ["tab_tech", "tab_story", "tab_diff"];
@@ -15,15 +18,14 @@ const BADGE_KEYS = [
   { key: "badge_fullstack", color: "cyan"    },
   { key: "badge_self",      color: "violet"  },
   { key: "badge_infra",     color: "fuchsia" },
-  { key: "badge_pedagogy",  color: "cyan"    },
-  { key: "badge_ai",        color: "fuchsia" },
-  { key: "badge_n8n",       color: "violet"  },
+  { key: "badge_ai",        color: "emerald" },
 ];
 
 const BADGE_STYLES = {
   cyan:    "bg-[var(--accent-secondary-dim)] text-[var(--accent-secondary)] border-[var(--accent-secondary)]/30",
   fuchsia: "bg-[var(--accent-primary-dim)]   text-[var(--accent-primary)]   border-[var(--accent-primary)]/30",
   violet:  "bg-violet-500/10                 text-violet-400                border-violet-500/20",
+  emerald: "bg-emerald-500/10               text-emerald-400               border-emerald-500/20",
 };
 
 const STATS_CONFIG = [
@@ -34,52 +36,21 @@ const STATS_CONFIG = [
 ];
 
 const DIFF_ITEMS = [
-  { icon: "🔍", key: "diff_detail"      },
-  { icon: "📡", key: "diff_selflearner" },
-  { icon: "🎓", key: "diff_pedagogy"    },
-  { icon: "🤖", key: "diff_ai"          },
-  { icon: "🔁", key: "diff_n8n"         },
+  { Icon: MdSearch,    iconColor: "text-[var(--accent-primary)]",   key: "diff_detail"      },
+  { Icon: BsBroadcast, iconColor: "text-[var(--accent-secondary)]", key: "diff_selflearner" },
+  { Icon: MdSchool,    iconColor: "text-[var(--accent-primary)]",   key: "diff_pedagogy"    },
+  { Icon: FaRobot,     iconColor: "text-[var(--accent-secondary)]", key: "diff_ai"          },
+  { Icon: MdAutorenew, iconColor: "text-[var(--accent-primary)]",   key: "diff_n8n"         },
 ];
 
 const TECH_KEYS = ["tech_1", "tech_2", "tech_3", "tech_4", "tech_5"];
-const TECH_ICONS = ["⚡", "🔌", "🖥", "🤖", "🔁"];
-
-const TECH_STACK_GROUPS = [
-  {
-    titleKey:  "stack_frontend_title",
-    accentVar: "--accent-primary",
-    accentDim: "--accent-primary-dim",
-    techKeys:  ["stack_fe_react", "stack_fe_js", "stack_fe_tailwind", "stack_fe_vite", "stack_fe_responsive"],
-  },
-  {
-    titleKey:  "stack_backend_title",
-    accentVar: "--accent-secondary",
-    accentDim: "--accent-secondary-dim",
-    techKeys:  ["stack_be_laravel", "stack_be_php", "stack_be_node", "stack_be_rest", "stack_be_jwt"],
-  },
-  {
-    titleKey:  "stack_db_title",
-    accentVar: "--accent-green",
-    accentDim: "--accent-green-dim",
-    techKeys:  ["stack_db_mysql", "stack_db_pg", "stack_db_schema", "stack_db_modeling"],
-  },
-  {
-    titleKey:  "stack_infra_title",
-    accentVar: "--accent-orange",
-    accentDim: "--accent-orange-dim",
-    techKeys:  [
-      "stack_infra_docker", "stack_infra_nginx",  "stack_infra_proxy",
-      "stack_infra_ssl",    "stack_infra_cf",     "stack_infra_dns",
-      "stack_infra_vps",    "stack_infra_rpi",    "stack_infra_nas",
-      "stack_infra_deploy",
-    ],
-  },
-  {
-    titleKey:  "stack_ai_title",
-    accentVar: "--accent-purple",
-    accentDim: "--accent-purple-dim",
-    techKeys:  ["stack_ai_llm", "stack_ai_n8n", "stack_ai_flows", "stack_ai_apis"],
-  },
+const TECH_ICONS = [FaBolt, FaPlug, FaDesktop, FaRobot, FaSyncAlt];
+const TECH_ICON_COLORS = [
+  "text-[var(--accent-primary)]",
+  "text-[var(--accent-secondary)]",
+  "text-[var(--accent-primary)]",
+  "text-[var(--accent-secondary)]",
+  "text-[var(--accent-primary)]",
 ];
 
 /* ─── COMPONENT ─── */
@@ -113,7 +84,7 @@ export default function SobreMi() {
             {/* Foto */}
             <div className="shrink-0 flex justify-center md:justify-start">
               <Tilt tiltMaxAngleX={8} tiltMaxAngleY={8} scale={1.03} transitionSpeed={2000}>
-                <div className="p-[3px] bg-gradient-to-br from-fuchsia-500 via-violet-500 to-cyan-400 rounded-full shadow-[0_0_30px_rgba(168,85,247,0.35)]">
+                <div className="p-[3px] bg-gradient-to-br from-fuchsia-500 via-violet-500 to-cyan-400 rounded-full shadow-[0_0_30px_rgba(168,85,247,0.35)] ring-2 ring-[var(--accent-primary)]/40">
                   <img
                     src={mifoto}
                     alt="Guadalupe Cano"
@@ -129,7 +100,7 @@ export default function SobreMi() {
                 {t("about.tagline")}
               </h1>
 
-              <p className="text-[var(--text-secondary)] text-base md:text-lg leading-relaxed max-w-xl">
+              <p className="text-[var(--text-secondary)] text-base md:text-lg leading-relaxed max-w-xl text-justify">
                 {t("about.summary")}
               </p>
 
@@ -169,7 +140,7 @@ export default function SobreMi() {
                 transition={{ duration: 0.5, delay: i * 0.08 }}
                 className="bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-2xl p-5 flex flex-col items-center text-center gap-2 shadow-[var(--card-shadow)] hover:shadow-[var(--card-hover-shadow)] hover:-translate-y-1 transition-all duration-300"
               >
-                <Icon size={28} className={iconColor} aria-hidden="true" />
+                <Icon size={36} className={`${iconColor}`} aria-hidden="true" />
                 <span className="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-fuchsia-400 leading-none">
                   {t(`about.${valKey}`)}
                 </span>
@@ -179,13 +150,6 @@ export default function SobreMi() {
               </Motion.div>
             ))}
           </Motion.div>
-        </section>
-
-        {/* ══════════════════════════════════════════
-            BLOQUE 2.5 — STACK TECNOLÓGICO
-        ══════════════════════════════════════════ */}
-        <section aria-label="Stack tecnológico">
-          <TechStack t={t} />
         </section>
 
         {/* ══════════════════════════════════════════
@@ -305,17 +269,19 @@ export default function SobreMi() {
         </section>
 
         {/* ══════════════════════════════════════════
+            BLOQUE 3.5 — HABILIDADES TÉCNICAS
+        ══════════════════════════════════════════ */}
+        <section aria-label="Habilidades técnicas">
+          <TechSkills />
+        </section>
+
+
+
+        {/* ══════════════════════════════════════════
             BLOQUE 4 — TIMELINE
         ══════════════════════════════════════════ */}
         <section aria-label="Evolución profesional">
           <Timeline />
-        </section>
-
-        {/* ══════════════════════════════════════════
-            BLOQUE 5 — TOOLS GRID
-        ══════════════════════════════════════════ */}
-        <section aria-label="Stack tecnológico">
-          <ToolsGrid />
         </section>
 
         {/* ══════════════════════════════════════════
@@ -379,14 +345,21 @@ function TechProfile({ t }) {
         {t("about.tech_title")}
       </h3>
       <ul className="space-y-3">
-        {TECH_KEYS.map((key, i) => (
-          <li key={key} className="flex items-start gap-3">
-            <span className="text-lg mt-0.5 shrink-0" aria-hidden="true">{TECH_ICONS[i]}</span>
-            <span className="text-[var(--text-secondary)] text-sm leading-relaxed">
-              {t(`about.${key}`)}
-            </span>
-          </li>
-        ))}
+        {TECH_KEYS.map((key, i) => {
+          const Icon = TECH_ICONS[i];
+          return (
+            <li key={key} className="flex items-start gap-3">
+              <Icon
+                size={20}
+                className={`${TECH_ICON_COLORS[i]} mt-0.5 shrink-0`}
+                aria-hidden="true"
+              />
+              <span className="text-[var(--text-secondary)] text-sm leading-relaxed">
+                {t(`about.${key}`)}
+              </span>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
@@ -395,8 +368,8 @@ function TechProfile({ t }) {
 function MyStory({ t }) {
   return (
     <div className="space-y-4">
-      {["story_p1", "story_p2", "story_p3"].map((key) => (
-        <p key={key} className="text-[var(--text-secondary)] text-sm md:text-base leading-relaxed">
+      {["story_p1", "story_p2", "story_p3", "story_p4", "story_p5", "story_p6", "story_p7"].map((key) => (
+        <p key={key} className="text-[var(--text-secondary)] text-sm md:text-base leading-relaxed text-justify">
           {t(`about.${key}`)}
         </p>
       ))}
@@ -407,83 +380,22 @@ function MyStory({ t }) {
 function WhatDiffers({ t }) {
   return (
     <ul className="space-y-4">
-      {DIFF_ITEMS.map(({ icon, key }) => (
-        <li key={key} className="flex items-start gap-4">
-          <span
-            className="text-2xl shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)]"
-            aria-hidden="true"
-          >
-            {icon}
-          </span>
-          <span className="text-[var(--text-secondary)] text-sm md:text-base leading-relaxed pt-1">
-            {t(`about.${key}`)}
-          </span>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-/* ───────────────────────────────────────────
-   TechStack — grid de grupos con badges
-─────────────────────────────────────────── */
-function TechStack({ t }) {
-  return (
-    <Motion.div
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6 }}
-    >
-      {/* Encabezado */}
-      <div className="mb-8 text-center">
-        <h2 className="text-2xl md:text-3xl font-bold text-[var(--text-primary)] mb-2">
-          {t("about.stack_title")}
-        </h2>
-        <p className="text-[var(--text-secondary)] text-sm md:text-base max-w-xl mx-auto">
-          {t("about.stack_subtitle")}
-        </p>
-      </div>
-
-      {/* Grid de grupos: 2 columnas desktop, 1 columna móvil */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {TECH_STACK_GROUPS.map(({ titleKey, accentVar, accentDim, techKeys }, i) => (
-          <Motion.div
-            key={titleKey}
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: i * 0.07 }}
-            className="bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-2xl p-5 shadow-[var(--card-shadow)] hover:shadow-[var(--card-hover-shadow)] hover:-translate-y-0.5 transition-all duration-300"
-            style={{ borderLeft: `3px solid var(${accentVar})` }}
-          >
-            {/* Título del grupo */}
-            <h3
-              className="text-xs font-bold uppercase tracking-widest mb-3"
-              style={{ color: `var(${accentVar})` }}
+      {DIFF_ITEMS.map((item) => {
+        const DiffIcon = item.Icon;
+        return (
+          <li key={item.key} className="flex items-start gap-4">
+            <span
+              className="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)]"
+              aria-hidden="true"
             >
-              {t(`about.${titleKey}`)}
-            </h3>
-
-            {/* Badges */}
-            <div className="flex flex-wrap gap-2">
-              {techKeys.map((key) => (
-                <span
-                  key={key}
-                  className="px-3 py-1 rounded-full text-xs font-medium border transition-all duration-200 cursor-default hover:brightness-110"
-                  style={{
-                    backgroundColor: `var(${accentDim})`,
-                    borderColor: `color-mix(in srgb, var(${accentVar}) 35%, transparent)`,
-                    color: `var(${accentVar})`,
-                  }}
-                >
-                  {t(`about.${key}`)}
-                </span>
-              ))}
-            </div>
-          </Motion.div>
-        ))}
-      </div>
-    </Motion.div>
+              <DiffIcon size={20} className={item.iconColor} />
+            </span>
+            <span className="text-[var(--text-secondary)] text-sm md:text-base leading-relaxed pt-1 text-justify">
+              {t(`about.${item.key}`)}
+            </span>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
