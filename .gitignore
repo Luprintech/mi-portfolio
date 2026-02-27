@@ -40,3 +40,6 @@ dist-ssr
 
 eslint*.txt
 eslint*_results.json
+
+# Claude Code (worktrees internos, no subir a git)
+.claude/

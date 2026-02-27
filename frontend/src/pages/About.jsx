@@ -44,6 +44,44 @@ const DIFF_ITEMS = [
 const TECH_KEYS = ["tech_1", "tech_2", "tech_3", "tech_4", "tech_5"];
 const TECH_ICONS = ["⚡", "🔌", "🖥", "🤖", "🔁"];
 
+const TECH_STACK_GROUPS = [
+  {
+    titleKey:  "stack_frontend_title",
+    accentVar: "--accent-primary",
+    accentDim: "--accent-primary-dim",
+    techKeys:  ["stack_fe_react", "stack_fe_js", "stack_fe_tailwind", "stack_fe_vite", "stack_fe_responsive"],
+  },
+  {
+    titleKey:  "stack_backend_title",
+    accentVar: "--accent-secondary",
+    accentDim: "--accent-secondary-dim",
+    techKeys:  ["stack_be_laravel", "stack_be_php", "stack_be_node", "stack_be_rest", "stack_be_jwt"],
+  },
+  {
+    titleKey:  "stack_db_title",
+    accentVar: "--accent-green",
+    accentDim: "--accent-green-dim",
+    techKeys:  ["stack_db_mysql", "stack_db_pg", "stack_db_schema", "stack_db_modeling"],
+  },
+  {
+    titleKey:  "stack_infra_title",
+    accentVar: "--accent-orange",
+    accentDim: "--accent-orange-dim",
+    techKeys:  [
+      "stack_infra_docker", "stack_infra_nginx",  "stack_infra_proxy",
+      "stack_infra_ssl",    "stack_infra_cf",     "stack_infra_dns",
+      "stack_infra_vps",    "stack_infra_rpi",    "stack_infra_nas",
+      "stack_infra_deploy",
+    ],
+  },
+  {
+    titleKey:  "stack_ai_title",
+    accentVar: "--accent-purple",
+    accentDim: "--accent-purple-dim",
+    techKeys:  ["stack_ai_llm", "stack_ai_n8n", "stack_ai_flows", "stack_ai_apis"],
+  },
+];
+
 /* ─── COMPONENT ─── */
 export default function SobreMi() {
   const { t } = useTranslation();
@@ -141,6 +179,13 @@ export default function SobreMi() {
               </Motion.div>
             ))}
           </Motion.div>
+        </section>
+
+        {/* ══════════════════════════════════════════
+            BLOQUE 2.5 — STACK TECNOLÓGICO
+        ══════════════════════════════════════════ */}
+        <section aria-label="Stack tecnológico">
+          <TechStack t={t} />
         </section>
 
         {/* ══════════════════════════════════════════
@@ -376,5 +421,69 @@ function WhatDiffers({ t }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+/* ───────────────────────────────────────────
+   TechStack — grid de grupos con badges
+─────────────────────────────────────────── */
+function TechStack({ t }) {
+  return (
+    <Motion.div
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.6 }}
+    >
+      {/* Encabezado */}
+      <div className="mb-8 text-center">
+        <h2 className="text-2xl md:text-3xl font-bold text-[var(--text-primary)] mb-2">
+          {t("about.stack_title")}
+        </h2>
+        <p className="text-[var(--text-secondary)] text-sm md:text-base max-w-xl mx-auto">
+          {t("about.stack_subtitle")}
+        </p>
+      </div>
+
+      {/* Grid de grupos: 2 columnas desktop, 1 columna móvil */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {TECH_STACK_GROUPS.map(({ titleKey, accentVar, accentDim, techKeys }, i) => (
+          <Motion.div
+            key={titleKey}
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: i * 0.07 }}
+            className="bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-2xl p-5 shadow-[var(--card-shadow)] hover:shadow-[var(--card-hover-shadow)] hover:-translate-y-0.5 transition-all duration-300"
+            style={{ borderLeft: `3px solid var(${accentVar})` }}
+          >
+            {/* Título del grupo */}
+            <h3
+              className="text-xs font-bold uppercase tracking-widest mb-3"
+              style={{ color: `var(${accentVar})` }}
+            >
+              {t(`about.${titleKey}`)}
+            </h3>
+
+            {/* Badges */}
+            <div className="flex flex-wrap gap-2">
+              {techKeys.map((key) => (
+                <span
+                  key={key}
+                  className="px-3 py-1 rounded-full text-xs font-medium border transition-all duration-200 cursor-default hover:brightness-110"
+                  style={{
+                    backgroundColor: `var(${accentDim})`,
+                    borderColor: `color-mix(in srgb, var(${accentVar}) 35%, transparent)`,
+                    color: `var(${accentVar})`,
+                  }}
+                >
+                  {t(`about.${key}`)}
+                </span>
+              ))}
+            </div>
+          </Motion.div>
+        ))}
+      </div>
+    </Motion.div>
   );
 }
