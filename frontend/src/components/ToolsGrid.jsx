@@ -9,28 +9,28 @@ export default function ToolsGrid() {
       section: t('tools.sec_dev'),
       tools: [
         { name: "JavaScript", color: "from-yellow-400 to-orange-400", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg" },
-        { name: "React", color: "from-cyan-400 to-blue-400", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" },
-        { name: "Node.js", color: "from-green-400 to-emerald-500", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" },
-        { name: "PHP", color: "from-indigo-400 to-blue-500", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/php/php-original.svg" },
-        { name: "Python", color: "from-yellow-400 to-blue-500", logo: "https://cdn.simpleicons.org/python/3776AB" },
-        { name: "SQL", color: "from-blue-500 to-sky-400", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg" },
-        { name: "Git", color: "from-orange-400 to-red-500", logo: "https://cdn.simpleicons.org/git/F05032" },
+        { name: "React",      color: "from-cyan-400 to-blue-400",     logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" },
+        { name: "Node.js",    color: "from-green-400 to-emerald-500", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" },
+        { name: "PHP",        color: "from-indigo-400 to-blue-500",   logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/php/php-original.svg" },
+        { name: "Python",     color: "from-yellow-400 to-blue-500",   logo: "https://cdn.simpleicons.org/python/3776AB" },
+        { name: "SQL",        color: "from-blue-500 to-sky-400",      logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg" },
+        { name: "Git",        color: "from-orange-400 to-red-500",    logo: "https://cdn.simpleicons.org/git/F05032" },
       ],
     },
     {
       section: t('tools.sec_infra'),
       tools: [
-        { name: "Linux", color: "from-gray-700 to-black", logo: "https://cdn.simpleicons.org/linux/FAA918" },
-        { name: "Docker", color: "from-sky-400 to-blue-500", logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg" },
-        { name: "NGINX", color: "from-green-400 to-emerald-500", logo: "https://cdn.simpleicons.org/nginx/009639" },
+        { name: "Linux",  color: "from-gray-700 to-black",         logo: "https://cdn.simpleicons.org/linux/FAA918" },
+        { name: "Docker", color: "from-sky-400 to-blue-500",       logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg" },
+        { name: "NGINX",  color: "from-green-400 to-emerald-500",  logo: "https://cdn.simpleicons.org/nginx/009639" },
       ],
     },
     {
       section: t('tools.sec_ai'),
       tools: [
-        { name: "n8n", color: "from-pink-400 to-orange-400", logo: "https://cdn.simpleicons.org/n8n/ffffff" },
-        { name: t('tools.tool_api'), color: "from-blue-400 to-indigo-500", logo: "https://cdn.simpleicons.org/postman/ffffff" },
-        { name: t('tools.tool_ai'), color: "from-blue-500 to-indigo-500", logo: "https://cdn.simpleicons.org/googlegemini/ffffff" },
+        { name: "n8n",              color: "from-pink-400 to-orange-400",  logo: "https://cdn.simpleicons.org/n8n/EA4B71" },
+        { name: t('tools.tool_api'), color: "from-blue-400 to-indigo-500", logo: "https://cdn.simpleicons.org/postman/FF6C37" },
+        { name: t('tools.tool_ai'), color: "from-blue-500 to-indigo-500",  logo: "https://cdn.simpleicons.org/googlegemini/4285F4" },
       ],
     },
   ];
@@ -46,7 +46,7 @@ export default function ToolsGrid() {
       >
         {t('tools.title_main')}
       </Motion.h2>
-      <p className="text-gray-400 text-center mb-10">
+      <p className="text-[var(--text-muted)] text-center mb-10">
         {t('tools.subtitle')}
       </p>
       <div className="flex flex-col gap-14 max-w-6xl mx-auto">
@@ -83,8 +83,7 @@ function ToolCard({ name, color, logo, idx }) {
         boxShadow: "0 10px 30px -10px rgba(124, 58, 237, 0.4)",
         scale: 1.05,
       }}
-      className={`relative group flex flex-col items-center justify-center p-5 bg-[#0f172a]/80 rounded-2xl border border-white/5 shadow-lg hover:shadow-2xl transition-all cursor-pointer backdrop-blur-md`}
-      style={{ boxShadow: `0 4px 20px rgba(0,0,0,0.2)` }}
+      className="relative group flex flex-col items-center justify-center p-5 bg-[var(--bg-surface)] rounded-2xl border border-[var(--border-color)] shadow-[var(--shadow-sm)] hover:shadow-xl transition-all cursor-pointer backdrop-blur-md"
     >
       <div
         className={`w-16 h-16 mb-3 rounded-full bg-gradient-to-tr ${color} flex items-center justify-center shadow-[0_0_16px_#d946ef66,0_0_20px_#22d3ee55]`}
@@ -92,10 +91,10 @@ function ToolCard({ name, color, logo, idx }) {
         <img
           src={logo}
           alt={name}
-          className="w-10 h-10 object-contain drop-shadow-glow-fuchsia"
+          className="w-10 h-10 object-contain"
         />
       </div>
-      <span className="text-base font-medium text-gray-200 select-none">
+      <span className="text-base font-medium text-[var(--text-primary)] select-none">
         {name}
       </span>
     </Motion.div>

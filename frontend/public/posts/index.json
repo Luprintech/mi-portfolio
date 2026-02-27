@@ -4,7 +4,26 @@
     "title": "Diseñando Vocacción: Arquitectura Conversacional y Decisiones Guiadas",
     "date": "2026-02-23",
     "excerpt": "Cómo estructuré la arquitectura modular de una plataforma de orientación vocacional.",
-    "tags": ["Arquitectura", "React", "Laravel"],
+    "tags": [
+      "Arquitectura",
+      "React",
+      "Laravel"
+    ],
     "filename": "diseno-arquitectura-vocaccion.md"
+  },
+  {
+    "slug": "synology-docker-deploy",
+    "title": "Cómo desplegué mi portfolio React + Node.js en un Synology con Docker, HTTPS y dominio propio (sin depender de ningún hosting)",
+    "date": "2026-02-25",
+    "excerpt": "Guía completa paso a paso sobre cómo desplegar una aplicación React + Node.js en un Synology con Docker, HTTPS y dominio propio.",
+    "tags": [
+      "Docker",
+      "Synology",
+      "React",
+      "Node.js",
+      "HTTPS",
+      "Despliegue"
+    ],
+    "filename": "synology-docker-deploy.md"
   }
 ]

@@ -1,5 +1,10 @@
 import { useTranslation } from "react-i18next";
+import CountryFlag from "react-country-flag";
 
+/**
+ * Selector de idioma con banderas SVG.
+ * ES → España (ES), EN → Reino Unido (GB)
+ */
 export default function LanguageSwitcher() {
   const { i18n } = useTranslation();
 
@@ -7,33 +12,47 @@ export default function LanguageSwitcher() {
     i18n.changeLanguage(lang);
   };
 
+  const languages = [
+    { code: "es", countryCode: "ES", label: "ES", ariaLabel: "Cambiar a Español" },
+    { code: "en", countryCode: "GB", label: "EN", ariaLabel: "Switch to English" },
+  ];
+
   return (
-    <div className="flex items-center gap-2 text-sm font-medium">
-      <button
-        onClick={() => handleLanguageChange("es")}
-        className={`transition-colors duration-200 ${
-          i18n.resolvedLanguage === "es"
-            ? "text-cyan-400 cursor-default"
-            : "text-gray-500 hover:text-gray-300"
-        }`}
-        aria-label="Cambiar a Español"
-        aria-current={i18n.resolvedLanguage === "es"}
-      >
-        ES
-      </button>
-      <span className="text-gray-700 select-none">/</span>
-      <button
-        onClick={() => handleLanguageChange("en")}
-        className={`transition-colors duration-200 ${
-          i18n.resolvedLanguage === "en"
-            ? "text-cyan-400 cursor-default"
-            : "text-gray-500 hover:text-gray-300"
-        }`}
-        aria-label="Switch to English"
-        aria-current={i18n.resolvedLanguage === "en"}
-      >
-        EN
-      </button>
+    <div className="flex items-center gap-1 text-sm font-medium">
+      {languages.map(({ code, countryCode, label, ariaLabel }, idx) => {
+        const isActive = i18n.resolvedLanguage === code;
+        return (
+          <span key={code} className="flex items-center">
+            <button
+              onClick={() => handleLanguageChange(code)}
+              className={`
+                flex items-center gap-1.5 px-2 py-1 rounded-md transition-all duration-200
+                ${isActive
+                  ? "text-[var(--accent-secondary)] cursor-default bg-[var(--accent-secondary-dim)]"
+                  : "text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-surface)]"
+                }
+              `}
+              aria-label={ariaLabel}
+              aria-current={isActive ? "true" : undefined}
+              disabled={isActive}
+            >
+              <CountryFlag
+                countryCode={countryCode}
+                svg
+                aria-label={ariaLabel}
+                style={{ width: "1.1em", height: "1.1em", borderRadius: "2px" }}
+              />
+              <span>{label}</span>
+            </button>
+            {/* Separador entre botones */}
+            {idx < languages.length - 1 && (
+              <span className="text-[var(--border-color)] select-none px-0.5" aria-hidden="true">
+                /
+              </span>
+            )}
+          </span>
+        );
+      })}
     </div>
   );
 }

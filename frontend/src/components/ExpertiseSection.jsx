@@ -4,9 +4,6 @@ import { FiChevronDown } from "react-icons/fi";
 
 /**
  * ExpertiseSection - Componente profesional para mostrar áreas de expertise técnica
- * Diseñado para posicionamiento profesional, no ventas
- * @param {Object} area - Objeto con datos del área de expertise
- * @param {number} index - Índice para animaciones escalonadas
  */
 export default function ExpertiseSection({ area, index = 0 }) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -17,35 +14,31 @@ export default function ExpertiseSection({ area, index = 0 }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1, duration: 0.5 }}
-      className="bg-slate-900/40 border border-slate-700/50 rounded-xl overflow-hidden backdrop-blur-sm hover:border-slate-600/50 transition-all duration-300"
+      className="bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-xl overflow-hidden backdrop-blur-sm hover:border-[var(--accent-primary)] transition-all duration-300"
     >
       {/* Header (siempre visible) */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-slate-800/30 transition-colors duration-200"
+        className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-[var(--bg-elevated)] transition-colors duration-200"
       >
         <div className="flex items-center gap-4">
-          {/* Icon (opcional) */}
           {Icon && (
             <div className={`${area.iconColor} text-3xl flex-shrink-0`}>
               <Icon />
             </div>
           )}
-          
-          {/* Title */}
           <div>
-            <h3 className="text-xl font-bold text-white">
+            <h3 className="text-xl font-bold text-[var(--text-primary)]">
               {area.title}
             </h3>
-            <p className="text-sm text-gray-400 mt-1 hidden sm:block">
+            <p className="text-sm text-[var(--text-muted)] mt-1 hidden sm:block">
               {area.intro.split('.')[0]}...
             </p>
           </div>
         </div>
 
-        {/* Expand Icon */}
         <FiChevronDown
-          className={`text-2xl text-gray-400 transition-transform duration-300 flex-shrink-0 ${
+          className={`text-2xl text-[var(--text-muted)] transition-transform duration-300 flex-shrink-0 ${
             isExpanded ? "rotate-180" : ""
           }`}
         />
@@ -61,21 +54,21 @@ export default function ExpertiseSection({ area, index = 0 }) {
             transition={{ duration: 0.3, ease: "easeInOut" }}
             className="overflow-hidden"
           >
-            <div className="px-6 pb-6 pt-2 space-y-6 border-t border-slate-700/30">
+            <div className="px-6 pb-6 pt-2 space-y-6 border-t border-[var(--border-subtle)]">
               {/* Intro completo */}
-              <p className="text-gray-300 leading-relaxed">
+              <p className="text-[var(--text-secondary)] leading-relaxed">
                 {area.intro}
               </p>
 
               {/* Capacidades técnicas */}
               <div>
-                <h4 className="text-white font-semibold mb-3 flex items-center gap-2">
-                  <span className="w-1 h-4 bg-gradient-to-b from-fuchsia-500 to-cyan-400 rounded"></span>
+                <h4 className="text-[var(--text-primary)] font-semibold mb-3 flex items-center gap-2">
+                  <span className="w-1 h-4 bg-gradient-to-b from-fuchsia-500 to-cyan-400 rounded" />
                   Capacidades técnicas
                 </h4>
                 <ul className="space-y-2">
                   {area.capabilities.map((capability, idx) => (
-                    <li key={idx} className="text-gray-300 text-sm flex items-start gap-2">
+                    <li key={idx} className="text-[var(--text-secondary)] text-sm flex items-start gap-2">
                       <span className="text-cyan-400 mt-1 flex-shrink-0">•</span>
                       <span>{capability}</span>
                     </li>
@@ -85,21 +78,21 @@ export default function ExpertiseSection({ area, index = 0 }) {
 
               {/* Stack habitual */}
               <div>
-                <h4 className="text-white font-semibold mb-3 flex items-center gap-2">
-                  <span className="w-1 h-4 bg-gradient-to-b from-fuchsia-500 to-cyan-400 rounded"></span>
+                <h4 className="text-[var(--text-primary)] font-semibold mb-3 flex items-center gap-2">
+                  <span className="w-1 h-4 bg-gradient-to-b from-fuchsia-500 to-cyan-400 rounded" />
                   Stack habitual
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {Object.entries(area.stack).map(([category, technologies]) => (
-                    <div key={category} className="bg-slate-800/40 rounded-lg p-3 border border-slate-700/30">
-                      <div className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wide">
+                    <div key={category} className="bg-[var(--bg-elevated)] rounded-lg p-3 border border-[var(--border-subtle)]">
+                      <div className="text-xs font-semibold text-[var(--text-muted)] mb-2 uppercase tracking-wide">
                         {category}
                       </div>
                       <div className="flex flex-wrap gap-1.5">
                         {technologies.map((tech, idx) => (
                           <span
                             key={idx}
-                            className="text-xs px-2 py-1 bg-fuchsia-500/10 text-fuchsia-300 rounded border border-fuchsia-500/20"
+                            className="text-xs px-2 py-1 bg-fuchsia-500/10 text-fuchsia-400 rounded border border-fuchsia-500/20"
                           >
                             {tech}
                           </span>
@@ -112,19 +105,17 @@ export default function ExpertiseSection({ area, index = 0 }) {
 
               {/* Proyecto de ejemplo (opcional) */}
               {area.projectExample && (
-                <div className="bg-gradient-to-r from-slate-800/50 to-slate-800/30 rounded-lg p-4 border-l-4 border-cyan-400">
+                <div className="bg-[var(--bg-elevated)] rounded-lg p-4 border-l-4 border-cyan-400 border border-[var(--border-subtle)]">
                   <div className="flex items-start gap-3">
-                    <div className="text-cyan-400 text-2xl mt-1">
-                      💡
-                    </div>
+                    <div className="text-cyan-400 text-2xl mt-1">💡</div>
                     <div>
-                      <h5 className="text-white font-semibold mb-1">
+                      <h5 className="text-[var(--text-primary)] font-semibold mb-1">
                         {area.projectExample.name}
                       </h5>
-                      <p className="text-gray-300 text-sm mb-2">
+                      <p className="text-[var(--text-secondary)] text-sm mb-2">
                         {area.projectExample.description}
                       </p>
-                      <p className="text-gray-400 text-xs italic">
+                      <p className="text-[var(--text-muted)] text-xs italic">
                         {area.projectExample.context}
                       </p>
                     </div>
