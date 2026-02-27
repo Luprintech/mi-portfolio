@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
@@ -7,34 +7,48 @@ const POSTS_PER_PAGE = 5;
 const Blog = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [activeTag, setActiveTag] = useState('Todos');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    fetch('/posts/index.json')
-      .then(res => res.json())
-      .then(data => {
-        const sorted = data.sort((a, b) => new Date(b.date) - new Date(a.date));
+    const controller = new AbortController();
+
+    const fetchPosts = async () => {
+      try {
+        const res = await fetch('/posts/index.json', { signal: controller.signal });
+        if (!res.ok) throw new Error(`Error ${res.status} cargando artículos`);
+        const data = await res.json();
+        const sorted = [...data].sort((a, b) => new Date(b.date) - new Date(a.date));
         setPosts(sorted);
-      })
-      .catch(err => console.error("Error cargando posts:", err))
-      .finally(() => setLoading(false));
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Error cargando posts:', err);
+          setError('No se pudieron cargar los artículos. Inténtalo de nuevo más tarde.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPosts();
+    return () => controller.abort();
   }, []);
 
   const uniqueTags = useMemo(() => {
     const tags = new Set();
-    posts.forEach(post => post.tags.forEach(tag => tags.add(tag)));
+    posts.forEach(post => post.tags?.forEach(tag => tags.add(tag)));
     return ['Todos', ...Array.from(tags)];
   }, [posts]);
 
   const filteredPosts = useMemo(() => {
     let result = posts;
-    if (activeTag !== 'Todos') result = result.filter(post => post.tags.includes(activeTag));
+    if (activeTag !== 'Todos') result = result.filter(post => post.tags?.includes(activeTag));
     if (searchQuery.trim() !== '') {
       const q = searchQuery.toLowerCase();
       result = result.filter(post =>
-        post.title.toLowerCase().includes(q) || post.excerpt.toLowerCase().includes(q)
+        post.title?.toLowerCase().includes(q) || post.excerpt?.toLowerCase().includes(q)
       );
     }
     return result;
@@ -70,6 +84,10 @@ const Blog = () => {
 
         {loading ? (
           <p className="text-center text-[var(--text-muted)]">Cargando artículos...</p>
+        ) : error ? (
+          <div className="text-center text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl p-6">
+            {error}
+          </div>
         ) : (
           <>
             <motion.div
@@ -81,28 +99,30 @@ const Blog = () => {
               {/* Buscador */}
               <div className="w-full flex justify-between items-center gap-4 bg-[var(--bg-surface)] backdrop-blur border border-[var(--border-color)] rounded-2xl p-4">
                 <div className="relative w-full max-w-sm flex items-center group">
-                  <svg className="w-5 h-5 absolute left-3 text-[var(--text-muted)] group-focus-within:text-[var(--accent-secondary)] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-5 h-5 absolute left-3 text-[var(--text-muted)] group-focus-within:text-[var(--accent-secondary)] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                   <input
-                    type="text"
+                    type="search"
+                    aria-label="Buscar artículo"
                     placeholder="Buscar post..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl outline-none focus:border-[var(--accent-secondary)]/50 focus:ring-1 focus:ring-[var(--accent-secondary)]/50 transition-all text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)]"
                   />
                 </div>
-                <div className="text-sm font-mono text-[var(--accent-secondary)] shrink-0">
+                <div className="text-sm font-mono text-[var(--accent-secondary)] shrink-0" aria-live="polite">
                   {filteredPosts.length} posts
                 </div>
               </div>
 
               {/* Filtros por Tag */}
-              <div className="flex flex-wrap justify-center gap-2">
+              <div className="flex flex-wrap justify-center gap-2" role="group" aria-label="Filtrar por etiqueta">
                 {uniqueTags.map(tag => (
                   <button
                     key={tag}
                     onClick={() => setActiveTag(tag)}
+                    aria-pressed={activeTag === tag}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
                       activeTag === tag
                         ? 'bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-white shadow-[0_0_15px_rgba(6,182,212,0.4)]'
@@ -134,8 +154,11 @@ const Blog = () => {
                           {post.title}
                         </Link>
                       </h2>
-                      <time className="text-sm font-mono text-[var(--accent-secondary)]/80 mt-2 md:mt-0 shrink-0 md:ml-4">
-                        {new Date(post.date).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      <time
+                        dateTime={post.date}
+                        className="text-sm font-mono text-[var(--accent-secondary)]/80 mt-2 md:mt-0 shrink-0 md:ml-4"
+                      >
+                        {new Date(`${post.date}T00:00:00`).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
                       </time>
                     </div>
 
@@ -144,7 +167,7 @@ const Blog = () => {
                     </p>
 
                     <div className="flex flex-wrap gap-2">
-                      {post.tags.map(tag => (
+                      {post.tags?.map(tag => (
                         <span key={tag} className="px-3 py-1 text-xs font-medium text-fuchsia-400 bg-fuchsia-500/10 border border-fuchsia-500/20 rounded-full">
                           {tag}
                         </span>
@@ -157,10 +180,11 @@ const Blog = () => {
 
             {/* Paginación */}
             {totalPages > 1 && (
-              <div className="flex justify-center mt-12 gap-2">
+              <nav className="flex justify-center mt-12 gap-2" aria-label="Paginación">
                 <button
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
+                  aria-label="Página anterior"
                   className="px-4 py-2 rounded-lg bg-[var(--bg-surface)] text-[var(--text-secondary)] border border-[var(--border-color)] hover:bg-[var(--bg-elevated)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Anterior
@@ -170,6 +194,8 @@ const Blog = () => {
                     <button
                       key={i + 1}
                       onClick={() => setCurrentPage(i + 1)}
+                      aria-label={`Página ${i + 1}`}
+                      aria-current={currentPage === i + 1 ? 'page' : undefined}
                       className={`w-9 h-9 rounded-lg flex items-center justify-center text-sm font-medium transition-colors ${
                         currentPage === i + 1
                           ? 'bg-[var(--accent-secondary-dim)] border border-[var(--accent-secondary)]/50 text-[var(--accent-secondary)]'
@@ -183,17 +209,18 @@ const Blog = () => {
                 <button
                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
+                  aria-label="Página siguiente"
                   className="px-4 py-2 rounded-lg bg-[var(--bg-surface)] text-[var(--text-secondary)] border border-[var(--border-color)] hover:bg-[var(--bg-elevated)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Siguiente
                 </button>
-              </div>
+              </nav>
             )}
 
             {filteredPosts.length === 0 && (
-              <div className="text-center text-[var(--text-muted)] mt-10">
+              <p className="text-center text-[var(--text-muted)] mt-10">
                 No se encontraron artículos que coincidan con tu búsqueda.
-              </div>
+              </p>
             )}
           </>
         )}

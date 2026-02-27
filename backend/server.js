@@ -14,8 +14,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, '.env') });
 
-console.log("FRONTEND_URL cargada:", process.env.FRONTEND_URL);
-console.log("SMTP_HOST cargado:", process.env.SMTP_HOST);
+if (process.env.NODE_ENV !== 'production') {
+    console.log("FRONTEND_URL cargada:", process.env.FRONTEND_URL);
+    console.log("SMTP_HOST cargado:", process.env.SMTP_HOST);
+}
 
 const app = express();
 
@@ -38,7 +40,7 @@ const corsOptions = {
             callback(null, true);
         } else {
             console.warn('CORS bloqueado para origen:', origin);
-            callback(new Error('CORS Error: Origin not allowed'));
+            callback(new Error('Not allowed by CORS'));
         }
     }
 };

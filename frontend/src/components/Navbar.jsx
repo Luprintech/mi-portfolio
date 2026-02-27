@@ -1,6 +1,6 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { motion as Motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "./LanguageSwitcher";
 import LuprinCat from "./LuprinCat";
@@ -100,17 +100,19 @@ export default function Navbar() {
   // Gato y logo
   const [catVisible, setCatVisible] = useState(false);
   const [clickCount, setClickCount] = useState(0);
-  const [clickTimeout, setClickTimeout] = useState(null);
+  const clickTimeoutRef = useRef(null);
 
   const handleLogoClick = () => {
-    setClickCount((prev) => prev + 1);
-    if (clickTimeout) clearTimeout(clickTimeout);
-    const timeout = setTimeout(() => setClickCount(0), 2000);
-    setClickTimeout(timeout);
-    if (clickCount + 1 >= 5) {
-      setCatVisible(true);
-      setClickCount(0);
-    }
+    setClickCount((prev) => {
+      const next = prev + 1;
+      if (clickTimeoutRef.current) clearTimeout(clickTimeoutRef.current);
+      clickTimeoutRef.current = setTimeout(() => setClickCount(0), 2000);
+      if (next >= 5) {
+        setCatVisible(true);
+        return 0;
+      }
+      return next;
+    });
   };
   const handleCloseCat = () => setCatVisible(false);
   const goHome = () => navigate("/");
@@ -155,8 +157,8 @@ export default function Navbar() {
             <NavLink to="/sobre-mi"  className="px-3 py-2 rounded hover:text-fuchsia-300 transition">{t("nav.about")}</NavLink>
 
             {/* PORTFOLIO con submenú */}
-            <li
-              className="relative group list-none"
+            <div
+              className="relative group"
               onMouseEnter={() => setOpenDropdown("portfolio")}
               onMouseLeave={() => setOpenDropdown(null)}
             >
@@ -188,7 +190,7 @@ export default function Navbar() {
                   </Motion.ul>
                 )}
               </AnimatePresence>
-            </li>
+            </div>
 
             <NavLink to="/blog"     className="px-3 py-2 rounded hover:text-cyan-300 transition">Blog</NavLink>
             <NavLink to="/contacto" className="px-3 py-2 rounded hover:text-cyan-300 transition">{t("nav.contact")}</NavLink>

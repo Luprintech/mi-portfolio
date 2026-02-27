@@ -3,36 +3,33 @@ import { useState, useEffect } from 'react';
 export function useProjects() {
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
+        const controller = new AbortController();
+
         const fetchProjects = async () => {
             try {
-                const res = await fetch("/projects.json");
-                if (!res.ok) throw new Error("Añade el projects.json a la carpeta public");
+                const res = await fetch('/projects.json', { signal: controller.signal });
+                if (!res.ok) throw new Error(`Error ${res.status} cargando proyectos`);
                 const data = await res.json();
-                
-                if (Array.isArray(data)) {
-                    setProjects(data);
-                } else {
+                setProjects(Array.isArray(data) ? data : []);
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error('Error fetching projects:', err);
+                    setError(err.message);
                     setProjects([]);
                 }
-            } catch (error) {
-                console.error("Error fetching projects:", error);
-                setProjects([]);
             } finally {
                 setLoading(false);
             }
         };
 
         fetchProjects();
+        return () => controller.abort();
     }, []);
 
     const featuredProjects = projects.filter(p => p.featured).slice(0, 2);
 
-    return {
-        projects,
-        featuredProjects,
-        loading
-    };
+    return { projects, featuredProjects, loading, error };
 }
-

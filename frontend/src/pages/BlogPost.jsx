@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
@@ -13,25 +13,56 @@ const BlogPost = () => {
   const [postMeta, setPostMeta] = useState(null);
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch('/posts/index.json')
-      .then(res => res.json())
-      .then(data => {
+    const controller = new AbortController();
+
+    const fetchPost = async () => {
+      try {
+        const indexRes = await fetch('/posts/index.json', { signal: controller.signal });
+        if (!indexRes.ok) throw new Error(`Error ${indexRes.status} cargando índice`);
+        const data = await indexRes.json();
+
         const found = data.find(p => p.slug === slug);
-        if (!found) { navigate('/blog'); throw new Error('Post no encontrado =('); }
+        if (!found) {
+          navigate('/blog', { replace: true });
+          return;
+        }
         setPostMeta(found);
-        return fetch(`/posts/${found.filename}`);
-      })
-      .then(res => res.text())
-      .then(mdText => setContent(mdText))
-      .catch(err => console.error(err))
-      .finally(() => setLoading(false));
+
+        const mdRes = await fetch(`/posts/${found.filename}`, { signal: controller.signal });
+        if (!mdRes.ok) throw new Error(`Error ${mdRes.status} cargando artículo`);
+        const mdText = await mdRes.text();
+        setContent(mdText);
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Error cargando post:', err);
+          setError('No se pudo cargar el artículo.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPost();
+    return () => controller.abort();
   }, [slug, navigate]);
 
   if (loading) return (
     <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] flex items-center justify-center">
       <p className="text-[var(--accent-secondary)]">Cargando artículo...</p>
+    </div>
+  );
+
+  if (error) return (
+    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] flex items-center justify-center px-4">
+      <div className="text-center text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl p-8 max-w-md">
+        <p className="mb-4">{error}</p>
+        <Link to="/blog" className="text-[var(--accent-secondary)] hover:underline">
+          ← Volver al Blog
+        </Link>
+      </div>
     </div>
   );
 
@@ -58,7 +89,7 @@ const BlogPost = () => {
       >
         <div className="mb-10">
           <Link to="/blog" className="inline-flex items-center text-[var(--accent-secondary)] hover:text-[var(--accent-primary)] font-medium mb-8 transition-colors group">
-            <svg className="mr-2 w-4 h-4 transform group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="mr-2 w-4 h-4 transform group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
             Volver al Blog
@@ -69,10 +100,10 @@ const BlogPost = () => {
           </h1>
 
           <div className="flex flex-wrap items-center gap-4 text-sm font-mono text-[var(--text-muted)] border-b border-[var(--border-color)] pb-8">
-            <time className="text-[var(--accent-secondary)]/80">
-              {new Date(postMeta.date).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
+            <time dateTime={postMeta.date} className="text-[var(--accent-secondary)]/80">
+              {new Date(`${postMeta.date}T00:00:00`).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
             </time>
-            <span>•</span>
+            <span aria-hidden="true">•</span>
             <div className="flex flex-wrap gap-2">
               {postMeta.tags.map(tag => (
                 <span key={tag} className="text-fuchsia-400">{tag}</span>
@@ -82,7 +113,6 @@ const BlogPost = () => {
         </div>
 
         {/* Contenido Markdown */}
-        {/* Nota: el fondo de código usa --bg-code (siempre oscuro para legibilidad del syntax highlighting) */}
         <div className="bg-[var(--bg-surface)] backdrop-blur-md rounded-2xl border border-[var(--border-color)] shadow-[var(--shadow-md)] p-6 md:p-10">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
@@ -103,7 +133,7 @@ const BlogPost = () => {
                       <a className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold text-white bg-gradient-to-r from-fuchsia-600 to-cyan-600 hover:from-fuchsia-500 hover:to-cyan-500 rounded-xl transition-all duration-300 shadow-[0_0_15px_rgba(124,58,237,0.3)] hover:shadow-[0_0_20px_rgba(6,182,212,0.4)] no-underline"
                         target="_blank" rel="noopener noreferrer" {...props}>
                         {props.children}
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                       </a>
                     </span>
                   );
@@ -113,7 +143,7 @@ const BlogPost = () => {
               blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-fuchsia-500 pl-5 italic text-[var(--text-muted)] bg-[var(--bg-elevated)] py-4 pr-4 rounded-r-lg my-8 text-justify shadow-md" {...props} />,
               img: ({node, alt, ...props}) => (
                 <span className="flex flex-col items-center my-10">
-                  <img alt={alt} className="max-w-full h-auto rounded-2xl shadow-2xl border border-[var(--border-color)] mx-auto" loading="lazy" {...props} />
+                  <img alt={alt || ''} className="max-w-full h-auto rounded-2xl shadow-2xl border border-[var(--border-color)] mx-auto" loading="lazy" {...props} />
                   {alt && <span className="text-sm text-[var(--text-muted)] mt-4 text-center italic">{alt}</span>}
                 </span>
               ),
@@ -124,7 +154,7 @@ const BlogPost = () => {
                   </code>
                 ) : (
                   <div className="relative mb-8 rounded-lg overflow-hidden border border-[var(--border-color)] shadow-2xl">
-                    <div className="flex items-center bg-[var(--bg-code-header)] px-4 py-3 border-b border-white/5">
+                    <div className="flex items-center bg-[var(--bg-code-header)] px-4 py-3 border-b border-white/5" aria-hidden="true">
                       <span className="flex gap-2">
                         <span className="w-3 h-3 rounded-full bg-red-500/80" />
                         <span className="w-3 h-3 rounded-full bg-yellow-500/80" />
@@ -147,7 +177,7 @@ const BlogPost = () => {
         <div className="mt-8 mb-10 flex justify-center md:justify-start">
           <Link to="/blog"
             className="inline-flex items-center text-[var(--accent-secondary)] hover:text-[var(--accent-primary)] font-medium transition-colors group px-6 py-3 bg-[var(--bg-surface)] hover:bg-[var(--bg-elevated)] border border-[var(--accent-secondary)]/30 hover:border-[var(--accent-primary)] rounded-xl shadow-[var(--shadow-sm)]">
-            <svg className="mr-2 w-4 h-4 transform group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="mr-2 w-4 h-4 transform group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
             Volver al listado del Blog

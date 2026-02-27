@@ -3,14 +3,15 @@ import { AnimatePresence, motion as Motion } from "framer-motion";
 import { lazy, Suspense } from "react";
 
 // Lazy loading de páginas
-const Home                 = lazy(() => import("../pages/Home"));
-const About                = lazy(() => import("../pages/About"));
-const Portfolio            = lazy(() => import("../pages/Portfolio"));
+const Home                   = lazy(() => import("../pages/Home"));
+const About                  = lazy(() => import("../pages/About"));
+const Portfolio              = lazy(() => import("../pages/Portfolio"));
 const PortfolioDesarrolloWeb = lazy(() => import("../pages/portfolio/desarrollo-web"));
 const PortfolioDocumentacion = lazy(() => import("../pages/portfolio/documentacion-tecnica"));
-const Blog                 = lazy(() => import("../pages/Blog"));
-const BlogPost             = lazy(() => import("../pages/BlogPost"));
-const Contact              = lazy(() => import("../pages/Contact"));
+const Blog                   = lazy(() => import("../pages/Blog"));
+const BlogPost               = lazy(() => import("../pages/BlogPost"));
+const Contact                = lazy(() => import("../pages/Contact"));
+const NotFound               = lazy(() => import("../pages/NotFound"));
 
 // Loading fallback
 const PageLoader = () => (
@@ -55,6 +56,9 @@ export default function AppRoutes() {
 
           {/* Contacto */}
           <Route path="/contacto" element={<Motion.div {...pageTransition}><Contact /></Motion.div>} />
+
+          {/* 404 — catch-all */}
+          <Route path="*" element={<Motion.div {...pageTransition}><NotFound /></Motion.div>} />
 
         </Routes>
       </AnimatePresence>

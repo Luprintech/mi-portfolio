@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Typewriter } from "react-simple-typewriter";
 import Tilt from "react-parallax-tilt";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
@@ -81,8 +81,9 @@ export default function Home() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5, duration: 0.7 }}
           className="max-w-3xl text-base xs:text-lg md:text-xl text-[var(--text-secondary)] mx-auto leading-relaxed"
-          dangerouslySetInnerHTML={{ __html: t('hero.description') }}
-        />
+        >
+          {t('hero.description')}
+        </motion.p>
       </section>
 
       {/* Qué hago — Services Grid */}
@@ -137,12 +138,12 @@ export default function Home() {
                 {t('home.projects_subtitle')}
               </p>
             </div>
-            <a
-              href="/portfolio/desarrollo-web"
+            <Link
+              to="/portfolio/desarrollo-web"
               className="text-[var(--accent-secondary)] hover:text-[var(--accent-primary)] font-medium flex items-center gap-2 transition-colors"
             >
               {t('home.view_all_projects')}
-            </a>
+            </Link>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
@@ -173,12 +174,12 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center">
-            <a
-              href="/contacto"
+            <Link
+              to="/contacto"
               className="px-8 py-3 rounded-lg font-semibold text-white bg-gradient-to-r from-fuchsia-600 to-cyan-600 hover:from-fuchsia-500 hover:to-cyan-500 shadow-md transition-all duration-300 transform hover:-translate-y-1"
             >
               {t('home.contact_btn')}
-            </a>
+            </Link>
 
             <a
               href="/CV_Guadalupe_Cano.pdf"
