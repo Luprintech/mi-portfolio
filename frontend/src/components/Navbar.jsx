@@ -217,17 +217,20 @@ export default function Navbar() {
             <LanguageSwitcher />
           </div>
 
-          {/* MOBILE — switcher de idioma + toggle de tema + hamburguesa, siempre visibles */}
-          <div className="md:hidden flex items-center gap-1">
-            <LanguageSwitcher />
+          {/* MOBILE — solo toggle de tema + hamburguesa en la barra */}
+          <div className="md:hidden flex items-center gap-2">
             <ThemeToggleButton />
             <button
-              className="text-3xl focus:outline-none px-2 py-1"
+              className="flex items-center justify-center w-9 h-9 text-[var(--text-primary)] focus:outline-none"
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label="Abrir menú"
               aria-expanded={menuOpen}
             >
-              ☰
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                <line x1="3" y1="6"  x2="21" y2="6"  />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
             </button>
           </div>
         </div>
@@ -300,6 +303,13 @@ export default function Navbar() {
                 {t("nav.cv")}
               </a>
 
+              {/* Selector de idioma — dentro del drawer */}
+              <div className="pt-3 pb-1 flex items-center justify-between">
+                <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+                  Idioma
+                </span>
+                <LanguageSwitcher />
+              </div>
 
             </Motion.div>
           )}
