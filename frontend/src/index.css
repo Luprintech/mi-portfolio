@@ -17,7 +17,7 @@
 
    ============================================================ */
 
-/* ─── TEMA OSCURO (por defecto) ─── */
+/* ─── TEMA OSCURO  ─── */
 :root,
 :root[data-theme="dark"] {
   color-scheme: dark;
@@ -96,7 +96,7 @@
   --toggle-icon: #22d3ee;
 }
 
-/* ─── TEMA CLARO ─── */
+/* ─── TEMA CLARO  (por defecto)─── */
 /* Personalidad: misma estética del oscuro en clave clara.
    Fondos con toque azul/índigo. Acentos siempre vibrantes.
    Bordes índigo-pastel, NO grises neutros.               */
