@@ -8,6 +8,10 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { body, validationResult } from 'express-validator';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import jwt from 'jsonwebtoken';
+import multer from 'multer';
+import fsExtra from 'fs-extra';
+import crypto from 'crypto';
 
 // Configuración de rutas para ES Modules
 const __filename = fileURLToPath(import.meta.url);
@@ -48,8 +52,337 @@ const corsOptions = {
 // Middlewares
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(cors(corsOptions));
-app.use(express.json({ limit: '10kb' }));
-app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+// ─── RUTAS DE CONTENIDO ─────────────────────────────────────────────────────
+// Directorio base donde se encuentran los ficheros de contenido (posts, projects)
+const CONTENT_PATH = process.env.CONTENT_PATH
+    ? path.resolve(process.env.CONTENT_PATH)
+    : path.join(__dirname, '../frontend/public');
+
+const POSTS_DIR    = path.join(CONTENT_PATH, 'posts');
+const POSTS_INDEX  = path.join(POSTS_DIR, 'index.json');
+const PROJECTS_FILE = path.join(CONTENT_PATH, 'projects.json');
+const IMAGES_DIR   = path.join(POSTS_DIR, 'images');
+
+// Servir imágenes subidas a través del backend
+app.use('/posts/images', express.static(IMAGES_DIR));
+
+// ─── CMS — AUTENTICACIÓN ────────────────────────────────────────────────────
+
+function safeCompare(a, b) {
+    // crypto.timingSafeEqual requiere buffers del mismo tamaño
+    const bufA = Buffer.from(String(a || ''));
+    const bufB = Buffer.from(String(b || ''));
+    if (bufA.length !== bufB.length) return false;
+    return crypto.timingSafeEqual(bufA, bufB);
+}
+
+function verifyCmsToken(req, res, next) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'No autorizado' });
+    }
+    const token = authHeader.slice(7);
+    try {
+        req.user = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret-change-me');
+        next();
+    } catch {
+        return res.status(401).json({ error: 'Token inválido o expirado' });
+    }
+}
+
+const cmsLoginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    message: { error: 'Demasiados intentos de acceso. Espera unos minutos.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+// POST /api/bitacora/auth — Login del CMS
+app.post('/api/bitacora/auth', cmsLoginLimiter, (req, res) => {
+    const { username, password } = req.body || {};
+
+    const expectedUser = process.env.CMS_USERNAME || '';
+    const expectedPass = process.env.CMS_PASSWORD || '';
+
+    const userOk = safeCompare(username, expectedUser);
+    const passOk = safeCompare(password, expectedPass);
+
+    if (!userOk || !passOk || !expectedUser || !expectedPass) {
+        return res.status(401).json({ error: 'Credenciales incorrectas' });
+    }
+
+    const token = jwt.sign(
+        { username },
+        process.env.JWT_SECRET || 'dev-secret-change-me',
+        { expiresIn: '24h' }
+    );
+
+    return res.json({ token });
+});
+
+// GET /api/bitacora/verify — Verificar token
+app.get('/api/bitacora/verify', verifyCmsToken, (req, res) => {
+    res.json({ valid: true, username: req.user.username });
+});
+
+// ─── CMS — POSTS ────────────────────────────────────────────────────────────
+
+// GET /api/bitacora/posts — Listar todos los posts
+app.get('/api/bitacora/posts', verifyCmsToken, async (req, res) => {
+    try {
+        const index = await fsExtra.readJson(POSTS_INDEX);
+        res.json(index);
+    } catch (err) {
+        res.status(500).json({ error: 'Error leyendo el índice de posts' });
+    }
+});
+
+// GET /api/bitacora/posts/:slug — Obtener un post con su contenido
+app.get('/api/bitacora/posts/:slug', verifyCmsToken, async (req, res) => {
+    try {
+        const { slug } = req.params;
+        const index = await fsExtra.readJson(POSTS_INDEX);
+        const post = index.find(p => p.slug === slug);
+        if (!post) return res.status(404).json({ error: 'Post no encontrado' });
+
+        const content = await fsExtra.readFile(path.join(POSTS_DIR, post.filename), 'utf-8');
+        res.json({ ...post, content });
+    } catch (err) {
+        res.status(500).json({ error: 'Error leyendo el post' });
+    }
+});
+
+// POST /api/bitacora/posts — Crear nuevo post
+app.post('/api/bitacora/posts', verifyCmsToken, async (req, res) => {
+    try {
+        const { title, slug, excerpt, tags, date, content } = req.body || {};
+
+        if (!title || !slug || !content) {
+            return res.status(400).json({ error: 'title, slug y content son obligatorios' });
+        }
+
+        // Validar slug: solo letras, números y guiones
+        if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+            return res.status(400).json({ error: 'El slug solo puede contener letras minúsculas, números y guiones' });
+        }
+
+        const index = await fsExtra.readJson(POSTS_INDEX);
+        if (index.find(p => p.slug === slug)) {
+            return res.status(409).json({ error: 'Ya existe un post con ese slug' });
+        }
+
+        const filename = `${slug}.md`;
+        await fsExtra.writeFile(path.join(POSTS_DIR, filename), content, 'utf-8');
+
+        const newPost = {
+            slug,
+            title,
+            date: date || new Date().toISOString().split('T')[0],
+            excerpt: excerpt || '',
+            tags: Array.isArray(tags) ? tags : (tags || '').split(',').map(t => t.trim()).filter(Boolean),
+            filename,
+        };
+
+        index.unshift(newPost);
+        await fsExtra.writeJson(POSTS_INDEX, index, { spaces: 2 });
+
+        res.status(201).json(newPost);
+    } catch (err) {
+        console.error('Error creando post:', err);
+        res.status(500).json({ error: 'Error creando el post' });
+    }
+});
+
+// PUT /api/bitacora/posts/:slug — Actualizar post
+app.put('/api/bitacora/posts/:slug', verifyCmsToken, async (req, res) => {
+    try {
+        const { slug } = req.params;
+        const { title, excerpt, tags, date, content } = req.body || {};
+
+        const index = await fsExtra.readJson(POSTS_INDEX);
+        const postIdx = index.findIndex(p => p.slug === slug);
+        if (postIdx === -1) return res.status(404).json({ error: 'Post no encontrado' });
+
+        if (content !== undefined) {
+            await fsExtra.writeFile(path.join(POSTS_DIR, index[postIdx].filename), content, 'utf-8');
+        }
+
+        index[postIdx] = {
+            ...index[postIdx],
+            ...(title     !== undefined && { title }),
+            ...(excerpt   !== undefined && { excerpt }),
+            ...(date      !== undefined && { date }),
+            ...(tags      !== undefined && {
+                tags: Array.isArray(tags) ? tags : tags.split(',').map(t => t.trim()).filter(Boolean),
+            }),
+        };
+
+        await fsExtra.writeJson(POSTS_INDEX, index, { spaces: 2 });
+        res.json(index[postIdx]);
+    } catch (err) {
+        console.error('Error actualizando post:', err);
+        res.status(500).json({ error: 'Error actualizando el post' });
+    }
+});
+
+// DELETE /api/bitacora/posts/:slug — Eliminar post
+app.delete('/api/bitacora/posts/:slug', verifyCmsToken, async (req, res) => {
+    try {
+        const { slug } = req.params;
+
+        const index = await fsExtra.readJson(POSTS_INDEX);
+        const postIdx = index.findIndex(p => p.slug === slug);
+        if (postIdx === -1) return res.status(404).json({ error: 'Post no encontrado' });
+
+        await fsExtra.remove(path.join(POSTS_DIR, index[postIdx].filename));
+        index.splice(postIdx, 1);
+        await fsExtra.writeJson(POSTS_INDEX, index, { spaces: 2 });
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Error eliminando post:', err);
+        res.status(500).json({ error: 'Error eliminando el post' });
+    }
+});
+
+// ─── CMS — PROYECTOS ────────────────────────────────────────────────────────
+
+// GET /api/bitacora/projects
+app.get('/api/bitacora/projects', verifyCmsToken, async (req, res) => {
+    try {
+        const projects = await fsExtra.readJson(PROJECTS_FILE);
+        res.json(projects);
+    } catch (err) {
+        res.status(500).json({ error: 'Error leyendo los proyectos' });
+    }
+});
+
+// POST /api/bitacora/projects
+app.post('/api/bitacora/projects', verifyCmsToken, async (req, res) => {
+    try {
+        const project = req.body || {};
+        if (!project.id || !project.title) {
+            return res.status(400).json({ error: 'id y title son obligatorios' });
+        }
+
+        const projects = await fsExtra.readJson(PROJECTS_FILE);
+        if (projects.find(p => p.id === project.id)) {
+            return res.status(409).json({ error: 'Ya existe un proyecto con ese ID' });
+        }
+
+        projects.push(project);
+        await fsExtra.writeJson(PROJECTS_FILE, projects, { spaces: 2 });
+        res.status(201).json(project);
+    } catch (err) {
+        console.error('Error creando proyecto:', err);
+        res.status(500).json({ error: 'Error creando el proyecto' });
+    }
+});
+
+// PUT /api/bitacora/projects/:id
+app.put('/api/bitacora/projects/:id', verifyCmsToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const projects = await fsExtra.readJson(PROJECTS_FILE);
+        const idx = projects.findIndex(p => p.id === id);
+        if (idx === -1) return res.status(404).json({ error: 'Proyecto no encontrado' });
+
+        projects[idx] = { ...projects[idx], ...req.body };
+        await fsExtra.writeJson(PROJECTS_FILE, projects, { spaces: 2 });
+        res.json(projects[idx]);
+    } catch (err) {
+        console.error('Error actualizando proyecto:', err);
+        res.status(500).json({ error: 'Error actualizando el proyecto' });
+    }
+});
+
+// DELETE /api/bitacora/projects/:id
+app.delete('/api/bitacora/projects/:id', verifyCmsToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const projects = await fsExtra.readJson(PROJECTS_FILE);
+        const idx = projects.findIndex(p => p.id === id);
+        if (idx === -1) return res.status(404).json({ error: 'Proyecto no encontrado' });
+
+        projects.splice(idx, 1);
+        await fsExtra.writeJson(PROJECTS_FILE, projects, { spaces: 2 });
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Error eliminando proyecto:', err);
+        res.status(500).json({ error: 'Error eliminando el proyecto' });
+    }
+});
+
+// ─── CMS — IMÁGENES ─────────────────────────────────────────────────────────
+
+const imageStorage = multer.diskStorage({
+    destination: async (req, file, cb) => {
+        await fsExtra.ensureDir(IMAGES_DIR);
+        cb(null, IMAGES_DIR);
+    },
+    filename: (req, file, cb) => {
+        const ext  = path.extname(file.originalname).toLowerCase();
+        const name = path.basename(file.originalname, ext)
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '-')
+            .replace(/-+/g, '-')
+            .slice(0, 60);
+        cb(null, `${Date.now()}-${name}${ext}`);
+    },
+});
+
+const imageUpload = multer({
+    storage: imageStorage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+    fileFilter: (req, file, cb) => {
+        if (!file.mimetype.startsWith('image/')) {
+            return cb(new Error('Solo se permiten imágenes'));
+        }
+        cb(null, true);
+    },
+});
+
+// POST /api/bitacora/upload — Subir imagen
+app.post('/api/bitacora/upload', verifyCmsToken, imageUpload.single('image'), (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'No se ha recibido ninguna imagen' });
+    const url = `/posts/images/${req.file.filename}`;
+    res.json({ url, filename: req.file.filename });
+});
+
+// GET /api/bitacora/images — Listar imágenes
+app.get('/api/bitacora/images', verifyCmsToken, async (req, res) => {
+    try {
+        await fsExtra.ensureDir(IMAGES_DIR);
+        const files = await fsExtra.readdir(IMAGES_DIR);
+        const images = files
+            .filter(f => /\.(jpe?g|png|gif|webp|svg|avif)$/i.test(f))
+            .map(f => ({ filename: f, url: `/posts/images/${f}` }));
+        res.json(images);
+    } catch (err) {
+        res.status(500).json({ error: 'Error listando imágenes' });
+    }
+});
+
+// DELETE /api/bitacora/images/:filename — Eliminar imagen
+app.delete('/api/bitacora/images/:filename', verifyCmsToken, async (req, res) => {
+    try {
+        const { filename } = req.params;
+        // Prevenir path traversal
+        if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+            return res.status(400).json({ error: 'Nombre de fichero no válido' });
+        }
+        await fsExtra.remove(path.join(IMAGES_DIR, filename));
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: 'Error eliminando la imagen' });
+    }
+});
+
+// ─── RATE LIMITERS ──────────────────────────────────────────────────────────
 
 // Rate limiter para el endpoint de contacto
 const contactLimiter = rateLimit({
