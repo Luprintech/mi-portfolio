@@ -2,6 +2,7 @@ import { Link, Outlet, useLocation } from 'react-router-dom';
 import { motion as Motion } from 'framer-motion';
 import { FaCode, FaYoutube } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
+import { Helmet } from 'react-helmet-async';
 
 export default function Portfolio() {
   const { t } = useTranslation();
@@ -12,6 +13,11 @@ export default function Portfolio() {
     <section className={`min-h-screen relative bg-[var(--bg-primary)] text-[var(--text-primary)] ${isRoot ? 'pt-32 pb-20' : 'pt-0 pb-0'} px-0 w-full flex flex-col items-center selection:bg-violet-500/30`}>
       {isRoot && (
         <>
+          <Helmet>
+            <title>Portfolio | Guadalupe Cano — Proyectos Full Stack con IA</title>
+            <meta name="description" content="Proyectos reales de Guadalupe Cano: aplicaciones web con React, Laravel, Node.js, integración de IA con Gemini y automatización con n8n desplegadas en producción." />
+            <link rel="canonical" href="https://guadalupecano.es/portfolio" />
+          </Helmet>
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-violet-900/10 via-[var(--bg-primary)] to-[var(--bg-primary)] pointer-events-none z-0" />
           <div className="absolute inset-0 bg-noise opacity-[0.02] mix-blend-overlay pointer-events-none z-0" />
 

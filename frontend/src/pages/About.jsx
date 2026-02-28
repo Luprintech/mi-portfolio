@@ -3,6 +3,7 @@ import { motion as Motion, AnimatePresence } from "framer-motion";
 import Tilt from "react-parallax-tilt";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { Helmet } from "react-helmet-async";
 import { Rocket, Calendar, Layers, GraduationCap } from "lucide-react";
 import { FaBolt, FaPlug, FaDesktop, FaRobot, FaSyncAlt } from "react-icons/fa";
 import { MdSearch, MdSchool, MdAutorenew } from "react-icons/md";
@@ -65,6 +66,11 @@ export default function SobreMi() {
       className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] relative overflow-hidden"
       id="sobre-mi"
     >
+      <Helmet>
+        <title>Sobre mí | Guadalupe Cano — Desarrolladora Full Stack</title>
+        <meta name="description" content="Conoce a Guadalupe Cano: desarrolladora Full Stack con base en Córdoba, graduada en Pedagogía y autodidacta en tecnología. Especializada en React, Node.js, IA y automatización." />
+        <link rel="canonical" href="https://guadalupecano.es/sobre-mi" />
+      </Helmet>
       {/* Ruido ambiental */}
       <div className="absolute inset-0 bg-noise opacity-[0.02] mix-blend-overlay pointer-events-none z-0" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-violet-900/10 via-transparent to-transparent pointer-events-none z-0" />

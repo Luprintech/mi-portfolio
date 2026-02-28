@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 
 const POSTS_PER_PAGE = 5;
 
@@ -64,6 +65,11 @@ const Blog = () => {
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] py-28 px-6 md:px-16 relative overflow-x-hidden selection:bg-violet-500/30">
+      <Helmet>
+        <title>Blog técnico | Guadalupe Cano — Desarrollo web e IA</title>
+        <meta name="description" content="Blog técnico de Guadalupe Cano sobre desarrollo web, inteligencia artificial, automatización e infraestructura. Tutoriales y experiencias reales." />
+        <link rel="canonical" href="https://guadalupecano.es/blog" />
+      </Helmet>
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-violet-900/10 via-[var(--bg-primary)] to-[var(--bg-primary)] pointer-events-none z-0" />
       <div className="absolute inset-0 bg-noise opacity-[0.02] mix-blend-overlay pointer-events-none z-0" />
 

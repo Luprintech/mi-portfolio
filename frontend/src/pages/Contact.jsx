@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { FaGithub, FaLinkedin, FaYoutube, FaEnvelope, FaMapMarkerAlt, FaPaperPlane } from "react-icons/fa";
 import { useTranslation } from "react-i18next";
+import { Helmet } from "react-helmet-async";
 
 export default function Contact() {
   const { t } = useTranslation();
@@ -45,6 +46,11 @@ export default function Contact() {
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] pt-32 pb-20 px-4 md:px-8 relative overflow-hidden selection:bg-cyan-500/30">
+      <Helmet>
+        <title>Contacto | Guadalupe Cano — Desarrolladora Full Stack</title>
+        <meta name="description" content="Contacta con Guadalupe Cano para proyectos de desarrollo web, integración de IA o automatización. Disponible para trabajo remoto e híbrido en Andalucía." />
+        <link rel="canonical" href="https://guadalupecano.es/contacto" />
+      </Helmet>
       <div className="absolute inset-0 bg-noise opacity-[0.02] mix-blend-overlay pointer-events-none z-0" />
       <div className="absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-[var(--bg-secondary)] to-transparent opacity-80 z-0 pointer-events-none" />
 

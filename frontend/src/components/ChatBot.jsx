@@ -66,12 +66,20 @@ function MessageBubble({ msg }) {
 /* ─── COMPONENTE PRINCIPAL ─── */
 export default function ChatBot() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640);
   const [messages, setMessages] = useState([WELCOME_MESSAGE]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);       // { msg, isWarning }
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+
+  /* Detecta cambios de tamaño de pantalla */
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   /* Scroll automático al último mensaje */
   useEffect(() => {
@@ -209,7 +217,7 @@ export default function ChatBot() {
             </div>
 
             {/* INPUT */}
-            <div className="px-3 pb-3 pt-2 border-t border-[var(--border-subtle)] bg-[var(--bg-surface)] shrink-0">
+            <div className="px-3 pb-6 sm:pb-3 pt-2 border-t border-[var(--border-subtle)] bg-[var(--bg-surface)] shrink-0">
               <div className="flex items-end gap-2 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl px-3 py-2 focus-within:border-[var(--accent-secondary)]/60 transition-colors">
                 <textarea
                   ref={inputRef}
@@ -227,7 +235,7 @@ export default function ChatBot() {
                 <button
                   onClick={sendMessage}
                   disabled={isLoading || !input.trim()}
-                  className="shrink-0 p-1.5 rounded-lg bg-gradient-to-br from-fuchsia-600 to-cyan-600 text-white disabled:opacity-40 hover:opacity-90 transition-opacity"
+                  className="shrink-0 p-1 sm:p-1.5 w-7 h-7 sm:w-auto sm:h-auto rounded-lg bg-gradient-to-br from-fuchsia-600 to-cyan-600 text-white disabled:opacity-40 hover:opacity-90 transition-opacity flex items-center justify-center"
                   aria-label="Enviar mensaje"
                 >
                   <Send size={15} />
@@ -241,43 +249,20 @@ export default function ChatBot() {
         )}
       </AnimatePresence>
 
-      {/* ── Botón flotante ── */}
-      <Motion.button
-        onClick={() => setIsOpen((prev) => !prev)}
-        whileHover={{ scale: 1.08 }}
-        whileTap={{ scale: 0.95 }}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-fuchsia-600 to-cyan-600 text-white shadow-lg shadow-fuchsia-500/30 flex items-center justify-center"
-        aria-label={isOpen ? "Cerrar chat" : "Abrir chat con Guadalupe"}
-      >
-        <AnimatePresence mode="wait">
-          {isOpen ? (
-            <Motion.span
-              key="close"
-              initial={{ rotate: -90, opacity: 0 }}
-              animate={{ rotate: 0, opacity: 1 }}
-              exit={{ rotate: 90, opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              <X size={22} />
-            </Motion.span>
-          ) : (
-            <Motion.span
-              key="open"
-              initial={{ rotate: 90, opacity: 0 }}
-              animate={{ rotate: 0, opacity: 1 }}
-              exit={{ rotate: -90, opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              <MessageCircle size={22} />
-            </Motion.span>
-          )}
-        </AnimatePresence>
-
-        {/* Pulso de atención */}
-        {!isOpen && (
+      {/* ── Botón flotante — solo visible cuando el panel está cerrado ── */}
+      {!isOpen && (
+        <Motion.button
+          onClick={() => setIsOpen(true)}
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.95 }}
+          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-fuchsia-600 to-cyan-600 text-white shadow-lg shadow-fuchsia-500/30 flex items-center justify-center"
+          aria-label="Abrir chat con Guadalupe"
+        >
+          <MessageCircle size={22} />
+          {/* Pulso de atención */}
           <span className="absolute inset-0 rounded-full bg-gradient-to-br from-fuchsia-600 to-cyan-600 animate-ping opacity-25" />
-        )}
-      </Motion.button>
+        </Motion.button>
+      )}
     </>
   );
 }

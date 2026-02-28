@@ -5,6 +5,7 @@ import Tilt from "react-parallax-tilt";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
 import "swiper/css";
+import { Helmet } from "react-helmet-async";
 import miFoto from "../assets/mifoto.png";
 import { getFeaturedServices } from "../data/services";
 import ProjectCard from "../components/ProjectCard";
@@ -28,6 +29,12 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans relative overflow-x-hidden selection:bg-violet-500/30">
+      <Helmet>
+        <title>Guadalupe Cano | Desarrolladora Full Stack · React · Node.js · IA</title>
+        <meta name="description" content="Portfolio de Guadalupe Cano, desarrolladora Full Stack especializada en React, Node.js, integración de IA y automatización con n8n. Proyectos reales desplegados en producción." />
+        <meta name="keywords" content="desarrolladora web, full stack, React, Node.js, Laravel, inteligencia artificial, n8n, automatización, Córdoba, España" />
+        <link rel="canonical" href="https://guadalupecano.es/" />
+      </Helmet>
       {/* Gradiente radial ambiental */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-violet-900/20 via-[var(--bg-primary)] to-[var(--bg-primary)] pointer-events-none z-0" />
       {/* Textura noise */}
