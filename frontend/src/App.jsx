@@ -5,6 +5,7 @@ import Footer from './components/Footer'
 import AppRoutes from './routes/AppRoutes'
 import ErrorBoundary from './components/ErrorBoundary'
 import { ThemeProvider } from './context/ThemeContext'
+import ChatBot from './components/ChatBot'
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           <Footer />
         </div>
       </BrowserRouter>
+      <ChatBot />
     </ThemeProvider>
   )
 }
