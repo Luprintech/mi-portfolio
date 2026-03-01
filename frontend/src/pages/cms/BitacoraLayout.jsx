@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../hooks/useTheme';
 
 const navItems = [
     {
@@ -43,6 +44,7 @@ const navItems = [
 export default function BitacoraLayout() {
     const { logout } = useAuth();
     const navigate   = useNavigate();
+    const { isDark, toggleTheme } = useTheme();
 
     function handleLogout() {
         logout();
@@ -52,14 +54,14 @@ export default function BitacoraLayout() {
     const navClass = ({ isActive }) =>
         `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
             isActive
-                ? 'bg-fuchsia-500/15 text-fuchsia-400 border border-fuchsia-500/20'
-                : 'text-gray-400 hover:text-white hover:bg-white/5'
+                ? 'bg-[var(--accent-primary-dim)] text-[var(--accent-primary)] border border-[var(--accent-primary-dim)]'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]'
         }`;
 
     return (
-        <div className="min-h-screen bg-[#0a0a0f] flex">
+        <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] flex transition-colors duration-300">
             {/* Sidebar */}
-            <aside className="w-56 shrink-0 border-r border-white/5 flex flex-col py-6 px-3 gap-1">
+            <aside className="w-56 shrink-0 border-r border-[var(--border-default)] flex flex-col py-6 px-3 gap-1 bg-[var(--bg-secondary)]">
                 {/* Logo */}
                 <div className="flex items-center gap-2.5 px-3 mb-6">
                     <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-fuchsia-600 to-cyan-500 flex items-center justify-center shrink-0">
@@ -67,7 +69,7 @@ export default function BitacoraLayout() {
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                         </svg>
                     </div>
-                    <span className="text-sm font-semibold text-white">Bitácora</span>
+                    <span className="text-sm font-semibold text-[var(--text-primary)]">Bitácora</span>
                 </div>
 
                 {/* Nav */}
@@ -81,12 +83,27 @@ export default function BitacoraLayout() {
                 </nav>
 
                 {/* Pie del sidebar */}
-                <div className="border-t border-white/5 pt-4 mt-2">
+                <div className="border-t border-[var(--border-default)] pt-4 mt-2">
+                    {/* Botón de tema claro/oscuro idéntico al navbar pero simplificado para la terminal */}
+                    <button
+                        onClick={toggleTheme}
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-all mb-1"
+                    >
+                        <span className="flex items-center gap-2.5">
+                            {isDark ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg>
+                            ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" /></svg>
+                            )}
+                            Modo {isDark ? 'claro' : 'oscuro'}
+                        </span>
+                    </button>
+
                     <a
                         href="/"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-white hover:bg-white/5 transition-all"
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-all"
                     >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -95,7 +112,7 @@ export default function BitacoraLayout() {
                     </a>
                     <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-red-400 hover:bg-red-500/5 transition-all mt-1"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-[var(--text-muted)] hover:text-red-500 hover:bg-red-500/10 transition-all mt-1"
                     >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

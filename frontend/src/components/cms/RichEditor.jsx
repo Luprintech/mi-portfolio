@@ -539,13 +539,13 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                         </div>
                     </ToolBtn>
                     {showColorPick && (
-                        <div className="absolute top-10 left-0 z-50 p-3 bg-[#1a1a2e] border border-white/20 rounded-xl shadow-2xl w-44"
+                        <div className="absolute top-10 left-0 z-50 p-3 bg-[#1a1a2e] border border-white/20 rounded-xl shadow-2xl w-48"
                             onMouseDown={e => e.stopPropagation()}>
                             <button type="button" className="text-xs text-gray-400 hover:text-white mb-2 w-full text-left px-1"
                                 onClick={() => { editor.chain().focus().unsetColor().run(); setShowColorPick(false); }}>
                                 Quitar color
                             </button>
-                            <div className="grid grid-cols-5 gap-1.5">
+                            <div className="grid grid-cols-5 gap-1.5 mb-2">
                                 {TEXT_COLORS.map(c => (
                                     <button key={c} type="button" title={c}
                                         className="w-6 h-6 rounded-md border-2 border-transparent hover:border-white/50 hover:scale-110 transition-all"
@@ -553,6 +553,14 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                                         onClick={() => { editor.chain().focus().setColor(c).run(); setShowColorPick(false); }}
                                     />
                                 ))}
+                            </div>
+                            <div className="flex items-center gap-2 pt-2 border-t border-white/10">
+                                <input type="color"
+                                    value={editor.getAttributes('textStyle').color || '#ffffff'}
+                                    onChange={e => editor.chain().focus().setColor(e.target.value).run()}
+                                    className="w-6 h-6 p-0 border-0 rounded cursor-pointer bg-transparent"
+                                />
+                                <span className="text-xs text-gray-400">Color personalizado</span>
                             </div>
                         </div>
                     )}
@@ -564,13 +572,13 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
                     </ToolBtn>
                     {showHighPick && (
-                        <div className="absolute top-10 left-0 z-50 p-3 bg-[#1a1a2e] border border-white/20 rounded-xl shadow-2xl w-36"
+                        <div className="absolute top-10 left-0 z-50 p-3 bg-[#1a1a2e] border border-white/20 rounded-xl shadow-2xl w-44"
                             onMouseDown={e => e.stopPropagation()}>
                             <button type="button" className="text-xs text-gray-400 hover:text-white mb-2 w-full text-left px-1"
                                 onClick={() => { editor.chain().focus().unsetHighlight().run(); setShowHighPick(false); }}>
-                                Quitar
+                                Quitar fondo
                             </button>
-                            <div className="grid grid-cols-4 gap-1.5">
+                            <div className="grid grid-cols-4 gap-1.5 mb-2">
                                 {HIGHLIGHT_COLORS.map(c => (
                                     <button key={c} type="button" title={c}
                                         className="w-6 h-6 rounded-md border-2 border-transparent hover:border-white/50 hover:scale-110 transition-all"
@@ -578,6 +586,14 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                                         onClick={() => { editor.chain().focus().toggleHighlight({ color: c }).run(); setShowHighPick(false); }}
                                     />
                                 ))}
+                            </div>
+                            <div className="flex items-center gap-2 pt-2 border-t border-white/10">
+                                <input type="color"
+                                    defaultValue="#fef08a"
+                                    onChange={e => editor.chain().focus().toggleHighlight({ color: `${e.target.value}80` }).run()}
+                                    className="w-6 h-6 p-0 border-0 rounded cursor-pointer bg-transparent"
+                                />
+                                <span className="text-xs text-gray-400">Color personalizado</span>
                             </div>
                         </div>
                     )}

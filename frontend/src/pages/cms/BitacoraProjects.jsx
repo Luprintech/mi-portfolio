@@ -50,8 +50,8 @@ export default function BitacoraProjects() {
         <div className="p-8 max-w-4xl">
             <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-2xl font-bold text-white mb-1">Proyectos</h1>
-                    <p className="text-sm text-gray-500">{projects.length} proyectos en el portfolio</p>
+                    <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-1">Proyectos</h1>
+                    <p className="text-sm text-[var(--text-secondary)]">{projects.length} proyectos en el portfolio</p>
                 </div>
                 <Link
                     to="/bitacora/proyectos/nuevo"
@@ -76,34 +76,34 @@ export default function BitacoraProjects() {
                 </div>
             ) : projects.length === 0 ? (
                 <div className="text-center py-20">
-                    <p className="text-gray-500 text-sm">No hay proyectos todavía.</p>
+                    <p className="text-[var(--text-secondary)] text-sm">No hay proyectos todavía.</p>
                 </div>
             ) : (
                 <div className="space-y-3">
                     {projects.map(project => (
                         <div
                             key={project.id}
-                            className="flex items-center gap-4 px-5 py-4 rounded-2xl bg-white/3 border border-white/5 hover:border-white/10 transition-all"
+                            className="flex items-center gap-4 px-5 py-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-default)] hover:border-[var(--border-color)] transition-all"
                         >
                             {project.image && (
-                                <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-white/5">
+                                <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-[var(--bg-elevated)]">
                                     <img src={project.image} alt={project.title} className="w-full h-full object-cover" />
                                 </div>
                             )}
 
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
-                                    <p className="text-sm font-semibold text-white truncate">{project.title}</p>
+                                    <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{project.title}</p>
                                     {project.featured && (
                                         <span className="text-xs px-2 py-0.5 rounded-full bg-fuchsia-500/15 text-fuchsia-400 border border-fuchsia-500/20 shrink-0">
                                             Destacado
                                         </span>
                                     )}
                                 </div>
-                                <p className="text-xs text-gray-500 truncate mt-0.5">{project.description}</p>
+                                <p className="text-xs text-[var(--text-secondary)] truncate mt-0.5">{project.description}</p>
                                 <div className="flex gap-1.5 mt-1.5 flex-wrap">
                                     {project.tech?.slice(0, 4).map(t => (
-                                        <span key={t} className="text-xs px-2 py-0.5 rounded-full bg-white/5 text-gray-400">{t}</span>
+                                        <span key={t} className="text-xs px-2 py-0.5 rounded-full bg-[var(--bg-elevated)] text-[var(--text-muted)]">{t}</span>
                                     ))}
                                 </div>
                             </div>
@@ -111,7 +111,7 @@ export default function BitacoraProjects() {
                             <div className="flex items-center gap-2 shrink-0">
                                 {pendingDelete === project.id ? (
                                     <div className="flex items-center gap-2">
-                                        <span className="text-xs text-gray-400">¿Eliminar?</span>
+                                        <span className="text-xs text-[var(--text-muted)]">¿Eliminar?</span>
                                         <button
                                             onClick={() => confirmDelete(project.id)}
                                             disabled={deleting === project.id}
@@ -121,7 +121,7 @@ export default function BitacoraProjects() {
                                         </button>
                                         <button
                                             onClick={cancelDelete}
-                                            className="px-3 py-1 rounded-lg text-xs font-medium bg-white/5 text-gray-400 hover:text-white transition-all"
+                                            className="px-3 py-1 rounded-lg text-xs font-medium bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all"
                                         >
                                             Cancelar
                                         </button>
@@ -133,7 +133,7 @@ export default function BitacoraProjects() {
                                                 href={project.demo}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="p-2 rounded-lg text-gray-500 hover:text-cyan-400 hover:bg-cyan-500/10 transition-all"
+                                                className="p-2 rounded-lg text-[var(--text-secondary)] hover:text-cyan-400 hover:bg-cyan-500/10 transition-all"
                                                 title="Ver demo"
                                             >
                                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -143,7 +143,7 @@ export default function BitacoraProjects() {
                                         )}
                                         <Link
                                             to={`/bitacora/proyectos/editar/${project.id}`}
-                                            className="p-2 rounded-lg text-gray-500 hover:text-fuchsia-400 hover:bg-fuchsia-500/10 transition-all"
+                                            className="p-2 rounded-lg text-[var(--text-secondary)] hover:text-fuchsia-400 hover:bg-fuchsia-500/10 transition-all"
                                             title="Editar"
                                         >
                                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -152,7 +152,7 @@ export default function BitacoraProjects() {
                                         </Link>
                                         <button
                                             onClick={() => requestDelete(project.id)}
-                                            className="p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                                            className="p-2 rounded-lg text-[var(--text-secondary)] hover:text-red-400 hover:bg-red-500/10 transition-all"
                                             title="Eliminar"
                                         >
                                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

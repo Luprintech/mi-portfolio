@@ -13,6 +13,8 @@ const Blog                   = lazy(() => import("../pages/Blog"));
 const BlogPost               = lazy(() => import("../pages/BlogPost"));
 const BlogPostPreview        = lazy(() => import("../pages/BlogPostPreview"));
 const Contact                = lazy(() => import("../pages/Contact"));
+const PoliticaCookies        = lazy(() => import("../pages/PoliticaCookies"));
+const PoliticaPrivacidad     = lazy(() => import("../pages/PoliticaPrivacidad"));
 const NotFound               = lazy(() => import("../pages/NotFound"));
 
 // ─── Páginas del CMS /bitacora (lazy) ────────────────────────────────────────
@@ -61,6 +63,8 @@ export default function AppRoutes() {
           <Route path="/blog/preview"   element={<BlogPostPreview />} />
           <Route path="/blog/:slug"     element={<Motion.div {...pageTransition}><BlogPost /></Motion.div>} />
           <Route path="/contacto"   element={<Motion.div {...pageTransition}><Contact /></Motion.div>} />
+          <Route path="/politica-cookies"    element={<Motion.div {...pageTransition}><PoliticaCookies /></Motion.div>} />
+          <Route path="/politica-privacidad" element={<Motion.div {...pageTransition}><PoliticaPrivacidad /></Motion.div>} />
 
           {/* ─── CMS /bitacora ─── */}
           <Route path="/bitacora">

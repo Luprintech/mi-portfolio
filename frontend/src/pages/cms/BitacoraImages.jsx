@@ -87,8 +87,8 @@ export default function BitacoraImages() {
         <div className="p-8 max-w-5xl">
             <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-2xl font-bold text-white mb-1">Imágenes</h1>
-                    <p className="text-sm text-gray-500">{images.length} imágenes subidas</p>
+                    <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-1">Imágenes</h1>
+                    <p className="text-sm text-[var(--text-secondary)]">{images.length} imágenes subidas</p>
                 </div>
                 <button
                     onClick={() => fileInput.current?.click()}
@@ -128,18 +128,18 @@ export default function BitacoraImages() {
             <div
                 onDrop={handleDrop}
                 onDragOver={e => e.preventDefault()}
-                className="mb-6 border-2 border-dashed border-white/10 rounded-2xl p-8 text-center hover:border-fuchsia-500/30 transition-colors cursor-pointer"
+                className="mb-6 border-2 border-dashed border-[var(--border-default)] rounded-2xl p-8 text-center hover:border-fuchsia-500/30 transition-colors cursor-pointer"
                 onClick={() => fileInput.current?.click()}
             >
-                <svg className="w-8 h-8 text-gray-600 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <svg className="w-8 h-8 text-[var(--text-muted)] mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <p className="text-sm text-gray-500">Arrastra imágenes aquí o <span className="text-fuchsia-400">haz clic para seleccionar</span></p>
-                <p className="text-xs text-gray-600 mt-1">JPG, PNG, WebP, GIF, SVG — máx. 5 MB por imagen</p>
+                <p className="text-sm text-[var(--text-secondary)]">Arrastra imágenes aquí o <span className="text-fuchsia-400">haz clic para seleccionar</span></p>
+                <p className="text-xs text-[var(--text-muted)] mt-1">JPG, PNG, WebP, GIF, SVG — máx. 5 MB por imagen</p>
             </div>
 
-            <p className="text-xs text-gray-600 mb-4">
-                Copia la URL para usarla en Markdown: <code className="text-gray-500 bg-white/5 px-1.5 py-0.5 rounded">![alt](/posts/images/nombre.jpg)</code>
+            <p className="text-xs text-[var(--text-muted)] mb-4">
+                Copia la URL para usarla en Markdown: <code className="text-[var(--text-secondary)] bg-[var(--bg-elevated)] px-1.5 py-0.5 rounded">![alt](/posts/images/nombre.jpg)</code>
             </p>
 
             {loading ? (
@@ -147,13 +147,13 @@ export default function BitacoraImages() {
                     <div className="w-8 h-8 border-2 border-fuchsia-500/30 border-t-fuchsia-500 rounded-full animate-spin" />
                 </div>
             ) : images.length === 0 ? (
-                <p className="text-center text-gray-600 text-sm py-12">No hay imágenes todavía.</p>
+                <p className="text-center text-[var(--text-muted)] text-sm py-12">No hay imágenes todavía.</p>
             ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                     {images.map(img => (
                         <div
                             key={img.filename}
-                            className="group relative rounded-2xl overflow-hidden bg-white/3 border border-white/5 aspect-square"
+                            className="group relative rounded-2xl overflow-hidden bg-[var(--bg-surface)] border border-[var(--border-default)] aspect-square"
                         >
                             <img
                                 src={img.url}
@@ -163,13 +163,13 @@ export default function BitacoraImages() {
                             />
 
                             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-2">
-                                <p className="text-xs text-gray-300 text-center break-all leading-tight line-clamp-2">
+                                <p className="text-xs text-white text-center break-all leading-tight line-clamp-2">
                                     {img.filename}
                                 </p>
 
                                 {pendingDelete === img.filename ? (
                                     <div className="flex flex-col items-center gap-1.5">
-                                        <span className="text-xs text-gray-300">¿Eliminar?</span>
+                                        <span className="text-xs text-white">¿Eliminar?</span>
                                         <div className="flex gap-2">
                                             <button
                                                 onClick={() => confirmDelete(img.filename)}
@@ -180,7 +180,7 @@ export default function BitacoraImages() {
                                             </button>
                                             <button
                                                 onClick={cancelDelete}
-                                                className="px-2 py-1 rounded-lg text-xs font-medium bg-white/10 text-white hover:bg-white/20 transition-all"
+                                                className="px-2 py-1 rounded-lg text-xs font-medium bg-white/20 text-white hover:bg-white/30 transition-all"
                                             >
                                                 No
                                             </button>
@@ -193,7 +193,7 @@ export default function BitacoraImages() {
                                             className={`p-2 rounded-lg transition-all text-xs font-medium flex items-center gap-1.5 ${
                                                 copied === img.url
                                                     ? 'bg-green-500/20 text-green-400'
-                                                    : 'bg-white/10 text-white hover:bg-white/20'
+                                                    : 'bg-white/20 text-white hover:bg-white/30'
                                             }`}
                                             title="Copiar URL"
                                         >

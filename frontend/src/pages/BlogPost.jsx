@@ -72,11 +72,18 @@ const BlogPost = () => {
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] py-28 px-6 md:px-16 relative overflow-x-hidden selection:bg-violet-500/30">
       <Helmet>
-        <title>{postMeta.title} | Guadalupe Cano</title>
-        <meta name="description" content={postMeta.excerpt} />
-        <meta property="og:title" content={postMeta.title} />
-        <meta property="og:description" content={postMeta.excerpt} />
+        <title>{postMeta.seoTitle || postMeta.title} | Guadalupe Cano</title>
+        <meta name="description" content={postMeta.seoDescription || postMeta.excerpt} />
+        <meta property="og:title" content={postMeta.seoTitle || postMeta.title} />
+        <meta property="og:description" content={postMeta.seoDescription || postMeta.excerpt} />
+        {postMeta.ogImage && <meta property="og:image" content={postMeta.ogImage.startsWith('http') ? postMeta.ogImage : `${window.location.origin}${postMeta.ogImage}`} />}
         <meta property="og:type" content="article" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={postMeta.seoTitle || postMeta.title} />
+        <meta name="twitter:description" content={postMeta.seoDescription || postMeta.excerpt} />
+        {postMeta.ogImage && <meta name="twitter:image" content={postMeta.ogImage.startsWith('http') ? postMeta.ogImage : `${window.location.origin}${postMeta.ogImage}`} />}
+        {postMeta.canonicalUrl && <link rel="canonical" href={postMeta.canonicalUrl} />}
+        {postMeta.noindex && <meta name="robots" content="noindex" />}
       </Helmet>
 
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-violet-900/10 via-[var(--bg-primary)] to-[var(--bg-primary)] pointer-events-none z-0" />

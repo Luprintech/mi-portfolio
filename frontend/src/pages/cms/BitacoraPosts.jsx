@@ -50,8 +50,8 @@ export default function BitacoraPosts() {
         <div className="p-8 max-w-4xl">
             <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-2xl font-bold text-white mb-1">Posts</h1>
-                    <p className="text-sm text-gray-500">{posts.length} entradas en el blog</p>
+                    <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-1">Posts</h1>
+                    <p className="text-sm text-[var(--text-secondary)]">{posts.length} entradas en el blog</p>
                 </div>
                 <Link
                     to="/bitacora/posts/nuevo"
@@ -76,7 +76,7 @@ export default function BitacoraPosts() {
                 </div>
             ) : posts.length === 0 ? (
                 <div className="text-center py-20">
-                    <p className="text-gray-500 text-sm">No hay posts todavía.</p>
+                    <p className="text-[var(--text-secondary)] text-sm">No hay posts todavía.</p>
                     <Link to="/bitacora/posts/nuevo" className="inline-block mt-3 text-fuchsia-400 text-sm hover:text-fuchsia-300">
                         Crear el primero →
                     </Link>
@@ -86,15 +86,15 @@ export default function BitacoraPosts() {
                     {posts.map(post => (
                         <div
                             key={post.slug}
-                            className="flex items-center gap-4 px-5 py-4 rounded-2xl bg-white/3 border border-white/5 hover:border-white/10 transition-all"
+                            className="flex items-center gap-4 px-5 py-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-default)] hover:border-[var(--border-color)] transition-all"
                         >
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-white truncate">{post.title}</p>
+                                <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{post.title}</p>
                                 <div className="flex items-center gap-3 mt-1">
-                                    <span className="text-xs text-gray-500">{post.date}</span>
+                                    <span className="text-xs text-[var(--text-secondary)]">{post.date}</span>
                                     <div className="flex gap-1.5 flex-wrap">
                                         {post.tags?.slice(0, 3).map(tag => (
-                                            <span key={tag} className="text-xs px-2 py-0.5 rounded-full bg-white/5 text-gray-400">
+                                            <span key={tag} className="text-xs px-2 py-0.5 rounded-full bg-[var(--bg-elevated)] text-[var(--text-muted)]">
                                                 {tag}
                                             </span>
                                         ))}
@@ -105,7 +105,7 @@ export default function BitacoraPosts() {
                             <div className="flex items-center gap-2 shrink-0">
                                 {pendingDelete === post.slug ? (
                                     <div className="flex items-center gap-2">
-                                        <span className="text-xs text-gray-400">¿Eliminar?</span>
+                                        <span className="text-xs text-[var(--text-muted)]">¿Eliminar?</span>
                                         <button
                                             onClick={() => confirmDelete(post.slug)}
                                             disabled={deleting === post.slug}
@@ -115,7 +115,7 @@ export default function BitacoraPosts() {
                                         </button>
                                         <button
                                             onClick={cancelDelete}
-                                            className="px-3 py-1 rounded-lg text-xs font-medium bg-white/5 text-gray-400 hover:text-white transition-all"
+                                            className="px-3 py-1 rounded-lg text-xs font-medium bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all"
                                         >
                                             Cancelar
                                         </button>
@@ -126,7 +126,7 @@ export default function BitacoraPosts() {
                                             href={`/blog/${post.slug}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="p-2 rounded-lg text-gray-500 hover:text-cyan-400 hover:bg-cyan-500/10 transition-all"
+                                            className="p-2 rounded-lg text-[var(--text-secondary)] hover:text-cyan-400 hover:bg-cyan-500/10 transition-all"
                                             title="Ver post"
                                         >
                                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -135,7 +135,7 @@ export default function BitacoraPosts() {
                                         </a>
                                         <Link
                                             to={`/bitacora/posts/editar/${post.slug}`}
-                                            className="p-2 rounded-lg text-gray-500 hover:text-fuchsia-400 hover:bg-fuchsia-500/10 transition-all"
+                                            className="p-2 rounded-lg text-[var(--text-secondary)] hover:text-fuchsia-400 hover:bg-fuchsia-500/10 transition-all"
                                             title="Editar"
                                         >
                                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -144,7 +144,7 @@ export default function BitacoraPosts() {
                                         </Link>
                                         <button
                                             onClick={() => requestDelete(post.slug)}
-                                            className="p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                                            className="p-2 rounded-lg text-[var(--text-secondary)] hover:text-red-400 hover:bg-red-500/10 transition-all"
                                             title="Eliminar"
                                         >
                                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

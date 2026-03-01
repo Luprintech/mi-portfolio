@@ -15,7 +15,7 @@ const imageStorage = multer.diskStorage({
         cb(null, IMAGES_DIR);
     },
     filename: (req, file, cb) => {
-        const ext  = path.extname(file.originalname).toLowerCase();
+        const ext = path.extname(file.originalname).toLowerCase();
         const name = path.basename(file.originalname, ext)
             .toLowerCase()
             .replace(/[^a-z0-9]/g, '-')
@@ -43,7 +43,7 @@ router.post('/upload', verifyCmsToken, imageUpload.single('image'), (req, res) =
     res.json({ url, filename: req.file.filename });
 });
 
-router.get('/', verifyCmsToken, async (req, res) => {
+router.get('/images', verifyCmsToken, async (req, res) => {
     try {
         await fsExtra.ensureDir(IMAGES_DIR);
         const files = await fsExtra.readdir(IMAGES_DIR);
@@ -56,7 +56,7 @@ router.get('/', verifyCmsToken, async (req, res) => {
     }
 });
 
-router.delete('/:filename', verifyCmsToken, async (req, res) => {
+router.delete('/images/:filename', verifyCmsToken, async (req, res) => {
     try {
         // path.basename strips any directory component, preventing path traversal
         const filename = path.basename(req.params.filename);

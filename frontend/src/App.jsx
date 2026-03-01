@@ -7,6 +7,7 @@ import ErrorBoundary from './components/ErrorBoundary'
 import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider } from './context/AuthContext'
 import ChatBot from './components/ChatBot'
+import CookieBanner from './components/CookieBanner'
 
 // Componente interno que puede usar useLocation (dentro de BrowserRouter)
 function AppContent() {
@@ -34,6 +35,7 @@ function AppContent() {
         <Footer />
       </div>
       <ChatBot />
+      <CookieBanner />
     </>
   );
 }
