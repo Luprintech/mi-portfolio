@@ -118,8 +118,9 @@ export default function ChatBot() {
       const data = await res.json();
 
       if (!res.ok) {
-        const isWarning = data.isWarning ?? false;
-        throw { message: data.error || "Error desconocido", isWarning };
+        const err = new Error(data.error || "Error desconocido");
+        err.isWarning = data.isWarning ?? false;
+        throw err;
       }
 
       setMessages((prev) => [

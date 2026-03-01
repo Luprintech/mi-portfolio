@@ -5,9 +5,11 @@ import { cmsApi } from '../../lib/cmsApi';
 
 export default function BitacoraPosts() {
     const { token } = useAuth();
-    const [posts,   setPosts]   = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [deleting, setDeleting] = useState(null);
+    const [posts,         setPosts]         = useState([]);
+    const [loading,       setLoading]       = useState(true);
+    const [deleting,      setDeleting]      = useState(null);
+    const [pendingDelete, setPendingDelete] = useState(null);
+    const [deleteError,   setDeleteError]   = useState('');
 
     async function load() {
         setLoading(true);
@@ -20,14 +22,25 @@ export default function BitacoraPosts() {
 
     useEffect(() => { load(); }, [token]);
 
-    async function handleDelete(slug, title) {
-        if (!confirm(`¿Eliminar "${title}"? Esta acción no se puede deshacer.`)) return;
+    function requestDelete(slug) {
+        setDeleteError('');
+        setPendingDelete(slug);
+    }
+
+    function cancelDelete() {
+        setPendingDelete(null);
+        setDeleteError('');
+    }
+
+    async function confirmDelete(slug) {
         setDeleting(slug);
+        setDeleteError('');
         try {
             await cmsApi.deletePost(token, slug);
             setPosts(prev => prev.filter(p => p.slug !== slug));
+            setPendingDelete(null);
         } catch (err) {
-            alert(`Error al eliminar: ${err.message}`);
+            setDeleteError(err.message);
         } finally {
             setDeleting(null);
         }
@@ -50,6 +63,12 @@ export default function BitacoraPosts() {
                     Nuevo post
                 </Link>
             </div>
+
+            {deleteError && (
+                <div className="mb-4 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                    {deleteError}
+                </div>
+            )}
 
             {loading ? (
                 <div className="flex items-center justify-center py-20">
@@ -84,40 +103,56 @@ export default function BitacoraPosts() {
                             </div>
 
                             <div className="flex items-center gap-2 shrink-0">
-                                <a
-                                    href={`/blog/${post.slug}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="p-2 rounded-lg text-gray-500 hover:text-cyan-400 hover:bg-cyan-500/10 transition-all"
-                                    title="Ver post"
-                                >
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                    </svg>
-                                </a>
-                                <Link
-                                    to={`/bitacora/posts/editar/${post.slug}`}
-                                    className="p-2 rounded-lg text-gray-500 hover:text-fuchsia-400 hover:bg-fuchsia-500/10 transition-all"
-                                    title="Editar"
-                                >
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                    </svg>
-                                </Link>
-                                <button
-                                    onClick={() => handleDelete(post.slug, post.title)}
-                                    disabled={deleting === post.slug}
-                                    className="p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all disabled:opacity-40"
-                                    title="Eliminar"
-                                >
-                                    {deleting === post.slug ? (
-                                        <div className="w-4 h-4 border-2 border-red-500/30 border-t-red-400 rounded-full animate-spin" />
-                                    ) : (
-                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
-                                    )}
-                                </button>
+                                {pendingDelete === post.slug ? (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs text-gray-400">¿Eliminar?</span>
+                                        <button
+                                            onClick={() => confirmDelete(post.slug)}
+                                            disabled={deleting === post.slug}
+                                            className="px-3 py-1 rounded-lg text-xs font-medium bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-all disabled:opacity-40"
+                                        >
+                                            {deleting === post.slug ? 'Eliminando…' : 'Confirmar'}
+                                        </button>
+                                        <button
+                                            onClick={cancelDelete}
+                                            className="px-3 py-1 rounded-lg text-xs font-medium bg-white/5 text-gray-400 hover:text-white transition-all"
+                                        >
+                                            Cancelar
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <a
+                                            href={`/blog/${post.slug}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="p-2 rounded-lg text-gray-500 hover:text-cyan-400 hover:bg-cyan-500/10 transition-all"
+                                            title="Ver post"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                            </svg>
+                                        </a>
+                                        <Link
+                                            to={`/bitacora/posts/editar/${post.slug}`}
+                                            className="p-2 rounded-lg text-gray-500 hover:text-fuchsia-400 hover:bg-fuchsia-500/10 transition-all"
+                                            title="Editar"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                        </Link>
+                                        <button
+                                            onClick={() => requestDelete(post.slug)}
+                                            className="p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                                            title="Eliminar"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </>
+                                )}
                             </div>
                         </div>
                     ))}
