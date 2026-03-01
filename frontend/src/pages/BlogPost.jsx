@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
+import rehypeRaw from 'rehype-raw';
 import { Helmet } from 'react-helmet-async';
 import 'highlight.js/styles/atom-one-dark.css';
 
@@ -116,7 +117,7 @@ const BlogPost = () => {
         <div className="bg-[var(--bg-surface)] backdrop-blur-md rounded-2xl border border-[var(--border-color)] shadow-[var(--shadow-md)] p-6 md:p-10">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeHighlight]}
+            rehypePlugins={[rehypeRaw, rehypeHighlight]}
             components={{
               h1: ({node, ...props}) => <h1 className="flex items-center justify-center text-center text-4xl font-bold mt-8 mb-8 border-b border-[var(--border-color)] pb-6 text-transparent bg-clip-text bg-gradient-to-r from-violet-300 to-fuchsia-200 min-h-[80px]" {...props} />,
               h2: ({node, ...props}) => <h2 className="text-center md:text-left text-2xl md:text-3xl font-semibold mt-12 mb-6 text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-violet-300 border-b border-[var(--border-color)] pb-3" {...props} />,

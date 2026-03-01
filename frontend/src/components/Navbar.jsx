@@ -3,7 +3,7 @@ import { motion as Motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "./LanguageSwitcher";
-import LuprinCat from "./LuprinCat";
+import LuprinCat from "./Luprincat";
 import { useTheme } from "../hooks/useTheme";
 
 /* ─── Íconos inline sol / luna ─── */
