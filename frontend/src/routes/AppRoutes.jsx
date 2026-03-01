@@ -11,6 +11,7 @@ const PortfolioDesarrolloWeb = lazy(() => import("../pages/portfolio/desarrollo-
 const PortfolioDocumentacion = lazy(() => import("../pages/portfolio/documentacion-tecnica"));
 const Blog                   = lazy(() => import("../pages/Blog"));
 const BlogPost               = lazy(() => import("../pages/BlogPost"));
+const BlogPostPreview        = lazy(() => import("../pages/BlogPostPreview"));
 const Contact                = lazy(() => import("../pages/Contact"));
 const NotFound               = lazy(() => import("../pages/NotFound"));
 
@@ -56,8 +57,9 @@ export default function AppRoutes() {
           <Route path="/portfolio" element={<Motion.div {...pageTransition}><Portfolio /></Motion.div>} />
           <Route path="/portfolio/desarrollo-web"        element={<Motion.div {...pageTransition}><PortfolioDesarrolloWeb /></Motion.div>} />
           <Route path="/portfolio/documentacion-tecnica" element={<Motion.div {...pageTransition}><PortfolioDocumentacion /></Motion.div>} />
-          <Route path="/blog"       element={<Motion.div {...pageTransition}><Blog /></Motion.div>} />
-          <Route path="/blog/:slug" element={<Motion.div {...pageTransition}><BlogPost /></Motion.div>} />
+          <Route path="/blog"           element={<Motion.div {...pageTransition}><Blog /></Motion.div>} />
+          <Route path="/blog/preview"   element={<BlogPostPreview />} />
+          <Route path="/blog/:slug"     element={<Motion.div {...pageTransition}><BlogPost /></Motion.div>} />
           <Route path="/contacto"   element={<Motion.div {...pageTransition}><Contact /></Motion.div>} />
 
           {/* ─── CMS /bitacora ─── */}
