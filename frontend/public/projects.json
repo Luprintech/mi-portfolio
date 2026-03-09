@@ -27,7 +27,7 @@
     "github": "https://github.com/Luprintech/calculadora-3D",
     "demo": "https://calculadora3d.luprintech.com/",
     "image": "/images/calculadora3d.png",
-    "featured": true,
+    "featured": false,
     "category": "code"
   },
   {
@@ -56,7 +56,7 @@
     ],
     "demo": "https://landgestionagricola.com/",
     "image": "/posts/images/1773042539337-land-agricola.png",
-    "featured": false,
+    "featured": true,
     "category": "cms"
   }
 ]

@@ -57,13 +57,42 @@ npm run dev
 
 ## Despliegue en Producción
 
+### Opción A — Docker (Recomendado: Synology NAS, VPS, servidor propio)
+
+El proyecto incluye una configuración Docker completa lista para usar:
+
+```
+docker-compose.yml           ← orquestación de servicios
+frontend/Dockerfile          ← build React + nginx alpine
+frontend/nginx.docker.conf   ← nginx con proxy /api/ al backend
+backend/Dockerfile           ← Node.js 20 alpine
+backend/docker-entrypoint.sh ← inicialización del volumen de contenido
+```
+
+**Requisitos**: Docker y Docker Compose instalados.
+
+```bash
+# Configura las variables de entorno del backend
+cp backend/.env.example backend/.env
+# Edita backend/.env con tus valores reales
+
+# Construye y arranca todos los servicios
+docker-compose up -d --build
+```
+
+La aplicación quedará disponible en el puerto `8081` (configurable en `docker-compose.yml`).
+
+**Detalles de la arquitectura Docker:**
+- El frontend (nginx) sirve los assets estáticos y hace proxy de `/api/*` al backend.
+- El contenido del CMS (posts, proyectos, imágenes) se persiste en un volumen Docker (`content_data`) compartido entre ambos contenedores.
+- En el primer arranque, el volumen se inicializa automáticamente con el contenido de `frontend/public`.
+- El backend no es accesible directamente desde el exterior, solo a través de nginx.
+
+### Opción B — Despliegue clásico en la nube
+
 Como resultado de esta arquitectura técnica dividida, el despliegue requiere dos ambientes:
 
 - **Frontend HTTP Estático (Recomendado: Vercel, Netlify o GitHub Pages)**: Servir estáticamente, la carga de JSONs y Markdown funcionará sin fricción. Inyectar variable `VITE_API_URL` apuntando al Backend.
 - **Backend Node Persistente (Recomendado: Railway, Render o VPS)**: El entorno debe mantener vivo el proceso `node server.js`. Si se opta por VPS autogestionado, requiere PM2 con proxy inverso (Nginx).
 
-## Optimizaciones Futuras
 
-- Automatizar un script en Node que regenere el `/public/posts/index.json` leyendo directamente las cabeceras Frontmatter de los archivos `.md` de la carpeta.
-- Implementar validaciones en TypeScript a lo largo del backend.
-- Optimización de imágenes masiva mediante formatos como WebP en tiempo de build o mediante integraciones de Cloudinary.

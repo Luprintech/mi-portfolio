@@ -1,0 +1,39 @@
+services:
+
+  # ── Backend: Node.js + Express ─────────────────────────────────────────────
+  backend:
+    build:
+      context: .                   # raíz para poder copiar frontend/public
+      dockerfile: backend/Dockerfile
+    env_file: ./backend/.env       # usa el .env existente del backend
+    environment:
+      - NODE_ENV=production
+      - CONTENT_PATH=/data/content
+    volumes:
+      - content_data:/data/content
+    expose:
+      - "3000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ── Frontend: nginx + React build ─────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8081:80"                  # Puerto externo configurable en Synology
+    volumes:
+      - content_data:/data/content:ro   # solo lectura para nginx
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+# ── Volumen compartido (posts, proyectos, imágenes CMS) ───────────────────────
+volumes:
+  content_data:
