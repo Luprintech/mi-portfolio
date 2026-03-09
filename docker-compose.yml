@@ -13,6 +13,8 @@ services:
       - content_data:/data/content
     expose:
       - "3000"
+    networks:
+      - portfolio_net
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
@@ -29,6 +31,8 @@ services:
       - "8081:80"                  # Puerto externo configurable en Synology
     volumes:
       - content_data:/data/content:ro   # solo lectura para nginx
+    networks:
+      - portfolio_net
     depends_on:
       backend:
         condition: service_healthy
@@ -37,3 +41,8 @@ services:
 # ── Volumen compartido (posts, proyectos, imágenes CMS) ───────────────────────
 volumes:
   content_data:
+
+# ── Red interna para que nginx encuentre el backend por nombre ────────────────
+networks:
+  portfolio_net:
+    driver: bridge
