@@ -5,15 +5,19 @@ import { contactLimiter } from '../middleware/rateLimiters.js';
 
 const router = Router();
 
-const transporter = nodemailer.createTransport({
-    host:   process.env.SMTP_HOST,
-    port:   parseInt(process.env.SMTP_PORT) || 465,
-    secure: process.env.SMTP_SECURE === 'true',
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-    },
-});
+// El transporter se crea dentro del handler porque en ESM los imports
+// se hoistan y se ejecutan antes que dotenv.config() en server.js.
+function createTransporter() {
+    return nodemailer.createTransport({
+        host:   process.env.SMTP_HOST,
+        port:   parseInt(process.env.SMTP_PORT) || 465,
+        secure: process.env.SMTP_SECURE === 'true',
+        auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+        },
+    });
+}
 
 const validators = [
     body('name').trim().notEmpty().withMessage('Required parameter missing: name').escape(),
@@ -35,6 +39,7 @@ router.post('/', contactLimiter, validators, async (req, res) => {
 
         const { name, email, subject, message } = req.body;
 
+        const transporter = createTransporter();
         const mailOptions = {
             from:    `"${name}" <${process.env.SMTP_USER}>`,
             to:      process.env.CONTACT_EMAIL || process.env.SMTP_USER,
