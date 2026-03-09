@@ -43,3 +43,8 @@ eslint*_results.json
 
 # Claude Code (worktrees internos, no subir a git)
 .claude/
+
+# Archivos temporales
+*.db-shm
+*.db-wal
+*.db
