@@ -23,8 +23,8 @@ services:
   # ── Frontend: nginx + React build ─────────────────────────────────────────
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .                   # raíz, igual que el backend
+      dockerfile: frontend/Dockerfile
     ports:
       - "8081:80"                  # Puerto externo configurable en Synology
     volumes:
