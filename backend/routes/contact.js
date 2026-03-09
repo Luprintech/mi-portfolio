@@ -9,9 +9,12 @@ const router = Router();
 // se hoistan y se ejecutan antes que dotenv.config() en server.js.
 function createTransporter() {
     return nodemailer.createTransport({
-        host:   process.env.SMTP_HOST,
-        port:   parseInt(process.env.SMTP_PORT) || 465,
-        secure: process.env.SMTP_SECURE === 'true',
+        host:               process.env.SMTP_HOST,
+        port:               parseInt(process.env.SMTP_PORT) || 465,
+        secure:             process.env.SMTP_SECURE === 'true',
+        connectionTimeout:  10000,   // 10s para establecer conexión TCP
+        greetingTimeout:    10000,   // 10s para el saludo SMTP
+        socketTimeout:      15000,   // 15s inactividad por socket
         auth: {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS,
@@ -81,7 +84,7 @@ router.post('/', contactLimiter, validators, async (req, res) => {
         return res.status(200).json({ success: true, message: 'Message sent successfully.' });
 
     } catch (error) {
-        console.error('Contact form error:', error);
+        console.error('Contact form error — code:', error.code, '| message:', error.message);
         return res.status(500).json({ error: 'Internal server error processing email.' });
     }
 });
