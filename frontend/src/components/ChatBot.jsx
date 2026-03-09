@@ -12,6 +12,75 @@ const WELCOME_MESSAGE = {
     "¡Hola! Soy Guadalupe. Puedes preguntarme sobre mi stack, proyectos, experiencia o lo que necesites saber. ¿En qué puedo ayudarte?",
 };
 
+/* ─── Helper: detectar URLs y clasificarlas ─── */
+function parseMessageLinks(text) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = [];
+  let lastIndex = 0;
+
+  const getLinkConfig = (url) => {
+    const lower = url.toLowerCase();
+    if (lower.endsWith(".pdf"))                                         return { type: "button", label: "📄 Descargar CV" };
+    if (lower.includes("github.com"))                                   return { type: "button", label: "🐙 Ver GitHub" };
+    if (lower.includes("linkedin.com"))                                 return { type: "button", label: "💼 Ver LinkedIn" };
+    if (lower.includes("youtube.com") || lower.includes("youtu.be"))   return { type: "button", label: "▶ Ver canal" };
+    if (lower.includes("portfolio") || lower.includes("proyecto") || lower.includes("project")) {
+      return { type: "button", label: "🚀 Ver proyecto" };
+    }
+    return { type: "link" };
+  };
+
+  text.replace(urlRegex, (match, url, offset) => {
+    if (lastIndex < offset) parts.push({ type: "text", content: text.slice(lastIndex, offset) });
+    parts.push({ url, ...getLinkConfig(url) });
+    lastIndex = offset + match.length;
+  });
+
+  if (lastIndex < text.length) parts.push({ type: "text", content: text.slice(lastIndex) });
+  return parts.length ? parts : [{ type: "text", content: text }];
+}
+
+/* ─── Renderizado de contenido con URLs ─── */
+function MessageContent({ content }) {
+  const parts = parseMessageLinks(content);
+  return (
+    <div className="space-y-1 break-words" style={{ overflowWrap: "anywhere" }}>
+      {parts.map((part, idx) => {
+        if (part.type === "text") {
+          return <span key={idx}>{part.content}</span>;
+        }
+        if (part.type === "button") {
+          return (
+            <a
+              key={idx}
+              href={part.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 mt-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-br from-white/10 to-white/5 border border-white/20 hover:border-white/40 hover:from-white/15 hover:to-white/10 transition-all duration-200 font-medium text-xs"
+            >
+              {part.label}
+            </a>
+          );
+        }
+        if (part.type === "link") {
+          return (
+            <a
+              key={idx}
+              href={part.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="break-all underline opacity-80 hover:opacity-100 transition-opacity"
+            >
+              {part.url}
+            </a>
+          );
+        }
+        return null;
+      })}
+    </div>
+  );
+}
+
 /* ─── Indicador de escritura ─── */
 function TypingIndicator() {
   return (
@@ -51,13 +120,13 @@ function MessageBubble({ msg }) {
         />
       )}
       <div
-        className={`max-w-[78%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+        className={`max-w-[78%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
           isUser
             ? "rounded-br-sm bg-gradient-to-br from-fuchsia-600 to-cyan-600 text-white"
             : "rounded-bl-sm bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-[var(--text-primary)]"
         }`}
       >
-        {msg.content}
+        <MessageContent content={msg.content} />
       </div>
     </div>
   );

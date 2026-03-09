@@ -3,6 +3,8 @@ import { body, validationResult } from 'express-validator';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { chatLimiter } from '../middleware/rateLimiters.js';
 import { SYSTEM_PROMPT } from '../data/systemPrompt.js';
+import { matchFaq } from '../utils/faqMatcher.js';
+import { getCachedResponse, saveToCache, isSpam } from '../utils/messageProtection.js';
 
 const router = Router();
 
@@ -21,6 +23,30 @@ router.post('/', chatLimiter, validators, async (req, res) => {
             return res.status(400).json({ error: errors.array()[0].msg });
         }
 
+        const { message, history = [] } = req.body;
+
+        // Spam filter
+        if (isSpam(message)) {
+            console.log(`[CHAT] Spam blocked → msg: "${message.slice(0, 80)}"`);
+            return res.status(400).json({ error: 'Mensaje no válido.' });
+        }
+
+        // Respuesta local sin consumir tokens si la pregunta coincide con FAQ
+        const faq = matchFaq(message);
+        if (faq.matched) {
+            console.log(`[CHAT] FAQ match → "${faq.id}" | msg: "${message.slice(0, 80)}"`);
+            return res.status(200).json({ reply: faq.answer });
+        }
+
+        // Respuesta cacheada de la IA (sin consumir tokens)
+        const cached = getCachedResponse(message);
+        if (cached) {
+            console.log(`[CHAT] Cache hit → msg: "${message.slice(0, 80)}"`);
+            return res.status(200).json({ reply: cached });
+        }
+
+        console.log(`[CHAT] Gemini API → msg: "${message.slice(0, 80)}"`);
+
         if (!process.env.GEMINI_API_KEY) {
             console.error('GEMINI_API_KEY not configured.');
             return res.status(503).json({
@@ -28,8 +54,6 @@ router.post('/', chatLimiter, validators, async (req, res) => {
                 isWarning: true,
             });
         }
-
-        const { message, history = [] } = req.body;
 
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({
@@ -80,6 +104,7 @@ router.post('/', chatLimiter, validators, async (req, res) => {
         }
 
         const reply = result.response.text();
+        saveToCache(message, reply);
         return res.status(200).json({ reply });
 
     } catch (error) {

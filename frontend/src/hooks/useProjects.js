@@ -30,6 +30,8 @@ export function useProjects() {
     }, []);
 
     const featuredProjects = projects.filter(p => p.featured).slice(0, 2);
+    const codeProjects     = projects.filter(p => !p.category || p.category === 'code');
+    const cmsProjects      = projects.filter(p => p.category === 'cms');
 
-    return { projects, featuredProjects, loading, error };
+    return { projects, featuredProjects, codeProjects, cmsProjects, loading, error };
 }

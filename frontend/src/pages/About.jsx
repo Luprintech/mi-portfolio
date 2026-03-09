@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Helmet } from "react-helmet-async";
 import { Rocket, Calendar, Layers, GraduationCap } from "lucide-react";
-import { FaBolt, FaPlug, FaDesktop, FaRobot, FaSyncAlt } from "react-icons/fa";
+import { FaBolt, FaPlug, FaDesktop, FaRobot, FaSyncAlt, FaWordpress, FaYoutube } from "react-icons/fa";
 import { MdSearch, MdSchool, MdAutorenew } from "react-icons/md";
 import { BsBroadcast } from "react-icons/bs";
 import mifoto from "../assets/pc.jpg";
@@ -16,10 +16,11 @@ import TechSkills from "../components/TechSkills.jsx";
 const TABS = ["tab_tech", "tab_story", "tab_diff"];
 
 const BADGE_KEYS = [
-  { key: "badge_fullstack", color: "cyan"    },
-  { key: "badge_self",      color: "violet"  },
-  { key: "badge_infra",     color: "fuchsia" },
-  { key: "badge_ai",        color: "emerald" },
+  { key: "badge_fullstack",  color: "cyan"    },
+  { key: "badge_self",       color: "violet"  },
+  { key: "badge_infra",      color: "fuchsia" },
+  { key: "badge_ai",         color: "emerald" },
+  { key: "badge_wordpress",  color: "blue"    },
 ];
 
 const BADGE_STYLES = {
@@ -27,6 +28,7 @@ const BADGE_STYLES = {
   fuchsia: "bg-[var(--accent-primary-dim)]   text-[var(--accent-primary)]   border-[var(--accent-primary)]/30",
   violet:  "bg-violet-500/10                 text-violet-400                border-violet-500/20",
   emerald: "bg-emerald-500/10               text-emerald-400               border-emerald-500/20",
+  blue:    "bg-blue-500/10                  text-blue-400                  border-blue-500/20",
 };
 
 const STATS_CONFIG = [
@@ -44,14 +46,15 @@ const DIFF_ITEMS = [
   { Icon: MdAutorenew, iconColor: "text-[var(--accent-primary)]",   key: "diff_n8n"         },
 ];
 
-const TECH_KEYS = ["tech_1", "tech_2", "tech_3", "tech_4", "tech_5"];
-const TECH_ICONS = [FaBolt, FaPlug, FaDesktop, FaRobot, FaSyncAlt];
+const TECH_KEYS = ["tech_1", "tech_2", "tech_3", "tech_4", "tech_5", "tech_6"];
+const TECH_ICONS = [FaBolt, FaPlug, FaDesktop, FaRobot, FaSyncAlt, FaWordpress];
 const TECH_ICON_COLORS = [
   "text-[var(--accent-primary)]",
   "text-[var(--accent-secondary)]",
   "text-[var(--accent-primary)]",
   "text-[var(--accent-secondary)]",
   "text-[var(--accent-primary)]",
+  "text-blue-400",
 ];
 
 /* ─── COMPONENT ─── */
@@ -291,6 +294,41 @@ export default function SobreMi() {
         </section>
 
         {/* ══════════════════════════════════════════
+            BLOQUE 5 — CANAL YOUTUBE
+        ══════════════════════════════════════════ */}
+        <section aria-label="Canal de YouTube">
+          <Motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="flex flex-col sm:flex-row items-center gap-6 rounded-2xl border border-red-500/20 bg-[var(--bg-surface)] p-6 md:p-8 shadow-[var(--card-shadow)] relative overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 via-transparent to-transparent pointer-events-none" />
+            <div className="shrink-0 flex items-center justify-center w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 relative z-10">
+              <FaYoutube size={32} />
+            </div>
+            <div className="flex-1 text-center sm:text-left relative z-10">
+              <h3 className="text-lg font-bold text-[var(--text-primary)] mb-1">
+                {t("about.yt_title")}
+              </h3>
+              <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+                {t("about.yt_desc")}
+              </p>
+            </div>
+            <a
+              href="https://www.youtube.com/@Luprintech"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-semibold transition-all flex items-center gap-2 shadow-md relative z-10"
+            >
+              <FaYoutube size={16} />
+              {t("about.yt_btn")}
+            </a>
+          </Motion.div>
+        </section>
+
+        {/* ══════════════════════════════════════════
             BLOQUE 6 — CTA FINAL
         ══════════════════════════════════════════ */}
         <section aria-label="Llamada a la acción">
@@ -320,7 +358,7 @@ export default function SobreMi() {
                 {t("about.cta_contact")}
               </Link>
               <Link
-                to="/portfolio"
+                to="/portfolio/desarrollo-web"
                 className="px-8 py-3 rounded-xl font-semibold text-[var(--accent-secondary)] border border-[var(--accent-secondary)]/50 bg-[var(--bg-elevated)] hover:bg-[var(--accent-secondary-dim)] transition-all duration-300 hover:-translate-y-1"
               >
                 {t("about.cta_projects")}

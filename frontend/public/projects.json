@@ -3,30 +3,60 @@
     "id": "vocaccion",
     "title": "Vocacción",
     "description": "Plataforma web orientada a la orientación vocacional mediante un sistema conversacional inteligente y arquitectura modular escalable. Diseñada para transformar procesos de toma de decisiones en experiencias guiadas.",
-    "tech": ["React", "Laravel", "API REST", "Arquitectura Modular"],
+    "tech": [
+      "React",
+      "Laravel",
+      "API REST",
+      "Arquitectura Modular"
+    ],
     "github": "https://github.com/Luprintech/vocaccion",
     "demo": "https://tuvocaccion.es",
     "image": "/images/vocaccion.jpg",
-    "featured": true
+    "featured": true,
+    "category": "code"
   },
   {
     "id": "calculadora-3d",
     "title": "Calculadora Presupuesto 3D",
     "description": "Herramienta que permite calcular el coste de impresión 3D a través de un panel interactivo con parámetros como tiempos, materiales y gastos extras.",
-    "tech": ["React", "Tailwind CSS", "JavaScript"],
+    "tech": [
+      "React",
+      "Tailwind CSS",
+      "JavaScript"
+    ],
     "github": "https://github.com/Luprintech/calculadora-3D",
     "demo": "https://calculadora3d.luprintech.com/",
     "image": "/images/calculadora3d.png",
-    "featured": true
+    "featured": true,
+    "category": "code"
   },
   {
     "id": "luprinchef-recetas",
     "title": "LuprinChef - Recetario",
     "description": "Plataforma de recetas de cocina con un sistema interactivo para que los usuarios valoren comidas, compartan ideas y descubran nuevas opciones culinarias.",
-    "tech": ["Node.js", "Express", "HTML/CSS"],
+    "tech": [
+      "Node.js",
+      "Express",
+      "HTML/CSS"
+    ],
     "github": "https://github.com/Luprintech/luprinchef-recetas",
     "demo": "https://recetas.luprintech.com/",
     "image": "/images/luprinchef.jpg",
-    "featured": false
+    "featured": false,
+    "category": "code"
+  },
+  {
+    "id": "land-gestion-agricola",
+    "title": "Landing Page — Land Gestión Agrícola",
+    "description": "Colaboración en proyecto real: remodelación completa de la landing page de una empresa del sector agrícola. Reconstruí el sistema de navegación con menús y submenús, gestión e inserción de imágenes, estructura visual de secciones y optimización general de la página.",
+    "tech": [
+      "WordPress",
+      "Divi Builder",
+      "CSS"
+    ],
+    "demo": "https://landgestionagricola.com/",
+    "image": "/posts/images/1773042539337-land-agricola.png",
+    "featured": false,
+    "category": "cms"
   }
 ]

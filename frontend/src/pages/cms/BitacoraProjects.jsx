@@ -92,11 +92,20 @@ export default function BitacoraProjects() {
                             )}
 
                             <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 flex-wrap">
                                     <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{project.title}</p>
                                     {project.featured && (
                                         <span className="text-xs px-2 py-0.5 rounded-full bg-fuchsia-500/15 text-fuchsia-400 border border-fuchsia-500/20 shrink-0">
                                             Destacado
+                                        </span>
+                                    )}
+                                    {project.category === 'cms' ? (
+                                        <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/20 shrink-0">
+                                            WordPress & CMS
+                                        </span>
+                                    ) : (
+                                        <span className="text-xs px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-400 border border-violet-500/20 shrink-0">
+                                            Código
                                         </span>
                                     )}
                                 </div>

@@ -1,7 +1,7 @@
 import { motion as Motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import { Sparkles, Cloud } from "lucide-react";
-import { SiLaravel, SiPhp, SiNodedotjs, SiJavascript, SiReact, SiTailwindcss, SiVite, SiMysql, SiPostgresql, SiRedis, SiDocker, SiNginx, SiLinux, SiGit } from "react-icons/si";
+import { Sparkles } from "lucide-react";
+import { SiLaravel, SiPhp, SiNodedotjs, SiJavascript, SiReact, SiTailwindcss, SiVite, SiMysql, SiPostgresql, SiRedis, SiDocker, SiNginx, SiLinux, SiGit, SiWordpress } from "react-icons/si";
 
 /* ─── SKILLS DATA ─── */
 const SKILLS_DATA = [
@@ -53,19 +53,6 @@ const SKILLS_DATA = [
     ],
   },
   {
-    titleKey: "skills.cloud_title",
-    descKey: "skills.cloud_desc",
-    icon: Cloud,
-    iconColor: "text-cyan-500",
-    skills: [
-      { name: "AWS", level: 60, years: "1+" },
-      { name: "Google Cloud", level: 60, years: "1+" },
-      { name: "Cloudflare", level: 80, years: "3+" },
-      { name: "Deploy en VPS Linux", level: 85, years: "4+" },
-      { name: "Docker en cloud", level: 80, years: "3+" },
-    ],
-  },
-  {
     titleKey: "skills.ai_title",
     descKey: "skills.ai_desc",
     icon: Sparkles,
@@ -76,6 +63,18 @@ const SKILLS_DATA = [
       { name: "Modelos locales / ComfyUI", level: 75, years: "2+" },
       { name: "n8n automatización", level: 85, years: "3+" },
       { name: "IA en producción", level: 80, years: "3+" },
+    ],
+  },
+  {
+    titleKey: "skills.cms_title",
+    descKey: "skills.cms_desc",
+    icon: SiWordpress,
+    iconColor: "text-blue-400",
+    skills: [
+      { name: "WordPress", level: 85, years: "5+" },
+      { name: "Divi Builder", level: 80, years: "4+" },
+      { name: "Landing Pages", level: 85, years: "5+" },
+      { name: "Webs a medida", level: 80, years: "4+" },
     ],
   },
 ];
@@ -133,15 +132,10 @@ function SkillCard({ titleKey, descKey, icon: Icon, iconColor, skills, index, is
               transition={{ duration: 0.4, delay: index * 0.1 + idx * 0.05 }}
               className="space-y-1.5"
             >
-              {/* Nombre y años */}
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-medium text-[var(--text-primary)]">
-                  {skill.name}
-                </span>
-                <span className="text-xs font-semibold text-[var(--accent-secondary)] bg-[var(--accent-secondary-dim)] px-2.5 py-0.5 rounded-full">
-                  {skill.years}
-                </span>
-              </div>
+              {/* Nombre */}
+              <span className="text-sm font-medium text-[var(--text-primary)]">
+                {skill.name}
+              </span>
 
               {/* Barra de progreso */}
               <div className="relative h-2 bg-[var(--bg-surface)] rounded-full overflow-hidden">

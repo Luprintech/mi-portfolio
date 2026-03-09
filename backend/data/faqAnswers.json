@@ -1,0 +1,298 @@
+[
+  {
+    "id": "greeting",
+    "weight": 1,
+    "keywords": ["hola", "hello", "hi", "hey", "buenas"],
+    "secondary_keywords": ["saludos", "buenos dias", "buenos días", "buenas tardes", "buenas noches", "good morning", "good afternoon", "good evening", "holi", "howdy", "greetings"],
+    "answer_es": "¡Hola! Soy Guadalupe. Puedes preguntarme sobre mi experiencia, proyectos, stack técnico, disponibilidad o lo que necesites saber. ¿En qué puedo ayudarte?",
+    "answer_en": "Hi! I'm Guadalupe. Feel free to ask me about my experience, projects, tech stack, availability or anything you need. How can I help you?"
+  },
+  {
+    "id": "name",
+    "weight": 2,
+    "keywords": ["nombre", "llamas", "name"],
+    "secondary_keywords": ["quien eres", "quién eres", "who are you", "who is this", "nombre completo", "how do i call you", "como te llamo", "cómo te llamo", "quien es guadalupe", "quién es guadalupe"],
+    "answer_es": "Me llamo Guadalupe Cano. Soy desarrolladora web Full Stack.",
+    "answer_en": "My name is Guadalupe Cano. I'm a Full Stack web developer."
+  },
+  {
+    "id": "intro",
+    "weight": 2,
+    "keywords": ["presentate", "presentarte", "sobre ti", "perfil profesional", "resumen profesional", "dedicas", "background"],
+    "secondary_keywords": ["introduce yourself", "tell me about yourself", "about you", "que haces", "qué haces", "what do you do", "cuentame de ti", "cuéntame de ti", "professional profile", "describe yourself", "hablame de ti", "háblame de ti", "tu perfil", "tell me about you", "your background"],
+    "answer_es": "Soy Guadalupe Cano, desarrolladora web Full Stack de 35 años con base en Córdoba. Vengo de 10 años en RACE (emergencias y soporte técnico) y decidí dedicarme 100% a la tecnología. Mi stack principal es React, Laravel y Node.js, con experiencia real en infraestructura: Docker, Nginx, VPS. También integro IA en producción y trabajo con WordPress/Divi.",
+    "answer_en": "I'm Guadalupe Cano, a 35-year-old Full Stack web developer based in Córdoba, Spain. After 10 years at RACE in emergency services and technical support, I transitioned fully into tech. My main stack is React, Laravel and Node.js, with real infrastructure experience: Docker, Nginx, VPS. I also integrate AI in production and work with WordPress/Divi."
+  },
+  {
+    "id": "personal_age",
+    "weight": 3,
+    "keywords": ["edad tienes", "años tienes", "how old", "your age", "cuantos años tienes", "cuántos años tienes"],
+    "secondary_keywords": ["fecha de nacimiento", "date of birth", "birthday", "naciste", "cuantos años", "cuántos años", "que edad", "qué edad", "edad tiene", "años tiene"],
+    "answer_es": "Tengo 35 años.",
+    "answer_en": "I'm 35 years old."
+  },
+  {
+    "id": "location",
+    "weight": 2,
+    "keywords": ["donde vives", "dónde vives", "ubicacion", "ubicación", "cordoba", "ciudad", "location"],
+    "secondary_keywords": ["andalucia", "andalucía", "spain", "españa", "where do you live", "where are you based", "where are you located", "donde eres", "dónde eres", "de donde eres", "de dónde eres", "en que ciudad", "en qué ciudad", "base location"],
+    "answer_es": "Vivo en Córdoba, Andalucía. Tengo carné de conducir y vehículo propio, y puedo desplazarme por Andalucía o viajar ocasionalmente.",
+    "answer_en": "I'm based in Córdoba, Andalusia, Spain. I have a driving license and my own car, and can travel within Andalusia or occasionally further."
+  },
+  {
+    "id": "remote_work",
+    "weight": 2,
+    "keywords": ["remoto", "teletrabajo", "presencial", "hibrido", "híbrido", "remote", "on-site"],
+    "secondary_keywords": ["trabajo remoto", "trabajo en remoto", "full remote", "work from home", "wfh", "modalidad de trabajo", "remote work", "in person", "hybrid", "100 remoto", "oficina", "office", "aceptas remoto", "trabajas en remoto", "do you work remotely", "are you open to remote"],
+    "answer_es": "Estoy abierta a remoto, híbrido o presencial en Andalucía. Mi preferencia es el remoto o híbrido, pero valoro sobre todo el proyecto y el equipo.",
+    "answer_en": "I'm open to remote, hybrid or on-site within Andalusia. My preference is remote or hybrid, but what matters most is the project and the team."
+  },
+  {
+    "id": "availability",
+    "weight": 2,
+    "keywords": ["disponible", "disponibilidad", "incorporarte", "incorporacion", "availability", "when can you start"],
+    "secondary_keywords": ["cuando puedes empezar", "cuándo puedes empezar", "start date", "notice period", "inmediata", "immediate", "cuando te incorporas", "cuándo te incorporas", "are you available", "available now", "join date", "cuando podrias empezar", "periodo de preaviso"],
+    "answer_es": "Estoy disponible de forma inmediata.",
+    "answer_en": "I'm available immediately."
+  },
+  {
+    "id": "stack_tech",
+    "weight": 2,
+    "keywords": ["stack", "tecnologias", "tecnologías", "lenguajes", "herramientas", "skills", "technologies"],
+    "secondary_keywords": ["framework", "programacion", "programación", "dominas", "conoces", "tech stack", "what do you know", "what can you do", "tus habilidades", "habilidades tecnicas", "habilidades técnicas", "what technologies do you use", "what programming languages", "what tools", "technical skills", "competencias tecnicas"],
+    "answer_es": "Frontend: React, JavaScript ES6+, Tailwind CSS, Vite. Backend: Laravel/PHP, Node.js, REST APIs, JWT. Bases de datos: MySQL, PostgreSQL. Infraestructura: Docker, Nginx, VPS Linux, Raspberry Pi, Synology NAS. IA y automatización: Gemini API, n8n. CMS: WordPress y Divi Builder.",
+    "answer_en": "Frontend: React, JavaScript ES6+, Tailwind CSS, Vite. Backend: Laravel/PHP, Node.js, REST APIs, JWT. Databases: MySQL, PostgreSQL. Infrastructure: Docker, Nginx, Linux VPS, Raspberry Pi, Synology NAS. AI & automation: Gemini API, n8n. CMS: WordPress and Divi Builder."
+  },
+  {
+    "id": "react",
+    "weight": 3,
+    "keywords": ["react", "reactjs", "jsx", "hooks"],
+    "secondary_keywords": ["react.js", "sabes react", "usas react", "react experience", "frontend react", "react router", "vite react", "context api", "do you know react", "react developer", "react skills", "nivel react", "react hooks"],
+    "answer_es": "Sí, React es mi principal framework de frontend. Lo uso con Tailwind CSS, React Router, hooks personalizados y Vite. Este portfolio está hecho en React.",
+    "answer_en": "Yes, React is my main frontend framework. I use it with Tailwind CSS, React Router, custom hooks and Vite. This portfolio is built with React."
+  },
+  {
+    "id": "laravel",
+    "weight": 3,
+    "keywords": ["laravel", "eloquent", "sanctum", "artisan"],
+    "secondary_keywords": ["php", "backend laravel", "laravel api", "sabes laravel", "usas laravel", "laravel experience", "laravel developer", "laravel backend", "laravel jwt", "do you know laravel", "blade", "nivel laravel", "php developer"],
+    "answer_es": "Sí, Laravel es mi framework de backend principal. Lo uso para construir APIs RESTful, gestión de autenticación con JWT/Sanctum y lógica de negocio estructurada. En VocAcción desarrollé un backend completo con Laravel.",
+    "answer_en": "Yes, Laravel is my main backend framework. I use it to build RESTful APIs, authentication with JWT/Sanctum, and structured business logic. I built a full Laravel backend for VocAcción."
+  },
+  {
+    "id": "projects",
+    "weight": 2,
+    "keywords": ["tus proyectos", "your projects", "portfolio", "has desarrollado", "what have you built"],
+    "secondary_keywords": ["trabajos realizados", "ejemplos de proyectos", "what have you done", "case studies", "aplicaciones que has hecho", "muéstrame tu trabajo", "muestrame tu trabajo", "show me your work", "que has hecho", "qué has hecho", "cuales son tus proyectos", "cuáles son tus proyectos", "tell me about your projects", "portfolio work"],
+    "answer_es": "Mis proyectos principales: VocAcción (plataforma de orientación vocacional con IA, Laravel + React + Gemini), Calculadora de presupuesto 3D (Next.js) y este portfolio desplegado en mi propio NAS con Docker y Nginx. También remodelé la landing page landgestionagricola.com con WordPress y Divi. Todo en guadalupecano.es.",
+    "answer_en": "My main projects: VocAcción (vocational guidance platform with AI, Laravel + React + Gemini), a 3D print cost calculator (Next.js), and this portfolio deployed on my own NAS with Docker and Nginx. I also rebuilt landgestionagricola.com with WordPress and Divi. Everything's at guadalupecano.es."
+  },
+  {
+    "id": "vocaccion",
+    "weight": 3,
+    "keywords": ["vocaccion", "vocacción", "orientacion vocacional", "orientación vocacional", "vocational"],
+    "secondary_keywords": ["plataforma vocacional", "proyecto vocaccion", "proyecto final daw", "proyecto fin de ciclo", "laravel react gemini", "proyecto educativo", "educational platform", "tu proyecto principal", "proyecto mas completo", "proyecto más completo", "mejor proyecto", "proyecto destacado"],
+    "answer_es": "VocAcción es mi proyecto más completo: plataforma de orientación vocacional con 3 roles (admin, orientador, alumno). Backend en Laravel con API REST y JWT, frontend React SPA, y sistema de análisis con IA (Gemini) que genera perfiles vocacionales personalizados a partir de los resultados de un test. Fue mi proyecto final de DAW.",
+    "answer_en": "VocAcción is my most complete project: a vocational guidance platform with 3 roles (admin, counselor, student). Laravel backend with REST API and JWT, React SPA frontend, and an AI analysis system (Gemini) that generates personalized vocational profiles from test results. It was my final DAW project."
+  },
+  {
+    "id": "calculator_3d",
+    "weight": 3,
+    "keywords": ["calculadora 3d", "presupuesto 3d", "next.js", "nextjs", "calculadora impresion", "calculadora impresión"],
+    "secondary_keywords": ["herramienta 3d", "coste impresion 3d", "coste impresión 3d", "3d print cost", "3d printing calculator", "impresion 3d calculadora"],
+    "answer_es": "La Calculadora de Presupuesto 3D es una herramienta online en Next.js para estimar el coste de piezas impresas en 3D: materiales, consumo eléctrico, amortización de la máquina y factor de fallos. Nació de mi experiencia real con impresoras 3D.",
+    "answer_en": "The 3D Print Cost Calculator is an online Next.js tool to estimate the production cost of 3D printed parts: materials, power consumption, machine depreciation, and failure factor. It came from my real hands-on experience with 3D printers."
+  },
+  {
+    "id": "wordpress",
+    "weight": 3,
+    "keywords": ["wordpress", "divi", "landing page", "cms"],
+    "secondary_keywords": ["web corporativa", "pagina web", "página web", "web a medida", "woocommerce", "elementor", "divi builder", "landgestion", "landgestionagricola", "sabes wordpress", "usas wordpress", "wordpress experience", "wordpress developer", "wordpress skills", "do you know wordpress", "plugin wordpress", "web para clientes"],
+    "answer_es": "Trabajo con WordPress y Divi Builder para webs corporativas, landing pages y webs a medida con gestión autónoma por el cliente. Un ejemplo real es landgestionagricola.com: remodelé toda la estructura, el sistema de menús y submenús, y la gestión de imágenes.",
+    "answer_en": "I work with WordPress and Divi Builder for corporate sites, landing pages and custom websites with client-managed content. A real example is landgestionagricola.com, where I rebuilt the entire structure, menu system and image management."
+  },
+  {
+    "id": "experience",
+    "weight": 2,
+    "keywords": ["experiencia laboral", "experiencia profesional", "work experience", "historial laboral", "trayectoria profesional"],
+    "secondary_keywords": ["has trabajado antes", "trabajos anteriores", "previous job", "employment history", "tell me about your experience", "your experience", "tu experiencia", "que experiencia tienes", "qué experiencia tienes", "años de experiencia", "worked before", "prior experience", "cuanto llevas trabajando", "cuánto llevas trabajando", "donde trabajabas", "dónde trabajabas"],
+    "answer_es": "No tengo experiencia formal en tecnología todavía — es mi primer empleo en el sector. Pero vengo de 10 años en RACE (asistencia en carretera, emergencias, soporte técnico a vehículos, formación a compañeros). Eso me dio trabajo bajo presión real, trabajo en equipo y capacidad de resolver problemas de manera rápida. Puedes ver mis proyectos, que muestran lo que sé construir.",
+    "answer_en": "No formal tech experience yet — this would be my first role in the sector. However, I bring 10 years of experience at RACE (roadside assistance, emergency services, vehicle technical support, and training colleagues). That background gave me real experience working under pressure, strong teamwork skills, and the ability to solve problems quickly. You can also review my projects, which demonstrate what I'm capable of building."
+  },
+  {
+    "id": "race",
+    "weight": 3,
+    "keywords": ["asistencia en carretera", "empresa race", "emergencias laborales", "volvo soporte", "targa"],
+    "secondary_keywords": ["race", "emergencias", "anterior empresa", "empresa anterior", "operadora", "roadside", "gestion flotas", "gestión flotas", "que hacías antes", "qué hacías antes", "soporte volvo", "antes de programar", "where did you work before", "call center emergencias"],
+    "answer_es": "Trabajé 10 años en RACE: operadora de asistencia en carretera y SOS de emergencias reales, soporte técnico a vehículos Volvo, formación a compañeros y material formativo, y apoyo a Targa (empresa italiana) con localización de flotas. Lo dejé para dedicarme al 100% a la tecnología.",
+    "answer_en": "I worked 10 years at RACE: roadside assistance and real emergency SOS operator, technical support for Volvo vehicles, training colleagues and writing training materials, and supporting Targa (Italian company) with fleet tracking. I left to dedicate myself 100% to tech."
+  },
+  {
+    "id": "education",
+    "weight": 2,
+    "keywords": ["estudios", "formacion", "formación", "titulacion", "titulación", "daw", "degree"],
+    "secondary_keywords": ["ciclo superior", "grado", "universidad", "certificaciones", "fp", "formacion profesional", "formación profesional", "que estudiaste", "qué estudiaste", "tus estudios", "your education", "what did you study", "academic background", "titulos", "títulos", "educacion formal", "educación formal"],
+    "answer_es": "Tengo el Ciclo Superior de Desarrollo de Aplicaciones Web (DAW), una Licenciatura en Pedagogía (Universidad de Burgos, con Erasmus en Messina, Italia), y cursos de IA aplicada y ciberseguridad (INCIBE + Universidad de Málaga). Soy muy autodidacta: Docker, Linux, IA... todo antes de que apareciera en el plan de estudios.",
+    "answer_en": "I have a Higher Technician degree in Web Application Development (DAW), a Pedagogy degree (University of Burgos, Erasmus in Messina, Italy), and courses in AI and cybersecurity (INCIBE + University of Málaga). Very self-taught: Docker, Linux, AI... all before it was in any curriculum."
+  },
+  {
+    "id": "pedagogy",
+    "weight": 3,
+    "keywords": ["pedagogia", "pedagogía", "erasmus", "messina", "licenciatura pedagogia"],
+    "secondary_keywords": ["grado pedagogia", "grado en pedagogia", "burgos", "maestra", "por que pedagogia", "por qué pedagogía", "teaching degree", "pedagogy", "carrera pedagogia", "que relacion tiene con programacion"],
+    "answer_es": "Me licencié en Pedagogía en la Universidad de Burgos, con un Erasmus en Messina (Italia). Esa formación me dio algo que el puro código rara vez da: capacidad para estructurar, documentar y hacer que los sistemas sean comprensibles, no solo funcionales. Lo aplico cada día.",
+    "answer_en": "I have a Pedagogy degree from the University of Burgos, with an Erasmus in Messina, Italy. That training gave me something pure coding rarely does: the ability to structure, document, and make systems understandable, not just functional. I apply it every day."
+  },
+  {
+    "id": "cybersecurity",
+    "weight": 3,
+    "keywords": ["ciberseguridad", "cybersecurity", "pentesting", "incibe", "hacking"],
+    "secondary_keywords": ["seguridad informatica", "seguridad informática", "owasp", "vulnerabilidades", "seguridad web", "ethical hacking", "formacion seguridad", "cursos seguridad", "do you know cybersecurity", "security training", "secure coding", "desarrollo seguro"],
+    "answer_es": "He completado un MOOC de ciberseguridad (INCIBE + Universidad de Málaga). Me interesa especialmente en el contexto del desarrollo web — construir aplicaciones seguras no es opcional. El año que viene planeo especializarme más en esta área.",
+    "answer_en": "I've completed a cybersecurity MOOC (INCIBE + University of Málaga). I'm especially interested in it in the web development context — building secure applications isn't optional. I plan to specialize further in this area next year."
+  },
+  {
+    "id": "ai_integration",
+    "weight": 2,
+    "keywords": ["inteligencia artificial", "gemini api", "llm", "artificial intelligence", "ia produccion"],
+    "secondary_keywords": ["ia", "chatgpt", "ollama", "prompt engineering", "generative ai", "modelos ia", "ai integration", "ia en proyectos", "machine learning", "nlp", "openai", "ia en aplicaciones", "llms", "modelos de lenguaje", "como usas la ia", "cómo usas la ia"],
+    "answer_es": "Integro IA real en producción: Gemini API, OpenAI con rate limiting, fallbacks y manejo de errores — no demos. En VocAcción, la IA genera análisis vocacionales personalizados a partir de resultados de test. También experimento con Ollama, ComfyUI y otros modelos generativos.",
+    "answer_en": "I integrate real AI in production: Gemini API, OpenAI with rate limiting, fallbacks and error handling — not demos. In VocAcción, the AI generates personalized vocational analysis from test results. I also experiment with Ollama, ComfyUI and other generative models."
+  },
+  {
+    "id": "n8n_automation",
+    "weight": 3,
+    "keywords": ["n8n", "automatizacion", "automatización", "automation", "workflows"],
+    "secondary_keywords": ["zapier", "no-code", "low-code", "flujos trabajo", "flujos de trabajo", "process automation", "sabes n8n", "usas n8n", "n8n workflows", "automation tools", "automatizar procesos", "que automatizas", "qué automatizas", "make.com", "integromat"],
+    "answer_es": "Uso n8n para crear flujos de automatización que conectan sistemas que de otra forma no se hablarían. Es parte de mi stack de IA y automatización: no solo construyo la app, también automatizo lo que corre detrás.",
+    "answer_en": "I use n8n to create automation workflows that connect systems that wouldn't otherwise communicate. It's part of my AI and automation stack: I don't just build the app, I also automate what runs behind it."
+  },
+  {
+    "id": "infrastructure",
+    "weight": 2,
+    "keywords": ["docker", "nginx", "linux vps", "infraestructura", "devops"],
+    "secondary_keywords": ["servidor propio", "contenedores", "raspberry pi", "synology", "deployment", "despliegue", "ssl", "lets encrypt", "reverse proxy", "homelab", "home lab", "vps", "linux", "sabes docker", "usas docker", "server setup", "configure servers"],
+    "answer_es": "Tengo experiencia real en infraestructura: Docker, Nginx como reverse proxy, VPS Linux, Raspberry Pi y Synology NAS. Este portfolio está desplegado en mi propio NAS con Docker y SSL de Let's Encrypt. No es teoría — lo configuro y lo mantengo yo.",
+    "answer_en": "I have real infrastructure experience: Docker, Nginx as reverse proxy, Linux VPS, Raspberry Pi and Synology NAS. This portfolio is deployed on my own NAS with Docker and Let's Encrypt SSL. Not theory — I configure and maintain it myself."
+  },
+  {
+    "id": "self_taught",
+    "weight": 2,
+    "keywords": ["autodidacta", "self-taught", "aprendiste sola", "aprendiste solo"],
+    "secondary_keywords": ["como aprendiste", "cómo aprendiste", "antes del daw", "aprendizaje autodidacta", "aprendizaje continuo", "self learning", "como te formaste", "cómo te formaste", "cursos realizados", "autoformacion", "continuous learning", "aprendiste por tu cuenta"],
+    "answer_es": "Soy muy autodidacta. Antes de empezar DAW ya tenía servidores caseros, Docker, Raspberry Pi y experimentos con IA. No espero a que me enseñen — identifico lo que necesito aprender y voy a por ello.",
+    "answer_en": "I'm very self-taught. Before starting DAW I already had home servers, Docker, Raspberry Pi and AI experiments. I don't wait to be taught — I identify what I need to learn and go for it."
+  },
+  {
+    "id": "languages_spoken",
+    "weight": 2,
+    "keywords": ["idiomas", "ingles nivel", "italiano hablas", "languages spoken", "english level"],
+    "secondary_keywords": ["ingles", "inglés", "italiano", "hablas ingles", "hablas inglés", "do you speak english", "speak italian", "nivel de ingles", "nivel de inglés", "b2", "c1", "language skills", "language proficiency", "que idiomas hablas", "qué idiomas hablas", "english fluency"],
+    "answer_es": "Español nativo. Inglés a nivel de lectura técnica y documentación. Italiano conversacional y escrito — viví en Messina (Italia) durante el Erasmus.",
+    "answer_en": "Native Spanish. English at technical reading and documentation level. Conversational Italian (spoken and written) — I lived in Messina, Italy during my Erasmus."
+  },
+  {
+    "id": "salary",
+    "weight": 2,
+    "keywords": ["salario", "sueldo", "salary", "pretensiones salariales", "compensation"],
+    "secondary_keywords": ["cuanto cobras", "cuánto cobras", "cuanto quieres ganar", "cuánto quieres ganar", "wage", "earnings", "expectativas salariales", "salary expectations", "rango salarial", "banda salarial", "salary range", "salary requirements", "cuanto pides", "cuánto pides", "how much do you expect"],
+    "answer_es": "Busco una remuneración acorde al convenio del sector TIC según categoría y responsabilidades, abierta a negociar. El rango orientativo para perfiles junior/mid en España está entre 20.000–26.000€ brutos anuales, aunque prefiero hablarlo directamente.",
+    "answer_en": "I'm looking for compensation in line with the Spanish ICT sector collective agreement for my category, open to negotiation. The reference range for junior/mid profiles in Spain is around 20,000–26,000€ gross per year, though I prefer to discuss it directly."
+  },
+  {
+    "id": "why_hire",
+    "weight": 2,
+    "keywords": ["contratarte", "por que contratarte", "diferencia", "why hire", "fortalezas", "aportas"],
+    "secondary_keywords": ["convenceme", "convénceme", "valor diferencial", "sell yourself", "puntos fuertes", "why should i hire you", "que te hace especial", "qué te hace especial", "ventaja competitiva", "why choose you", "razones para contratarte", "what value do you bring", "por que eres la candidata", "your strengths"],
+    "answer_es": "Vengo de 10 años resolviendo emergencias reales — eso te da una mentalidad que el código solo no da. Soy autodidacta desde antes de la carrera, entiendo la infraestructura donde corre el código, integro IA en producción y tengo la formación pedagógica para documentar y explicar lo que construyo. No dejo nada a medias.",
+    "answer_en": "I spent 10 years solving real emergencies — that gives you a mindset pure coding can't. I'm self-taught from before my degree, I understand the infrastructure where code runs, I integrate AI in production, and I have the pedagogical background to document and explain what I build. I don't leave things half-done."
+  },
+  {
+    "id": "teamwork",
+    "weight": 2,
+    "keywords": ["trabajo en equipo", "teamwork", "colaboracion", "scrum", "agile"],
+    "secondary_keywords": ["equipo", "team", "pair programming", "kanban", "metodologias agiles", "metodologías ágiles", "trabajas en equipo", "are you a team player", "do you work in teams", "trabajar con otros", "code review", "colaboracion en proyectos"],
+    "answer_es": "10 años en un servicio de emergencias donde el trabajo en equipo no era opcional — era crítico. Sé coordinarme, comunicar bajo presión y adaptar mi ritmo al del grupo. En proyectos técnicos, me gusta documentar bien para que cualquiera del equipo pueda entender lo que he hecho.",
+    "answer_en": "10 years in emergency services where teamwork wasn't optional — it was critical. I know how to coordinate, communicate under pressure, and adapt my pace to the group. In technical projects, I document thoroughly so anyone on the team can understand what I've built."
+  },
+  {
+    "id": "career_change",
+    "weight": 2,
+    "keywords": ["cambio de carrera", "por que tecnologia", "why tech", "career change", "por que programacion"],
+    "secondary_keywords": ["por qué tecnología", "por qué programación", "motivacion programar", "motivación programar", "career transition", "why development", "why did you switch", "que te llevo a programar", "qué te llevó a programar", "why did you become a developer", "que te motivó", "qué te motivó"],
+    "answer_es": "La educación siempre fue mi base. Pero la tecnología es donde me siento más yo, donde soy más feliz. No fue un abandono — fue encontrar dónde quería estar. Y la Pedagogía no la dejé atrás: me da una mentalidad analítica que aplico cada día en cómo construyo y documento sistemas.",
+    "answer_en": "Education was always my foundation. But technology is where I feel most myself, where I'm happiest. It wasn't abandonment — it was finding where I wanted to be. And Pedagogy isn't left behind: it gives me an analytical mindset I apply every day in how I build and document systems."
+  },
+  {
+    "id": "personality",
+    "weight": 2,
+    "keywords": ["personalidad", "personality", "soft skills", "como eres", "cómo eres"],
+    "secondary_keywords": ["caracter", "carácter", "habilidades blandas", "estilo de trabajo", "work style", "puntos debiles", "weaknesses", "how would you describe yourself", "te describes", "describete", "descríbete", "what are you like", "que tipo de persona", "qué tipo de persona"],
+    "answer_es": "Directa y honesta, sin rodeos. Perfeccionista funcional — me fijo en los bordes y los casos extremos. Cuando algo me bloquea, investigo hasta la causa raíz. Curiosa: necesito entender cómo funciona todo por dentro. No me gustan los parches.",
+    "answer_en": "Direct and honest, no nonsense. A functional perfectionist — I pay attention to edge cases. When something blocks me, I research to the root cause. Curious: I need to understand how everything works from the inside. I don't like patches."
+  },
+  {
+    "id": "cv",
+    "weight": 3,
+    "keywords": ["cv", "curriculum", "currículum", "resume"],
+    "secondary_keywords": ["descargar cv", "download cv", "download resume", "descargar curriculum", "ver cv", "tu cv", "link cv", "pdf cv", "adjunta cv", "enviar cv", "your cv", "your resume", "dame tu cv", "send cv", "me puedes pasar tu cv", "can i see your cv"],
+    "answer_es": "Aquí tienes mi CV: https://guadalupecano.es/CV_Guadalupe_Cano.pdf — También puedes ver todos mis proyectos en detalle en el portfolio.",
+    "answer_en": "Here's my CV: https://guadalupecano.es/CV_Guadalupe_Cano.pdf — You can also explore all my projects in the portfolio."
+  },
+  {
+    "id": "contact",
+    "weight": 2,
+    "keywords": ["contacto", "email", "correo", "linkedin", "github"],
+    "secondary_keywords": ["contact", "contactar", "como te contacto", "cómo te contacto", "reach you", "get in touch", "write to you", "redes sociales", "redes profesionales", "informacion de contacto", "información de contacto", "tu email", "your email", "contact info", "contact details", "send you a message", "como puedo contactarte", "cómo puedo contactarte"],
+    "answer_es": "Puedes escribirme a contacto@guadalupecano.es o a través del formulario de contacto de la web. También estoy en LinkedIn y GitHub — los encuentras en la sección de contacto.",
+    "answer_en": "You can reach me at contacto@guadalupecano.es or through the contact form. I'm also on LinkedIn and GitHub — you'll find the links in the contact section."
+  },
+  {
+    "id": "youtube",
+    "weight": 3,
+    "keywords": ["youtube", "luprintech", "canal youtube", "your channel", "tu canal"],
+    "secondary_keywords": ["videos tecnicos", "vídeos técnicos", "canal tecnico", "canal técnico", "contenido youtube", "video content", "tienes youtube", "youtube channel", "donde ver tus videos", "dónde ver tus vídeos", "channel link"],
+    "answer_es": "Tengo un canal de YouTube (Luprintech) donde comparto proyectos técnicos reales: configuraciones, automatizaciones, integraciones. Es una forma de ver cómo trabajo, me comunico y resuelvo problemas: https://www.youtube.com/@Luprintech",
+    "answer_en": "I have a YouTube channel (Luprintech) where I share real technical projects: configurations, automations, integrations. A way to see how I work, communicate and solve problems: https://www.youtube.com/@Luprintech"
+  },
+  {
+    "id": "printing_3d",
+    "weight": 3,
+    "keywords": ["impresora 3d", "impresion 3d", "impresión 3d", "octoprint", "klipper"],
+    "secondary_keywords": ["impresoras 3d", "filamento", "gcode", "g-code", "fdm", "raspberry pi impresoras", "3d printer", "3d printing experience", "do you have a 3d printer", "experiencia impresion 3d"],
+    "answer_es": "Llevo años con impresoras 3D. Mis primeras impresoras no tenían conectividad, así que configuré servidores propios con Raspberry Pi para monitorearlas en remoto vía WAN. De ahí surgió mi interés real por la infraestructura y los servidores.",
+    "answer_en": "I've worked with 3D printers for years. My first printers had no connectivity, so I set up my own servers with Raspberry Pi to monitor them remotely over WAN. That's where my real interest in infrastructure and servers came from."
+  },
+  {
+    "id": "future_plans",
+    "weight": 3,
+    "keywords": ["donde te ves", "dónde te ves", "where do you see yourself", "en 5 años", "en 10 años", "futuro profesional", "objetivos profesionales"],
+    "secondary_keywords": ["in 5 years", "in 10 years", "your future", "career goals", "long term", "planes de futuro", "a largo plazo", "donde quieres llegar", "dónde quieres llegar", "tus metas", "your goals", "aspiraciones", "aspirations", "vision profesional", "visión profesional"],
+    "answer_es": "En 5-10 años me veo como una desarrolladora consolidada, con especialización en ciberseguridad aplicada al desarrollo web y liderando proyectos donde arquitectura y seguridad vayan de la mano. Quiero seguir creciendo en entornos donde pueda combinar desarrollo, infraestructura e IA, y nunca dejar de aprender.",
+    "answer_en": "In 5-10 years I see myself as a consolidated developer, specializing in cybersecurity applied to web development and leading projects where architecture and security go hand in hand. I want to keep growing in environments where I can combine development, infrastructure and AI — and never stop learning."
+  },
+  {
+    "id": "job_search",
+    "weight": 3,
+    "keywords": ["buscando trabajo", "looking for work", "buscas empleo", "buscas trabajo", "en busqueda activa", "en búsqueda activa"],
+    "secondary_keywords": ["estas buscando trabajo", "estás buscando trabajo", "are you looking for a job", "actively looking", "open to opportunities", "open to work", "buscas oportunidades", "abierta a ofertas", "en busqueda de empleo", "en búsqueda de empleo", "primera oportunidad", "primer empleo tech"],
+    "answer_es": "Sí, estoy en búsqueda activa de mi primera oportunidad en el sector tecnológico. Estoy disponible de forma inmediata para incorporarme.",
+    "answer_en": "Yes, I'm actively looking for my first opportunity in the tech sector. I'm available immediately."
+  },
+  {
+    "id": "daw",
+    "weight": 3,
+    "keywords": ["que es daw", "qué es daw", "what is daw", "ciclo formativo", "fp informatica", "fp informática"],
+    "secondary_keywords": ["desarrollo aplicaciones web", "ciclo superior", "formacion profesional informatica", "formación profesional informática", "grado superior programacion", "grado superior programación", "titulacion daw", "titulación daw", "daw significa", "que significa daw"],
+    "answer_es": "DAW son las siglas de Desarrollo de Aplicaciones Web: un Ciclo Formativo de Grado Superior (FP) en España que cubre frontend, backend, bases de datos, despliegue y arquitectura web. Lo terminé y fue mi base formal en programación — aunque ya llevaba años aprendiendo por mi cuenta antes de empezar.",
+    "answer_en": "DAW stands for Desarrollo de Aplicaciones Web (Web Application Development), a Higher Technician vocational degree in Spain covering frontend, backend, databases, deployment and web architecture. I completed it — it was my formal programming foundation, although I had been self-learning for years before starting."
+  },
+  {
+    "id": "drive_license",
+    "weight": 3,
+    "keywords": ["carne de conducir", "carné de conducir", "vehiculo propio", "vehículo propio", "driving license"],
+    "secondary_keywords": ["coche propio", "movilidad", "mobility", "can you travel", "puedes viajar", "desplazamiento", "tienes coche", "driver license", "own car", "willingness to travel", "dispuesta a viajar", "open to travel", "puedes moverte"],
+    "answer_es": "Sí, tengo carné de conducir y vehículo propio. Puedo desplazarme por Andalucía sin problema y estoy dispuesta a viajar ocasionalmente.",
+    "answer_en": "Yes, I have a driving license and my own car. I can travel within Andalusia without issue and I'm willing to travel occasionally."
+  }
+]

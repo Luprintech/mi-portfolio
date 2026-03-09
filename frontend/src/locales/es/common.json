@@ -4,14 +4,15 @@
     "about": "Sobre mí",
     "skills": "Stack",
     "portfolio": "Portfolio",
+    "projects": "Proyectos",
     "contact": "Contacto",
     "sub_web": "Desarrollo Web",
     "sub_docs": "Documentación Técnica",
     "cv": "Descargar CV"
   },
   "hero": {
-    "title": "Desarrolladora Web Full Stack",
-    "subtitle": "React · Laravel · Integración de Sistemas",
+    "title": "Desarrolladora Web Full Stack Junior",
+    "subtitle": "React · Laravel · WordPress · Integración de Sistemas",
     "description": "Transformo requerimientos funcionales en aplicaciones web sólidas y escalables. Mi enfoque combina un desarrollo técnico riguroso en Backend y Frontend con la capacidad de investigación necesaria para resolver desafíos de infraestructura y automatización."
   },
   "home": {
@@ -33,7 +34,9 @@
     "ai_title": "Integración de IA",
     "ai_desc": "Implementación práctica de Inteligencia Artificial (LLMs como Gemini) en flujos de trabajo web para análisis de datos y automatización de respuestas.",
     "cloud_title": "Despliegue & Servidores",
-    "cloud_desc": "Configuración de entornos de producción en VPS Linux. Gestión de dominios, certificados SSL (Let's Encrypt) y despliegues básicos con Docker y Nginx."
+    "cloud_desc": "Configuración de entornos de producción en VPS Linux. Gestión de dominios, certificados SSL (Let's Encrypt) y despliegues básicos con Docker y Nginx.",
+    "wordpress_title": "WordPress & Divi",
+    "wordpress_desc": "Páginas web con WordPress y Divi Builder: webs corporativas, páginas a medida, landing pages y tiendas online. Soluciones visuales, rápidas y fáciles de gestionar por el cliente."
   },
   "projects": {
     "vocaccion_title": "VocAcción - Plataforma de Orientación",
@@ -46,7 +49,10 @@
     "calc3d_short": "Calculadora de estimación de costes de impresión 3D. Desarrollada en Next.js con Tailwind.",
     "luprinchef_title": "LuprinChef - Buscador de Recetas",
     "luprinchef_desc": "Buscador de recetas interactivo usando la API de Edamam. Autenticación con Firebase, modo oscuro, favoritos guardados en la nube y optimización de renderizado con Next.js.",
-    "luprinchef_short": "App de recetas consumiendo una API externa, Firebase Auth y sistema de favoritos en la nube."
+    "luprinchef_short": "App de recetas consumiendo una API externa, Firebase Auth y sistema de favoritos en la nube.",
+    "landgestion_title": "Landing Page — Land Gestión Agrícola",
+    "landgestion_desc": "Colaboración en proyecto real: remodelación completa de la landing page de una empresa del sector agrícola. Reconstruí el sistema de navegación con menús y submenús, gestión e inserción de imágenes, estructura visual de secciones y optimización general de la página. Desarrollada con WordPress y Divi Builder.",
+    "landgestion_short": "Remodelación de landing page con WordPress y Divi: menús, submenús, imágenes y estructura visual."
   },
   "contact": {
     "title": "Contacto Profesional",
@@ -86,6 +92,7 @@
     "badge_infra": "Infraestructura real",
     "badge_ai": "IA \u0026 Automatización",
     "badge_n8n": "n8n",
+    "badge_wordpress": "WordPress & Divi",
     "stat1_value": "5+",
     "stat1_label": "Proyectos en producción",
     "stat2_value": "20+",
@@ -103,6 +110,7 @@
     "tech_3": "Infraestructura real: Docker, Nginx, VPS Linux, Raspberry Pi, NAS Synology.",
     "tech_4": "IA en producción: Gemini API, prompt engineering, rate limiting, fallbacks.",
     "tech_5": "Automatización: n8n, flujos no-code/low-code integrados en proyectos propios.",
+    "tech_6": "WordPress & Divi: webs corporativas, landing pages y páginas a medida con gestión autónoma para el cliente.",
     "story_p1": "No llegué al desarrollo por casualidad. Siempre he tenido la necesidad de entender cómo funcionan las cosas por dentro.",
     "story_p2": "Empecé estudiando Pedagogía, y ahí aprendí algo que hoy sigue siendo mi base: analizar, estructurar y explicar lo complejo hasta que tiene sentido. Entender sistemas, no solo usarlos.",
     "story_p3": "Pero también descubrí algo más: necesito crear. Necesito construir. Necesito mejorar lo que ya existe. Tengo facilidad para detectar rápidamente dónde falla algo y qué le falta a una aplicación para funcionar mejor, ser más clara o más eficiente.",
@@ -168,6 +176,9 @@
     "cta_desc": "Estoy disponible para proyectos donde la calidad técnica y la ejecución real sean prioridad.",
     "cta_contact": "Escríbeme",
     "cta_projects": "Ver proyectos",
+    "yt_title": "Canal de YouTube — Luprintech",
+    "yt_desc": "Comparto proyectos técnicos reales, configuraciones, automatizaciones e integraciones. Una forma de ver cómo trabajo, me comunico y resuelvo problemas.",
+    "yt_btn": "Ver canal",
     "bio_p1": "La tecnología forma parte de mi vida desde hace años. Antes incluso de iniciar mi formación como desarrolladora, ya experimentaba montando servidores caseros y configurando entornos propios para entender cómo funcionaban los sistemas por dentro.",
     "bio_p2": "Soy <span class='text-emerald-500 font-semibold'>Técnica Superior en Desarrollo de Aplicaciones Web</span>, donde he consolidado una base sólida en desarrollo Full Stack, bases de datos, arquitectura web e integración de sistemas.",
     "bio_p3": "Además, soy <span class='text-fuchsia-400 font-semibold'>graduada en Pedagogía</span>. Esta formación influye directamente en mi manera de trabajar: tengo una mentalidad estructurada, analítica y orientada al aprendizaje continuo. Me interesa comprender los procesos en profundidad y construir soluciones que sean claras, mantenibles y bien diseñadas.",
@@ -242,7 +253,9 @@
     "cloud_title": "Cloud Computing",
     "cloud_desc": "Despliegue y gestión de infraestructura cloud y servicios escalables",
     "ai_title": "IA & Automatización",
-    "ai_desc": "Integración de inteligencia artificial y automatización de procesos"
+    "ai_desc": "Integración de inteligencia artificial y automatización de procesos",
+    "cms_title": "WordPress & CMS",
+    "cms_desc": "Desarrollo de webs con WordPress, Divi Builder, landing pages y páginas a medida"
   },
   "tools": {
     "title_main": "Stack y ecosistema de trabajo",
@@ -257,6 +270,11 @@
     "web_title": "Proyectos de Desarrollo Web",
     "web_desc": "Una selección de proyectos creados con pasión por la tecnología, arquitectura de software y la resolución de problemas técnicos complejos.",
     "web_empty": "Próximamente se agregarán más proyectos...",
+    "web_code_title": "Full Stack & Código",
+    "web_code_desc": "Aplicaciones web desarrolladas desde cero con React, Laravel, Node.js y tecnologías modernas.",
+    "web_cms_title": "WordPress & CMS",
+    "web_cms_desc": "Páginas web, landing pages y proyectos desarrollados con WordPress, Divi Builder y otros CMS.",
+    "web_cms_empty": "Próximamente se agregarán proyectos WordPress...",
     "docs_title": "Laboratorio Técnico y Experimentación",
     "docs_desc": "En mi canal comparto procesos reales de instalación, configuración y autoalojamiento de herramientas y servicios. Trabajo con entornos locales, NAS, Docker, servidores Linux e integraciones de IA, documentando tanto los aciertos como los problemas técnicos que surgen durante el proceso.",
     "docs_examples_title": "Ejemplos de documentación técnica:",

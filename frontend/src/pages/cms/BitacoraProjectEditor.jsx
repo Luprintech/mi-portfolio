@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { cmsApi } from '../../lib/cmsApi';
@@ -13,6 +13,7 @@ const EMPTY = {
     demo:        '',
     image:       '',
     featured:    false,
+    category:    'code',
 };
 
 export default function BitacoraProjectEditor() {
@@ -21,11 +22,14 @@ export default function BitacoraProjectEditor() {
     const { id: editId } = useParams();
     const isEdit = !!editId;
 
-    const [form,    setForm]    = useState(EMPTY);
-    const [loading, setLoading] = useState(isEdit);
-    const [saving,  setSaving]  = useState(false);
-    const [error,   setError]   = useState('');
-    const [idManual, setIdManual] = useState(false);
+    const [form,          setForm]          = useState(EMPTY);
+    const [loading,       setLoading]       = useState(isEdit);
+    const [saving,        setSaving]        = useState(false);
+    const [error,         setError]         = useState('');
+    const [idManual,      setIdManual]      = useState(false);
+    const [imgUploading,  setImgUploading]  = useState(false);
+    const [imgError,      setImgError]      = useState('');
+    const fileInputRef = useRef(null);
 
     useEffect(() => {
         if (!isEdit) return;
@@ -63,6 +67,22 @@ export default function BitacoraProjectEditor() {
     function handleIdChange(e) {
         setIdManual(true);
         setForm(f => ({ ...f, id: e.target.value }));
+    }
+
+    async function handleImageUpload(e) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setImgError('');
+        setImgUploading(true);
+        try {
+            const { url } = await cmsApi.uploadImage(token, file);
+            setForm(f => ({ ...f, image: url }));
+        } catch (err) {
+            setImgError(err.message || 'Error al subir la imagen');
+        } finally {
+            setImgUploading(false);
+            e.target.value = '';
+        }
     }
 
     async function handleSubmit(e) {
@@ -165,6 +185,38 @@ export default function BitacoraProjectEditor() {
                 </div>
 
                 <div>
+                    <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Tipo de proyecto *</label>
+                    <div className="flex gap-3">
+                        {[
+                            { value: 'code',  label: 'Full Stack / Código',  color: 'fuchsia' },
+                            { value: 'cms',   label: 'WordPress & CMS',      color: 'blue'    },
+                        ].map(({ value, label, color }) => (
+                            <label
+                                key={value}
+                                className={`flex items-center gap-2 flex-1 px-4 py-3 rounded-xl border cursor-pointer transition-all text-sm font-medium
+                                    ${form.category === value
+                                        ? color === 'fuchsia'
+                                            ? 'bg-fuchsia-500/10 border-fuchsia-500/40 text-fuchsia-400'
+                                            : 'bg-blue-500/10 border-blue-500/40 text-blue-400'
+                                        : 'bg-[var(--bg-elevated)] border-[var(--border-default)] text-[var(--text-muted)] hover:border-[var(--border-color)]'
+                                    }`}
+                            >
+                                <input
+                                    type="radio"
+                                    name="category"
+                                    value={value}
+                                    checked={form.category === value}
+                                    onChange={handleChange('category')}
+                                    className="sr-only"
+                                />
+                                <span className={`w-3 h-3 rounded-full border-2 flex-shrink-0 ${form.category === value ? (color === 'fuchsia' ? 'bg-fuchsia-400 border-fuchsia-400' : 'bg-blue-400 border-blue-400') : 'border-[var(--text-muted)]'}`} />
+                                {label}
+                            </label>
+                        ))}
+                    </div>
+                </div>
+
+                <div>
                     <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">
                         Tecnologías <span className="text-[var(--text-muted)] font-normal">(separadas por coma)</span>
                     </label>
@@ -183,12 +235,70 @@ export default function BitacoraProjectEditor() {
                 </div>
 
                 <div>
-                    <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Imagen (URL o ruta)</label>
-                    <input type="text" value={form.image} onChange={handleChange('image')} placeholder="/images/proyecto.jpg" className={inputClass} />
-                    {form.image && (
-                        <div className="mt-2 rounded-xl overflow-hidden h-32 bg-[var(--bg-elevated)] border border-[var(--border-default)]">
-                            <img src={form.image} alt="preview" className="w-full h-full object-cover" onError={e => e.target.style.display = 'none'} />
+                    <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Imagen del proyecto</label>
+
+                    {/* Input oculto */}
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="sr-only"
+                    />
+
+                    {/* Área de subida */}
+                    {form.image ? (
+                        <div className="relative rounded-xl overflow-hidden h-40 bg-[var(--bg-elevated)] border border-[var(--border-default)] group">
+                            <img
+                                src={form.image}
+                                alt="preview"
+                                className="w-full h-full object-cover"
+                                onError={e => e.target.style.display = 'none'}
+                            />
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={imgUploading}
+                                    className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition-all border border-white/20"
+                                >
+                                    {imgUploading ? 'Subiendo…' : 'Cambiar imagen'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setForm(f => ({ ...f, image: '' }))}
+                                    className="px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-300 text-xs font-medium transition-all border border-red-500/30"
+                                >
+                                    Eliminar
+                                </button>
+                            </div>
                         </div>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={imgUploading}
+                            className="w-full flex flex-col items-center justify-center gap-2 h-32 rounded-xl border-2 border-dashed border-[var(--border-default)] hover:border-fuchsia-500/40 hover:bg-fuchsia-500/5 transition-all text-[var(--text-muted)] hover:text-fuchsia-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {imgUploading ? (
+                                <>
+                                    <div className="w-5 h-5 border-2 border-fuchsia-500/30 border-t-fuchsia-500 rounded-full animate-spin" />
+                                    <span className="text-xs">Subiendo imagen…</span>
+                                </>
+                            ) : (
+                                <>
+                                    <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                                    </svg>
+                                    <span className="text-xs font-medium">Haz clic para seleccionar una imagen</span>
+                                    <span className="text-xs opacity-60">JPG, PNG, WebP, SVG — máx. 5 MB</span>
+                                </>
+                            )}
+                        </button>
+                    )}
+
+                    {imgError && (
+                        <p className="mt-1.5 text-xs text-red-400">{imgError}</p>
                     )}
                 </div>
 

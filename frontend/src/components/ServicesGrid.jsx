@@ -11,7 +11,7 @@ import { useTranslation } from "react-i18next";
 export default function ServicesGrid({ services, showLinks = false }) {
   const { t } = useTranslation();
   return (
-    <section className="w-full px-4 md:px-8 max-w-6xl mx-auto grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-6 pb-8">
+    <section className="w-full px-4 md:px-8 max-w-6xl mx-auto grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 pb-8">
       {services.map((service, index) => {
         const Icon = service.icon;
 

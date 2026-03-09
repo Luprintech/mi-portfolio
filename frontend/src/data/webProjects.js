@@ -73,6 +73,23 @@ export const webProjects = [
         featured: true, // ⭐ APARECE EN INICIO
     },
 
+    {
+        id: 4,
+        titulo: "projects.landgestion_title",
+        descripcion: "projects.landgestion_desc",
+        shortDescription: "projects.landgestion_short",
+        imagen: github, // Reemplaza con una captura de pantalla del proyecto
+        links: [
+            {
+                url: "https://landgestionagricola.com/",
+                labelKey: "projects.view_app",
+                type: "web",
+            },
+        ],
+        tech: ["WordPress", "Divi Builder", "CSS", "Landing Page"],
+        featured: false, // Solo aparece en el portfolio
+    },
+
     // 👇 AGREGA MÁS PROYECTOS AQUÍ
     // Ejemplo:
     // {

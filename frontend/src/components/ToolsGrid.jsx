@@ -15,6 +15,8 @@ export default function ToolsGrid() {
         { name: "Python",     color: "from-yellow-400 to-blue-500",   logo: "https://cdn.simpleicons.org/python/3776AB" },
         { name: "SQL",        color: "from-blue-500 to-sky-400",      logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg" },
         { name: "Git",        color: "from-orange-400 to-red-500",    logo: "https://cdn.simpleicons.org/git/F05032" },
+        { name: "WordPress",  color: "from-blue-400 to-sky-500",      logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/wordpress/wordpress-original.svg" },
+        { name: "Divi",       color: "from-purple-400 to-violet-500", logo: "https://cdn.simpleicons.org/divi/8A4FFF" },
       ],
     },
     {

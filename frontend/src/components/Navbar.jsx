@@ -93,9 +93,7 @@ export default function Navbar() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
-  const [openDropdown, setOpenDropdown] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [mobilePortfolioOpen, setMobilePortfolioOpen] = useState(false);
 
   // Gato y logo
   const [catVisible, setCatVisible] = useState(false);
@@ -123,10 +121,6 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const portfolioItems = [
-    { name: t("nav.sub_web"),  to: "/portfolio/desarrollo-web" },
-    { name: t("nav.sub_docs"), to: "/portfolio/documentacion-tecnica" },
-  ];
 
   return (
     <>
@@ -156,41 +150,7 @@ export default function Navbar() {
             <NavLink to="/"          className="px-3 py-2 rounded hover:text-fuchsia-300 transition">{t("nav.home")}</NavLink>
             <NavLink to="/sobre-mi"  className="px-3 py-2 rounded hover:text-fuchsia-300 transition">{t("nav.about")}</NavLink>
 
-            {/* PORTFOLIO con submenú */}
-            <div
-              className="relative group"
-              onMouseEnter={() => setOpenDropdown("portfolio")}
-              onMouseLeave={() => setOpenDropdown(null)}
-            >
-              <span className="px-3 py-2 hover:text-fuchsia-400 cursor-pointer flex items-center gap-1">
-                {t("nav.portfolio")}
-                <svg width="16" height="16" fill="currentColor" className="ml-1 text-cyan-400" aria-hidden="true">
-                  <path d="M4 6l4 4 4-4" />
-                </svg>
-              </span>
-              <AnimatePresence>
-                {openDropdown === "portfolio" && (
-                  <Motion.ul
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute left-0 mt-2 w-56 bg-[var(--bg-surface)] border border-[var(--border-default)] shadow-[var(--shadow-md)] rounded-lg overflow-hidden"
-                  >
-                    {portfolioItems.map((item) => (
-                      <li key={item.name}>
-                        <NavLink
-                          to={item.to}
-                          className="block px-4 py-2 hover:bg-[var(--accent-primary-dim)] text-[var(--text-secondary)] hover:text-[var(--accent-primary)]"
-                        >
-                          {item.name}
-                        </NavLink>
-                      </li>
-                    ))}
-                  </Motion.ul>
-                )}
-              </AnimatePresence>
-            </div>
+            <NavLink to="/portfolio/desarrollo-web" className="px-3 py-2 rounded hover:text-fuchsia-300 transition">{t("nav.projects")}</NavLink>
 
             <NavLink to="/blog"     className="px-3 py-2 rounded hover:text-cyan-300 transition">Blog</NavLink>
             <NavLink to="/contacto" className="px-3 py-2 rounded hover:text-cyan-300 transition">{t("nav.contact")}</NavLink>
@@ -249,43 +209,7 @@ export default function Navbar() {
               <NavLink to="/"         className="block py-2 border-b border-[var(--border-default)] text-[var(--text-primary)]" onClick={() => setMenuOpen(false)}>{t("nav.home")}</NavLink>
               <NavLink to="/sobre-mi" className="block py-2 border-b border-[var(--border-default)] text-[var(--text-primary)]" onClick={() => setMenuOpen(false)}>{t("nav.about")}</NavLink>
 
-              {/* Submenú Portfolio con toggle */}
-              <div className="border-b border-[var(--border-default)]">
-                <button
-                  onClick={() => setMobilePortfolioOpen(!mobilePortfolioOpen)}
-                  className="w-full flex items-center justify-between py-2 text-[var(--accent-primary)] font-semibold"
-                >
-                  {t("nav.portfolio")}
-                  <svg
-                    width="16" height="16" fill="currentColor"
-                    className={`transition-transform duration-200 ${mobilePortfolioOpen ? "rotate-180" : ""}`}
-                    aria-hidden="true"
-                  >
-                    <path d="M4 6l4 4 4-4" />
-                  </svg>
-                </button>
-                <AnimatePresence>
-                  {mobilePortfolioOpen && (
-                    <Motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      {portfolioItems.map((item) => (
-                        <NavLink
-                          key={item.name}
-                          to={item.to}
-                          className="block pl-4 py-2 text-sm text-[var(--text-secondary)] hover:text-[var(--accent-primary)]"
-                          onClick={() => setMenuOpen(false)}
-                        >
-                          {item.name}
-                        </NavLink>
-                      ))}
-                    </Motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+              <NavLink to="/portfolio/desarrollo-web" className="block py-2 border-b border-[var(--border-default)] text-[var(--accent-primary)] font-semibold" onClick={() => setMenuOpen(false)}>{t("nav.projects")}</NavLink>
 
               <NavLink to="/blog"     className="block py-2 border-b border-[var(--border-default)] text-[var(--text-primary)]" onClick={() => setMenuOpen(false)}>Blog</NavLink>
               <NavLink to="/contacto" className="block py-2 border-b border-[var(--border-default)] text-[var(--text-primary)]" onClick={() => setMenuOpen(false)}>{t("nav.contact")}</NavLink>

@@ -1,7 +1,7 @@
 // 🎯 SERVICIOS - DATOS CENTRALIZADOS
 // Este archivo gestiona TODOS los servicios ofrecidos compaginando perfil técnico con nivel Junior/Entry
 
-import { FaCode, FaServer, FaBrain, FaLinux } from "react-icons/fa";
+import { FaCode, FaServer, FaBrain, FaLinux, FaWordpress } from "react-icons/fa";
 
 export const services = [
     {
@@ -46,6 +46,17 @@ export const services = [
         iconColor: "text-emerald-400",
         hoverShadow: "hover:shadow-emerald-400/30",
         link: "/servicios/cloud-deploy",
+        featured: true,
+    },
+    {
+        id: 5,
+        title: "services.wordpress_title",
+        description: "services.wordpress_desc",
+        icon: FaWordpress,
+        iconSize: 36,
+        iconColor: "text-blue-400",
+        hoverShadow: "hover:shadow-blue-400/30",
+        link: "/servicios/wordpress",
         featured: true,
     },
 ];
