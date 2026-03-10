@@ -1,4 +1,4 @@
-import { useEditor, EditorContent, ReactNodeViewRenderer, NodeViewWrapper } from '@tiptap/react';
+import { useEditor, EditorContent, ReactNodeViewRenderer, NodeViewWrapper, NodeViewContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
@@ -11,7 +11,17 @@ import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
 import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table';
 import { Node, mergeAttributes } from '@tiptap/core';
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
+import { common, createLowlight } from 'lowlight';
+import Superscript from '@tiptap/extension-superscript';
+import Subscript from '@tiptap/extension-subscript';
+import 'highlight.js/styles/github-dark.css';
+import mermaid from 'mermaid';
 import { useCallback, useRef, useEffect, useState } from 'react';
+
+const lowlight = createLowlight(common);
+
+mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
 
 // ─── ResizableImage — nodo React con handles de resize ────────────────────────
 function ResizableImageView({ node, updateAttributes, selected }) {
@@ -254,6 +264,188 @@ const AudioNode = Node.create({
     },
 });
 
+// ─── Callout — TIP / NOTE / WARNING / INFO ────────────────────────────────────
+const CALLOUT_CONFIG = {
+    tip:     { icon: '💡', label: 'TIP',     border: '#22c55e', bg: 'rgba(34,197,94,0.08)'  },
+    note:    { icon: 'ℹ️',  label: 'NOTE',    border: '#3b82f6', bg: 'rgba(59,130,246,0.08)' },
+    warning: { icon: '⚠️', label: 'WARNING', border: '#f59e0b', bg: 'rgba(245,158,11,0.08)' },
+    info:    { icon: '📌', label: 'INFO',    border: '#8b5cf6', bg: 'rgba(139,92,246,0.08)' },
+};
+
+function CalloutView({ node, updateAttributes }) {
+    const cfg = CALLOUT_CONFIG[node.attrs.type] || CALLOUT_CONFIG.tip;
+    return (
+        <NodeViewWrapper>
+            <div style={{
+                borderLeft: `4px solid ${cfg.border}`,
+                background: cfg.bg,
+                borderRadius: '0 8px 8px 0',
+                padding: '10px 16px',
+                margin: '16px 0',
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                    <span>{cfg.icon}</span>
+                    <select
+                        value={node.attrs.type}
+                        onChange={e => updateAttributes({ type: e.target.value })}
+                        style={{
+                            background: 'transparent', border: 'none', fontWeight: 700,
+                            color: cfg.border, fontSize: 11, cursor: 'pointer', letterSpacing: '0.05em',
+                        }}
+                    >
+                        {Object.entries(CALLOUT_CONFIG).map(([k, v]) => (
+                            <option key={k} value={k} style={{ background: '#1a1a2e', color: '#e2e8f0' }}>{v.label}</option>
+                        ))}
+                    </select>
+                </div>
+                <NodeViewContent style={{ margin: 0 }} />
+            </div>
+        </NodeViewWrapper>
+    );
+}
+
+const CalloutExtension = Node.create({
+    name: 'callout',
+    group: 'block',
+    content: 'block+',
+    defining: true,
+    addAttributes() {
+        return {
+            type: {
+                default: 'tip',
+                parseHTML: el => el.getAttribute('data-callout-type') || 'tip',
+                renderHTML: attrs => ({ 'data-callout-type': attrs.type }),
+            },
+        };
+    },
+    parseHTML() { return [{ tag: 'div[data-callout]' }]; },
+    renderHTML({ HTMLAttributes }) {
+        return ['div', mergeAttributes(HTMLAttributes, { 'data-callout': '' }), 0];
+    },
+    addNodeView() {
+        return ReactNodeViewRenderer(CalloutView);
+    },
+    addCommands() {
+        return {
+            insertCallout: (type = 'tip') => ({ commands }) =>
+                commands.insertContent({
+                    type: this.name,
+                    attrs: { type },
+                    content: [{ type: 'paragraph' }],
+                }),
+        };
+    },
+});
+
+// ─── Mermaid — diagramas y mapas conceptuales ─────────────────────────────────
+const MERMAID_TEMPLATES = {
+    flowchart: `flowchart LR\n  A[Inicio] --> B{¿Condición?}\n  B -- Sí --> C[Proceso A]\n  B -- No --> D[Proceso B]\n  C --> E[Fin]\n  D --> E`,
+    mindmap:   `mindmap\n  root((Idea Principal))\n    Rama 1\n      Subnodo 1\n      Subnodo 2\n    Rama 2\n      Subnodo 3\n    Rama 3`,
+    sequence:  `sequenceDiagram\n  actor Usuario\n  participant App\n  participant API\n  Usuario->>App: Acción\n  App->>API: Request\n  API-->>App: Respuesta\n  App-->>Usuario: Resultado`,
+    graph:     `graph TD\n  A[Concepto Central] --> B[Idea 1]\n  A --> C[Idea 2]\n  A --> D[Idea 3]\n  B --> E[Detalle]\n  C --> F[Detalle]`,
+};
+
+let mermaidCounter = 0;
+
+function MermaidView({ node, updateAttributes }) {
+    const [editing, setEditing]     = useState(false);
+    const [localCode, setLocalCode] = useState(node.attrs.code || '');
+    const [svg, setSvg]             = useState('');
+    const [error, setError]         = useState('');
+    const idRef = useRef(`mermaid-${++mermaidCounter}`);
+
+    useEffect(() => {
+        renderDiagram(node.attrs.code || '');
+    }, [node.attrs.code]);
+
+    async function renderDiagram(code) {
+        if (!code.trim()) return;
+        try {
+            idRef.current = `mermaid-${++mermaidCounter}`;
+            const { svg: result } = await mermaid.render(idRef.current, code);
+            setSvg(result);
+            setError('');
+        } catch {
+            setError('Error de sintaxis en el diagrama');
+            setSvg('');
+        }
+    }
+
+    function saveCode() {
+        updateAttributes({ code: localCode });
+        setEditing(false);
+    }
+
+    return (
+        <NodeViewWrapper>
+            <div style={{ border: '1px solid var(--border-color)', borderRadius: 10, overflow: 'hidden', margin: '16px 0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 14px', background: '#0f172a', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                    <span style={{ fontSize: 11, color: '#64748b', fontFamily: 'monospace', letterSpacing: '0.05em' }}>MERMAID DIAGRAM</span>
+                    <button type="button"
+                        onMouseDown={e => { e.preventDefault(); e.stopPropagation(); setLocalCode(node.attrs.code); setEditing(v => !v); }}
+                        style={{ fontSize: 11, color: '#94a3b8', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', padding: '2px 10px', borderRadius: 4 }}>
+                        {editing ? '✕ Cerrar' : '✏ Editar código'}
+                    </button>
+                </div>
+                {editing && (
+                    <div style={{ background: '#0d1117' }}>
+                        <textarea
+                            value={localCode}
+                            onChange={e => setLocalCode(e.target.value)}
+                            rows={8}
+                            style={{ width: '100%', padding: '14px 16px', background: 'transparent', border: 'none', outline: 'none', color: '#cdd6f4', fontFamily: "'Fira Code', monospace", fontSize: 13, lineHeight: 1.65, resize: 'vertical', boxSizing: 'border-box' }}
+                        />
+                        <div style={{ padding: '8px 12px', display: 'flex', gap: 8, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                            <button type="button" onClick={saveCode}
+                                style={{ padding: '4px 18px', background: '#8b5cf6', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+                                Aplicar
+                            </button>
+                            <button type="button" onClick={() => setEditing(false)}
+                                style={{ padding: '4px 12px', background: 'transparent', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                )}
+                <div style={{ padding: '20px', background: '#0f172a', display: 'flex', justifyContent: 'center', minHeight: 80 }}>
+                    {error
+                        ? <p style={{ color: '#f87171', fontSize: 13, fontFamily: 'monospace' }}>{error}</p>
+                        : svg
+                            ? <div dangerouslySetInnerHTML={{ __html: svg }} style={{ maxWidth: '100%' }} />
+                            : <p style={{ color: '#475569', fontSize: 12 }}>Cargando diagrama…</p>
+                    }
+                </div>
+            </div>
+        </NodeViewWrapper>
+    );
+}
+
+const MermaidNode = Node.create({
+    name: 'mermaid',
+    group: 'block',
+    atom: true,
+    addAttributes() {
+        return {
+            code: {
+                default: MERMAID_TEMPLATES.flowchart,
+                parseHTML: el => el.getAttribute('data-mermaid-code') || '',
+                renderHTML: attrs => ({ 'data-mermaid-code': attrs.code }),
+            },
+        };
+    },
+    parseHTML() { return [{ tag: 'div[data-mermaid-code]' }]; },
+    renderHTML({ HTMLAttributes }) {
+        return ['div', mergeAttributes(HTMLAttributes, { class: 'mermaid-block' }), 0];
+    },
+    addNodeView() { return ReactNodeViewRenderer(MermaidView); },
+    addCommands() {
+        return {
+            insertMermaid: (code) => ({ commands }) =>
+                commands.insertContent({ type: this.name, attrs: { code } }),
+        };
+    },
+});
+
 // ─── Paletas ──────────────────────────────────────────────────────────────────
 const TEXT_COLORS = [
     '#ffffff','#e2e8f0','#94a3b8','#64748b',
@@ -277,8 +469,8 @@ function ToolBtn({ onClick, active, disabled, title, children }) {
             title={title}
             className={`flex items-center justify-center w-8 h-8 shrink-0 rounded-lg text-sm transition-all
                 ${active
-                    ? 'bg-fuchsia-500/30 text-fuchsia-300 ring-1 ring-fuchsia-500/50'
-                    : 'text-gray-400 hover:text-white hover:bg-white/10'}
+                    ? 'bg-fuchsia-500/20 text-fuchsia-400 ring-1 ring-fuchsia-500/50'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/10'}
                 ${disabled ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}`}
         >
             {children}
@@ -286,14 +478,14 @@ function ToolBtn({ onClick, active, disabled, title, children }) {
     );
 }
 function Divider() {
-    return <div className="w-px h-6 bg-white/10 mx-0.5 self-center shrink-0" />;
+    return <div className="w-px h-6 bg-[var(--border-color)] mx-0.5 self-center shrink-0" />;
 }
 
 // ─── Upload helpers ───────────────────────────────────────────────────────────
 async function uploadFile(file, token) {
     const fd = new FormData();
     fd.append('image', file);
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/bitacora/upload`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/bitacora/upload`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: fd,
@@ -317,6 +509,8 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
     const [audioUrl,        setAudioUrl]        = useState('');
     const [showColorPick,   setShowColorPick]   = useState(false);
     const [showHighPick,    setShowHighPick]    = useState(false);
+    const [showCalloutMenu, setShowCalloutMenu] = useState(false);
+    const [showMermaidMenu, setShowMermaidMenu] = useState(false);
     const [uploading,       setUploading]       = useState(false);
     const [fontSize,        setFontSize]        = useState('16px');
 
@@ -328,6 +522,8 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             setShowAudioMenu(false);
             setShowColorPick(false);
             setShowHighPick(false);
+            setShowCalloutMenu(false);
+            setShowMermaidMenu(false);
         }
         document.addEventListener('mousedown', close);
         return () => document.removeEventListener('mousedown', close);
@@ -335,7 +531,8 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
 
     const editor = useEditor({
         extensions: [
-            StarterKit,
+            StarterKit.configure({ codeBlock: false }),
+            CodeBlockLowlight.configure({ lowlight, defaultLanguage: 'javascript' }),
             Underline,
             TextStyleKit,
             Highlight.configure({ multicolor: true }),
@@ -351,6 +548,10 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             TableRow,
             TableHeader,
             TableCell,
+            CalloutExtension,
+            MermaidNode,
+            Superscript,
+            Subscript,
             Placeholder.configure({ placeholder: 'Escribe aquí el contenido del post…' }),
             CharacterCount,
         ],
@@ -482,11 +683,11 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
     const readMin   = Math.max(1, Math.ceil(wordCount / 200));
 
     return (
-        <div className={`flex flex-col rounded-2xl border border-white/10 bg-[#0d0d14]
+        <div className={`flex flex-col rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)]
             ${fullscreen ? 'fixed inset-0 z-50 rounded-none' : ''}`}>
 
             {/* ── TOOLBAR ─────────────────────────────────────────────────── */}
-            <div className="relative z-20 flex flex-wrap items-center gap-1 px-3 py-2 border-b border-white/10 bg-[#0d0d14] rounded-t-2xl">
+            <div className="relative z-20 flex flex-wrap items-center gap-1 px-3 py-2 border-b border-[var(--border-color)] bg-[var(--bg-surface)] rounded-t-2xl sticky top-0">
 
                 {/* Deshacer / Rehacer */}
                 <ToolBtn onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Deshacer (Ctrl+Z)">
@@ -500,7 +701,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
 
                 {/* Bloque */}
                 <select title="Tipo de bloque"
-                    className="h-8 px-2 rounded-lg bg-white/5 border border-white/10 text-gray-300 text-xs focus:outline-none focus:border-fuchsia-500/60 cursor-pointer shrink-0"
+                    className="h-8 px-2 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border-color)] text-[var(--text-secondary)] text-xs focus:outline-none focus:border-fuchsia-500/60 cursor-pointer shrink-0"
                     value={getActiveBlock()} onChange={e => setBlock(e.target.value)}>
                     <option value="p">Párrafo</option>
                     <option value="h1">Título 1</option>
@@ -513,7 +714,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
 
                 {/* Tamaño fuente */}
                 <select title="Tamaño"
-                    className="h-8 px-1 rounded-lg bg-white/5 border border-white/10 text-gray-300 text-xs focus:outline-none focus:border-fuchsia-500/60 cursor-pointer w-[70px] shrink-0"
+                    className="h-8 px-1 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border-color)] text-[var(--text-secondary)] text-xs focus:outline-none focus:border-fuchsia-500/60 cursor-pointer w-[70px] shrink-0"
                     value={fontSize}
                     onChange={e => { setFontSize(e.target.value); editor.chain().focus().setFontSize(e.target.value).run(); }}>
                     {FONT_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
@@ -527,6 +728,8 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                 <ToolBtn onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive('underline')} title="Subrayado (Ctrl+U)"><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/><line x1="4" y1="21" x2="20" y2="21"/></svg></ToolBtn>
                 <ToolBtn onClick={() => editor.chain().focus().toggleStrike().run()}  active={editor.isActive('strike')}    title="Tachado"><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="4" y1="12" x2="20" y2="12"/><path d="M17.5 5.5C17 4 15.5 3 14 3H10C7.8 3 6 4.8 6 7c0 1.5.8 2.8 2 3.5"/><path d="M16.5 14.5C17 16 16 18 14 19c-1 .5-2 .5-3 .5-2 0-3.5-1-4.5-2.5"/></svg></ToolBtn>
                 <ToolBtn onClick={() => editor.chain().focus().toggleCode().run()}    active={editor.isActive('code')}      title="Código inline"><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></ToolBtn>
+                <ToolBtn onClick={() => editor.chain().focus().toggleSuperscript().run()} active={editor.isActive('superscript')} title="Superíndice (x²)"><span className="text-xs font-bold leading-none">x<sup>2</sup></span></ToolBtn>
+                <ToolBtn onClick={() => editor.chain().focus().toggleSubscript().run()}   active={editor.isActive('subscript')}   title="Subíndice (H₂O)"><span className="text-xs font-bold leading-none">x<sub>2</sub></span></ToolBtn>
 
                 <Divider />
 
@@ -539,9 +742,9 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                         </div>
                     </ToolBtn>
                     {showColorPick && (
-                        <div className="absolute top-10 left-0 z-50 p-3 bg-[#1a1a2e] border border-white/20 rounded-xl shadow-2xl w-48"
+                        <div className="absolute top-10 left-0 z-50 p-3 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl w-48"
                             onMouseDown={e => e.stopPropagation()}>
-                            <button type="button" className="text-xs text-gray-400 hover:text-white mb-2 w-full text-left px-1"
+                            <button type="button" className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] mb-2 w-full text-left px-1"
                                 onClick={() => { editor.chain().focus().unsetColor().run(); setShowColorPick(false); }}>
                                 Quitar color
                             </button>
@@ -572,9 +775,9 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
                     </ToolBtn>
                     {showHighPick && (
-                        <div className="absolute top-10 left-0 z-50 p-3 bg-[#1a1a2e] border border-white/20 rounded-xl shadow-2xl w-44"
+                        <div className="absolute top-10 left-0 z-50 p-3 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl w-44"
                             onMouseDown={e => e.stopPropagation()}>
-                            <button type="button" className="text-xs text-gray-400 hover:text-white mb-2 w-full text-left px-1"
+                            <button type="button" className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] mb-2 w-full text-left px-1"
                                 onClick={() => { editor.chain().focus().unsetHighlight().run(); setShowHighPick(false); }}>
                                 Quitar fondo
                             </button>
@@ -621,11 +824,11 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                     </ToolBtn>
                     {showLinkMenu && (
-                        <div className="absolute top-10 left-0 z-50 p-3 bg-[#1a1a2e] border border-white/20 rounded-xl shadow-2xl flex gap-2 w-72"
+                        <div className="absolute top-10 left-0 z-50 p-3 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl flex gap-2 w-72"
                             onMouseDown={e => e.stopPropagation()}>
                             <input type="url" value={linkUrl} onChange={e => setLinkUrl(e.target.value)} onKeyDown={e => e.key === 'Enter' && applyLink()}
                                 placeholder="https://…"
-                                className="flex-1 px-3 py-1.5 text-sm bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-fuchsia-500/60"
+                                className="flex-1 px-3 py-1.5 text-sm bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-fuchsia-500/60"
                                 autoFocus />
                             <button type="button" onClick={applyLink} className="px-3 py-1.5 bg-fuchsia-600 hover:bg-fuchsia-500 text-white text-sm rounded-lg">OK</button>
                             {editor.isActive('link') && <button type="button" onClick={() => { editor.chain().focus().unsetLink().run(); setShowLinkMenu(false); }} className="px-2 py-1.5 text-red-400 text-sm">✕</button>}
@@ -645,11 +848,11 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M23 7s-.3-2-1.2-2.8c-1.1-1.2-2.4-1.2-3-1.3C16.5 2.8 12 2.8 12 2.8s-4.5 0-6.8.1c-.6.1-1.9.1-3 1.3C1.3 5 1 7 1 7S.7 9.1.7 11.2v1.9c0 2.1.3 4.2.3 4.2s.3 2 1.2 2.8c1.1 1.2 2.6 1.1 3.3 1.2C7.5 21.4 12 21.5 12 21.5s4.5 0 6.8-.2c.6-.1 1.9-.1 3-1.3.9-.8 1.2-2.8 1.2-2.8s.3-2.1.3-4.2v-1.9C23.3 9.1 23 7 23 7z" opacity=".85"/><polygon points="9.5,15.5 15.5,12 9.5,8.5" fill="white"/></svg>
                     </ToolBtn>
                     {showYoutubeMenu && (
-                        <div className="absolute top-10 left-0 z-50 p-3 bg-[#1a1a2e] border border-white/20 rounded-xl shadow-2xl flex gap-2 w-80"
+                        <div className="absolute top-10 left-0 z-50 p-3 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl flex gap-2 w-80"
                             onMouseDown={e => e.stopPropagation()}>
                             <input type="url" value={youtubeUrl} onChange={e => setYoutubeUrl(e.target.value)} onKeyDown={e => e.key === 'Enter' && applyYoutube()}
                                 placeholder="https://youtube.com/watch?v=…"
-                                className="flex-1 px-3 py-1.5 text-sm bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-fuchsia-500/60"
+                                className="flex-1 px-3 py-1.5 text-sm bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-fuchsia-500/60"
                                 autoFocus />
                             <button type="button" onClick={applyYoutube} className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white text-sm rounded-lg">Insertar</button>
                         </div>
@@ -662,17 +865,17 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
                     </ToolBtn>
                     {showAudioMenu && (
-                        <div className="absolute top-10 left-0 z-50 p-3 bg-[#1a1a2e] border border-white/20 rounded-xl shadow-2xl w-80 space-y-2"
+                        <div className="absolute top-10 left-0 z-50 p-3 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl w-80 space-y-2"
                             onMouseDown={e => e.stopPropagation()}>
                             <div className="flex gap-2">
                                 <input type="url" value={audioUrl} onChange={e => setAudioUrl(e.target.value)} onKeyDown={e => e.key === 'Enter' && applyAudio()}
                                     placeholder="https://…/audio.mp3"
-                                    className="flex-1 px-3 py-1.5 text-sm bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-fuchsia-500/60"
+                                    className="flex-1 px-3 py-1.5 text-sm bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-fuchsia-500/60"
                                     autoFocus />
                                 <button type="button" onClick={applyAudio} className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white text-sm rounded-lg">OK</button>
                             </div>
                             <button type="button" onClick={() => audioInputRef.current?.click()}
-                                className="w-full py-1.5 text-sm border border-dashed border-white/20 rounded-lg text-gray-400 hover:text-white hover:border-white/40 transition-colors">
+                                className="w-full py-1.5 text-sm border border-dashed border-[var(--border-color)] rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--text-muted)] transition-colors">
                                 Subir archivo de audio
                             </button>
                             <input ref={audioInputRef} type="file" accept="audio/*" className="hidden" onChange={handleAudioFile} />
@@ -684,6 +887,68 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                 <ToolBtn onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} title="Insertar tabla">
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
                 </ToolBtn>
+
+                {/* Callout */}
+                <div className="relative" onMouseDown={e => e.stopPropagation()}>
+                    <ToolBtn
+                        onClick={() => setShowCalloutMenu(p => !p)}
+                        active={editor.isActive('callout')}
+                        title="Insertar callout (TIP / NOTE / WARNING / INFO)"
+                    >
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
+                            <line x1="12" y1="8" x2="12" y2="12"/>
+                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                    </ToolBtn>
+                    {showCalloutMenu && (
+                        <div
+                            className="absolute top-10 left-0 z-50 p-2 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl flex flex-col gap-1 w-36"
+                            onMouseDown={e => e.stopPropagation()}
+                        >
+                            {Object.entries(CALLOUT_CONFIG).map(([k, v]) => (
+                                <button
+                                    key={k} type="button"
+                                    onClick={() => { editor.chain().focus().insertCallout(k).run(); setShowCalloutMenu(false); }}
+                                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-sm text-[var(--text-secondary)] text-left"
+                                >
+                                    <span>{v.icon}</span>
+                                    <span style={{ color: v.border, fontWeight: 700, fontSize: 11 }}>{v.label}</span>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Mermaid / Diagrama */}
+                <div className="relative" onMouseDown={e => e.stopPropagation()}>
+                    <ToolBtn onClick={() => setShowMermaidMenu(p => !p)} title="Insertar diagrama (flowchart, mapa mental, secuencia)">
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <rect x="3" y="3" width="5" height="4" rx="1"/><rect x="16" y="3" width="5" height="4" rx="1"/>
+                            <rect x="9" y="17" width="6" height="4" rx="1"/>
+                            <line x1="5.5" y1="7" x2="5.5" y2="10"/><line x1="18.5" y1="7" x2="18.5" y2="10"/>
+                            <line x1="5.5" y1="10" x2="18.5" y2="10"/><line x1="12" y1="10" x2="12" y2="17"/>
+                        </svg>
+                    </ToolBtn>
+                    {showMermaidMenu && (
+                        <div className="absolute top-10 left-0 z-50 p-2 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl flex flex-col gap-1 w-48" onMouseDown={e => e.stopPropagation()}>
+                            {[
+                                { key: 'flowchart', icon: '→', label: 'Diagrama de flujo' },
+                                { key: 'mindmap',   icon: '🌐', label: 'Mapa mental' },
+                                { key: 'sequence',  icon: '↔', label: 'Secuencia' },
+                                { key: 'graph',     icon: '◎', label: 'Mapa conceptual' },
+                            ].map(({ key, icon, label }) => (
+                                <button key={key} type="button"
+                                    onClick={() => { editor.chain().focus().insertMermaid(MERMAID_TEMPLATES[key]).run(); setShowMermaidMenu(false); }}
+                                    className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-sm text-[var(--text-secondary)] text-left"
+                                >
+                                    <span className="text-fuchsia-400 w-4 text-center">{icon}</span>
+                                    <span>{label}</span>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
 
                 <Divider />
 
@@ -700,28 +965,72 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                 </div>
             </div>
 
+            {/* ── TOOLBAR CONTEXTUAL DE TABLA ──────────────────────────────── */}
+            {editor.isActive('table') && (
+                <div className="flex flex-wrap items-center gap-1 px-3 py-1.5 border-b border-[var(--border-color)] bg-[var(--bg-elevated)] text-xs">
+                    <span className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mr-1">Tabla:</span>
+                    <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().addRowBefore().run(); }}
+                        className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors" title="Añadir fila arriba">↑ Fila</button>
+                    <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().addRowAfter().run(); }}
+                        className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors" title="Añadir fila abajo">↓ Fila</button>
+                    <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().deleteRow().run(); }}
+                        className="px-2 py-1 rounded hover:bg-red-500/10 text-red-400 transition-colors" title="Eliminar fila">✕ Fila</button>
+                    <div className="w-px h-4 bg-[var(--border-color)] mx-0.5 self-center" />
+                    <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().addColumnBefore().run(); }}
+                        className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors" title="Añadir columna izquierda">← Col</button>
+                    <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().addColumnAfter().run(); }}
+                        className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors" title="Añadir columna derecha">→ Col</button>
+                    <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().deleteColumn().run(); }}
+                        className="px-2 py-1 rounded hover:bg-red-500/10 text-red-400 transition-colors" title="Eliminar columna">✕ Col</button>
+                    <div className="w-px h-4 bg-[var(--border-color)] mx-0.5 self-center" />
+                    <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().toggleHeaderRow().run(); }}
+                        className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors">Cabecera</button>
+                    <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().deleteTable().run(); }}
+                        className="px-2 py-1 rounded hover:bg-red-500/10 text-red-400 transition-colors ml-auto">Eliminar tabla</button>
+                </div>
+            )}
+
             {/* ── ÁREA DE EDICIÓN ──────────────────────────────────────────── */}
             <div
-                className="flex-1 overflow-y-auto px-8 py-6 prose prose-invert prose-sm max-w-none
-                    prose-headings:font-bold prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl
-                    prose-a:text-fuchsia-400 prose-code:text-cyan-300 prose-code:bg-white/5
-                    prose-pre:bg-[#0a0a12] prose-blockquote:border-fuchsia-500
-                    prose-img:rounded-2xl prose-table:border-collapse focus-within:outline-none
+                className="flex-1 overflow-y-auto bg-[var(--bg-primary)] focus-within:outline-none"
+                style={{ minHeight: fullscreen ? 'calc(100vh - 120px)' : '420px' }}
+            >
+                {/* Columna central tipo Medium */}
+                <div className={`
+                    mx-auto px-6 py-10
+                    prose prose-invert max-w-none
                     [&_.tiptap]:outline-none
-                    [&_.tiptap_p.is-editor-empty:first-child::before]:text-gray-600
+                    [&_.tiptap]:max-w-[720px] [&_.tiptap]:mx-auto
+                    [&_.tiptap]:text-[17px] [&_.tiptap]:leading-[1.8] [&_.tiptap]:text-[var(--text-primary)]
+                    [&_.tiptap_h1]:text-[2.1em] [&_.tiptap_h1]:font-extrabold [&_.tiptap_h1]:leading-tight [&_.tiptap_h1]:mt-10 [&_.tiptap_h1]:mb-4 [&_.tiptap_h1]:text-[var(--text-primary)]
+                    [&_.tiptap_h2]:text-[1.55em] [&_.tiptap_h2]:font-bold [&_.tiptap_h2]:leading-snug [&_.tiptap_h2]:mt-9 [&_.tiptap_h2]:mb-3 [&_.tiptap_h2]:text-[var(--text-primary)]
+                    [&_.tiptap_h3]:text-[1.25em] [&_.tiptap_h3]:font-semibold [&_.tiptap_h3]:mt-7 [&_.tiptap_h3]:mb-2 [&_.tiptap_h3]:text-[var(--text-primary)]
+                    [&_.tiptap_h4]:text-[1.05em] [&_.tiptap_h4]:font-semibold [&_.tiptap_h4]:mt-6 [&_.tiptap_h4]:mb-2 [&_.tiptap_h4]:text-[var(--text-secondary)]
+                    [&_.tiptap_p]:mb-5 [&_.tiptap_p]:text-[var(--text-secondary)]
+                    [&_.tiptap_blockquote]:border-l-[3px] [&_.tiptap_blockquote]:border-fuchsia-500 [&_.tiptap_blockquote]:pl-5 [&_.tiptap_blockquote]:my-6 [&_.tiptap_blockquote]:italic [&_.tiptap_blockquote]:text-[var(--text-muted)] [&_.tiptap_blockquote]:text-[1.05em]
+                    [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-6 [&_.tiptap_ul]:mb-5 [&_.tiptap_ul]:space-y-1
+                    [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-6 [&_.tiptap_ol]:mb-5 [&_.tiptap_ol]:space-y-1
+                    [&_.tiptap_li]:text-[var(--text-secondary)]
+                    [&_.tiptap_code]:text-cyan-500 [&_.tiptap_code]:bg-[var(--bg-elevated)] [&_.tiptap_code]:px-[5px] [&_.tiptap_code]:py-[2px] [&_.tiptap_code]:rounded [&_.tiptap_code]:text-[0.87em] [&_.tiptap_code]:font-mono
+                    [&_.tiptap_pre]:my-6 [&_.tiptap_pre]:rounded-xl [&_.tiptap_pre]:overflow-x-auto [&_.tiptap_pre]:text-[0.88em] [&_.tiptap_pre]:leading-relaxed [&_.tiptap_pre]:p-0
+                    [&_.tiptap_pre_code]:bg-transparent [&_.tiptap_pre_code]:text-inherit [&_.tiptap_pre_code]:p-0
+                    [&_.tiptap_hr]:border-[var(--border-color)] [&_.tiptap_hr]:my-10
+                    [&_.tiptap_a]:text-fuchsia-500 [&_.tiptap_a]:underline [&_.tiptap_a:hover]:text-fuchsia-400
+                    [&_.tiptap_img]:rounded-xl [&_.tiptap_img]:shadow-2xl [&_.tiptap_img]:my-4
+                    [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:my-6
+                    [&_.tiptap_td]:border [&_.tiptap_td]:border-[var(--border-color)] [&_.tiptap_td]:p-3 [&_.tiptap_td]:text-[var(--text-secondary)]
+                    [&_.tiptap_th]:border [&_.tiptap_th]:border-[var(--border-color)] [&_.tiptap_th]:p-3 [&_.tiptap_th]:bg-[var(--bg-elevated)] [&_.tiptap_th]:font-semibold [&_.tiptap_th]:text-[var(--text-primary)]
+                    [&_.tiptap_p.is-editor-empty:first-child::before]:text-[var(--text-muted)]
                     [&_.tiptap_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)]
                     [&_.tiptap_p.is-editor-empty:first-child::before]:float-left
                     [&_.tiptap_p.is-editor-empty:first-child::before]:pointer-events-none
-                    [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse
-                    [&_.tiptap_td]:border [&_.tiptap_td]:border-white/10 [&_.tiptap_td]:p-2
-                    [&_.tiptap_th]:border [&_.tiptap_th]:border-white/10 [&_.tiptap_th]:p-2 [&_.tiptap_th]:bg-white/5"
-                style={{ minHeight: fullscreen ? 'calc(100vh - 120px)' : '420px' }}
-            >
-                <EditorContent editor={editor} />
+                `}>
+                    <EditorContent editor={editor} />
+                </div>
             </div>
 
             {/* ── STATUS BAR ───────────────────────────────────────────────── */}
-            <div className="flex items-center justify-between px-4 py-2 border-t border-white/5 bg-white/[0.02] text-xs text-gray-600 rounded-b-2xl">
+            <div className="flex items-center justify-between px-4 py-2 border-t border-[var(--border-color)] bg-[var(--bg-surface)] text-xs text-[var(--text-muted)] rounded-b-2xl">
                 <span>{wordCount} palabras · {charCount} caracteres</span>
                 <span>~{readMin} min de lectura</span>
             </div>
