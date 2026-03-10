@@ -32,7 +32,7 @@ import contactRoutes     from './routes/contact.js';
 import chatRoutes        from './routes/chat.js';
 
 const app = express();
-app.set('trust proxy', 1);
+app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal']);
 
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(cors(corsOptions));
