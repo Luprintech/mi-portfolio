@@ -51,4 +51,18 @@ export const cmsApi = {
         if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
         return data;
     },
+
+    // Upload Document (multipart)
+    uploadDocument: async (token, file) => {
+        const form = new FormData();
+        form.append('document', file);
+        const response = await fetch(`${BASE_URL}/api/bitacora/upload-document`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+            body: form,
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+        return data;
+    },
 };

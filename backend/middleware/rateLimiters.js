@@ -1,9 +1,8 @@
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 
-// Handler compartido que garantiza respuesta JSON
-const jsonHandler = (req, res) => {
+function jsonHandler(_req, res) {
     res.status(429).json({ error: 'Demasiadas peticiones. Espera unos minutos.' });
-};
+}
 
 export const cmsLoginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -19,13 +18,13 @@ export const contactLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     handler: jsonHandler,
-    // Clave: ignorar IPs de proxies internos para no contar mal
+    // Usa la IP real del cliente cuando hay proxies delante.
     keyGenerator: (req) => {
-        return req.headers['x-forwarded-for']?.split(',')[0].trim() 
-            || req.ip;
+        const rawIp = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.ip;
+        return ipKeyGenerator(rawIp);
     },
+    // Evita limitar trafico interno de Docker o red local.
     skip: (req) => {
-        // No limitar peticiones internas de Docker/red local
         const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.ip;
         return ip === '127.0.0.1' || ip === '::1' || ip?.startsWith('192.168.');
     },

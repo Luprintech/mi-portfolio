@@ -11,6 +11,55 @@ import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
 import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table';
 import { Node, mergeAttributes } from '@tiptap/core';
+
+// ─── Custom TableCell / TableHeader con atributos de color ────────────────────
+const CustomTableCell = TableCell.extend({
+    addAttributes() {
+        return {
+            ...this.parent?.(),
+            backgroundColor: {
+                default: null,
+                parseHTML: el => el.style.backgroundColor || el.getAttribute('data-bg') || null,
+                renderHTML: attrs => {
+                    if (!attrs.backgroundColor) return {};
+                    return { style: `background-color: ${attrs.backgroundColor}`, 'data-bg': attrs.backgroundColor };
+                },
+            },
+            borderColor: {
+                default: null,
+                parseHTML: el => el.getAttribute('data-border-color') || null,
+                renderHTML: attrs => {
+                    if (!attrs.borderColor) return {};
+                    return { style: `border-color: ${attrs.borderColor}`, 'data-border-color': attrs.borderColor };
+                },
+            },
+        };
+    },
+});
+
+const CustomTableHeader = TableHeader.extend({
+    addAttributes() {
+        return {
+            ...this.parent?.(),
+            backgroundColor: {
+                default: null,
+                parseHTML: el => el.style.backgroundColor || el.getAttribute('data-bg') || null,
+                renderHTML: attrs => {
+                    if (!attrs.backgroundColor) return {};
+                    return { style: `background-color: ${attrs.backgroundColor}`, 'data-bg': attrs.backgroundColor };
+                },
+            },
+            borderColor: {
+                default: null,
+                parseHTML: el => el.getAttribute('data-border-color') || null,
+                renderHTML: attrs => {
+                    if (!attrs.borderColor) return {};
+                    return { style: `border-color: ${attrs.borderColor}`, 'data-border-color': attrs.borderColor };
+                },
+            },
+        };
+    },
+});
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import { common, createLowlight } from 'lowlight';
 import Superscript from '@tiptap/extension-superscript';
@@ -18,6 +67,10 @@ import Subscript from '@tiptap/extension-subscript';
 import 'highlight.js/styles/github-dark.css';
 import mermaid from 'mermaid';
 import { useCallback, useRef, useEffect, useState } from 'react';
+import { LineHeight, AccordionExtension, ContentButtonExtension, DocumentAttachmentExtension, ImageGridExtension } from './editor/extensions';
+import EmojiPicker from './editor/EmojiPicker';
+import SlashMenu from './editor/SlashMenu';
+import { AUDIO_INPUT_ACCEPT, IMAGE_INPUT_ACCEPT, validateAudioFile, validateImageFile } from '../../lib/mediaUploadPolicy';
 
 const lowlight = createLowlight(common);
 
@@ -86,7 +139,7 @@ function ResizableImageView({ node, updateAttributes, selected }) {
     const handleStyle = 'absolute w-3 h-3 bg-fuchsia-500 border-2 border-white rounded-full z-10 cursor-nwse-resize';
 
     return (
-        <NodeViewWrapper className="inline-block relative my-4 mx-auto block" data-drag-handle>
+        <NodeViewWrapper className="inline-block relative my-4 mx-auto block" data-drag-handle style={node.attrs.textAlign && node.attrs.textAlign !== 'left' ? { display: 'flex', justifyContent: node.attrs.textAlign === 'center' ? 'center' : 'flex-end' } : undefined}>
             <div
                 ref={containerRef}
                 className={`relative inline-block group ${selected ? 'ring-2 ring-fuchsia-500 ring-offset-2 ring-offset-transparent' : ''}`}
@@ -123,7 +176,6 @@ function ResizableImageView({ node, updateAttributes, selected }) {
 // ─── ResizableYoutube — nodo React con handles de resize ─────────────────────
 function ResizableYoutubeView({ node, updateAttributes, selected }) {
     const containerRef = useRef(null);
-    const [resizing, setResizing] = useState(false);
     const startData = useRef(null);
 
     const width  = node.attrs.width  || 640;
@@ -141,16 +193,13 @@ function ResizableYoutubeView({ node, updateAttributes, selected }) {
             startH: rect.height,
             ratio:  rect.width / rect.height,
         };
-        setResizing(true);
-
         function onMove(ev) {
-            const { startX, startW, startH, ratio } = startData.current;
+            const { startX, startW, ratio } = startData.current;
             const newW = Math.max(200, startW + (ev.clientX - startX));
             const newH = Math.round(newW / ratio);
             updateAttributes({ width: Math.round(newW), height: newH });
         }
         function onUp() {
-            setResizing(false);
             window.removeEventListener('mousemove', onMove);
             window.removeEventListener('mouseup',   onUp);
         }
@@ -169,10 +218,12 @@ function ResizableYoutubeView({ node, updateAttributes, selected }) {
         } else if (u.hostname.includes('youtu.be')) {
             embedUrl = `https://www.youtube-nocookie.com/embed${u.pathname}`;
         }
-    } catch {}
+    } catch {
+        embedUrl = src;
+    }
 
     return (
-        <NodeViewWrapper className="my-4 block" data-drag-handle>
+        <NodeViewWrapper className="my-4 block" data-drag-handle style={node.attrs.textAlign && node.attrs.textAlign !== 'left' ? { display: 'flex', justifyContent: node.attrs.textAlign === 'center' ? 'center' : 'flex-end' } : undefined}>
             <div
                 ref={containerRef}
                 className={`relative group rounded-xl overflow-hidden ${selected ? 'ring-2 ring-fuchsia-500' : ''}`}
@@ -319,8 +370,8 @@ const CalloutExtension = Node.create({
         };
     },
     parseHTML() { return [{ tag: 'div[data-callout]' }]; },
-    renderHTML({ HTMLAttributes }) {
-        return ['div', mergeAttributes(HTMLAttributes, { 'data-callout': '' }), 0];
+    renderHTML({ node, HTMLAttributes }) {
+        return ['div', mergeAttributes(HTMLAttributes, { 'data-callout': '', ...(node.attrs.textAlign && { 'data-align': node.attrs.textAlign }) }), 0];
     },
     addNodeView() {
         return ReactNodeViewRenderer(CalloutView);
@@ -345,22 +396,45 @@ const MERMAID_TEMPLATES = {
     graph:     `graph TD\n  A[Concepto Central] --> B[Idea 1]\n  A --> C[Idea 2]\n  A --> D[Idea 3]\n  B --> E[Detalle]\n  C --> F[Detalle]`,
 };
 
+const MERMAID_THEMES = [
+    { label: 'Dark',     value: 'dark' },
+    { label: 'Default',  value: 'default' },
+    { label: 'Forest',   value: 'forest' },
+    { label: 'Neutral',  value: 'neutral' },
+];
+
+const MERMAID_BG_COLORS = [
+    { label: 'Slate',   value: '#0f172a' },
+    { label: 'Negro',   value: '#000000' },
+    { label: 'Grafito', value: '#1e1e2e' },
+    { label: 'Oceano',  value: '#0c1222' },
+    { label: 'Blanco',  value: '#ffffff' },
+    { label: 'Crema',   value: '#fefce8' },
+];
+
 let mermaidCounter = 0;
 
-function MermaidView({ node, updateAttributes }) {
+function MermaidView({ node, updateAttributes, selected }) {
     const [editing, setEditing]     = useState(false);
+    const [settings, setSettings]   = useState(false);
     const [localCode, setLocalCode] = useState(node.attrs.code || '');
     const [svg, setSvg]             = useState('');
     const [error, setError]         = useState('');
     const idRef = useRef(`mermaid-${++mermaidCounter}`);
 
-    useEffect(() => {
-        renderDiagram(node.attrs.code || '');
-    }, [node.attrs.code]);
+    const theme = node.attrs.theme || 'dark';
+    const bgColor = node.attrs.bgColor || '#0f172a';
+    const borderColor = node.attrs.borderColor || '';
+    const title = node.attrs.title || '';
 
-    async function renderDiagram(code) {
+    useEffect(() => {
+        renderDiagram(node.attrs.code || '', node.attrs.theme || 'dark');
+    }, [node.attrs.code, node.attrs.theme]);
+
+    async function renderDiagram(code, themeVal) {
         if (!code.trim()) return;
         try {
+            mermaid.initialize({ startOnLoad: false, theme: themeVal || 'dark', securityLevel: 'loose' });
             idRef.current = `mermaid-${++mermaidCounter}`;
             const { svg: result } = await mermaid.render(idRef.current, code);
             setSvg(result);
@@ -376,17 +450,129 @@ function MermaidView({ node, updateAttributes }) {
         setEditing(false);
     }
 
+    function insertTemplate(key) {
+        const tpl = MERMAID_TEMPLATES[key];
+        if (tpl) {
+            setLocalCode(tpl);
+            updateAttributes({ code: tpl });
+        }
+    }
+
     return (
-        <NodeViewWrapper>
-            <div style={{ border: '1px solid var(--border-color)', borderRadius: 10, overflow: 'hidden', margin: '16px 0' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 14px', background: '#0f172a', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                    <span style={{ fontSize: 11, color: '#64748b', fontFamily: 'monospace', letterSpacing: '0.05em' }}>MERMAID DIAGRAM</span>
-                    <button type="button"
-                        onMouseDown={e => { e.preventDefault(); e.stopPropagation(); setLocalCode(node.attrs.code); setEditing(v => !v); }}
-                        style={{ fontSize: 11, color: '#94a3b8', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', padding: '2px 10px', borderRadius: 4 }}>
-                        {editing ? '✕ Cerrar' : '✏ Editar código'}
-                    </button>
+        <NodeViewWrapper className="my-4" style={node.attrs.textAlign && node.attrs.textAlign !== 'left' ? { display: 'flex', justifyContent: node.attrs.textAlign === 'center' ? 'center' : 'flex-end' } : undefined}>
+            <div className={`border rounded-xl overflow-hidden ${selected ? 'ring-2 ring-fuchsia-500 ring-offset-2 ring-offset-transparent' : ''}`}
+                 style={{ borderColor: borderColor || 'var(--border-color)' }}>
+
+                {/* Header bar */}
+                <div className="flex items-center justify-between px-4 py-2" style={{ background: bgColor, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs text-fuchsia-400 font-mono font-semibold tracking-wide">DIAGRAM</span>
+                        {title && <span className="text-xs text-[var(--text-muted)] ml-1">— {title}</span>}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                        <button type="button"
+                            onMouseDown={e => { e.preventDefault(); e.stopPropagation(); setSettings(v => !v); setEditing(false); }}
+                            className={`text-[11px] px-2.5 py-1 rounded-md cursor-pointer transition-all ${settings ? 'bg-fuchsia-500/20 text-fuchsia-400' : 'bg-white/5 border border-white/10 text-[#94a3b8] hover:text-white'}`}>
+                            ⚙ Personalizar
+                        </button>
+                        <button type="button"
+                            onMouseDown={e => { e.preventDefault(); e.stopPropagation(); setLocalCode(node.attrs.code); setEditing(v => !v); setSettings(false); }}
+                            className={`text-[11px] px-2.5 py-1 rounded-md cursor-pointer transition-all ${editing ? 'bg-cyan-500/20 text-cyan-400' : 'bg-white/5 border border-white/10 text-[#94a3b8] hover:text-white'}`}>
+                            {editing ? '✕ Cerrar' : '✏ Editar'}
+                        </button>
+                    </div>
                 </div>
+
+                {/* Settings panel */}
+                {settings && (
+                    <div className="p-4 space-y-3 border-b border-white/8" style={{ background: bgColor }}
+                         onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>
+
+                        {/* Title */}
+                        <div>
+                            <label className="text-[10px] uppercase text-[var(--text-muted)] tracking-wider block mb-1">Título del diagrama</label>
+                            <input
+                                value={title}
+                                onChange={e => updateAttributes({ title: e.target.value })}
+                                placeholder="Ej: Arquitectura del sistema"
+                                className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-sm text-[var(--text-primary)] outline-none focus:border-fuchsia-500/60"
+                            />
+                        </div>
+
+                        {/* Theme */}
+                        <div>
+                            <label className="text-[10px] uppercase text-[var(--text-muted)] tracking-wider block mb-1.5">Tema Mermaid</label>
+                            <div className="flex gap-1.5 flex-wrap">
+                                {MERMAID_THEMES.map(t => (
+                                    <button key={t.value} type="button"
+                                        onClick={() => updateAttributes({ theme: t.value })}
+                                        className={`px-3 py-1 rounded-lg text-xs capitalize transition-colors ${
+                                            theme === t.value
+                                                ? 'bg-fuchsia-500 text-white'
+                                                : 'bg-white/5 border border-white/10 text-[var(--text-secondary)]'
+                                        }`}>{t.label}</button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Background color */}
+                        <div>
+                            <label className="text-[10px] uppercase text-[var(--text-muted)] tracking-wider block mb-1.5">Color de fondo</label>
+                            <div className="flex gap-1.5 items-center flex-wrap">
+                                {MERMAID_BG_COLORS.map(c => (
+                                    <button key={c.value} type="button" title={c.label}
+                                        onClick={() => updateAttributes({ bgColor: c.value })}
+                                        className={`w-7 h-7 rounded-full border-2 transition-transform hover:scale-110 ${
+                                            bgColor === c.value ? 'ring-2 ring-fuchsia-400 ring-offset-1 ring-offset-transparent scale-110' : 'border-white/20'
+                                        }`} style={{ background: c.value }} />
+                                ))}
+                                <div className="mx-0.5 w-px h-6 bg-white/10" />
+                                <label className="relative cursor-pointer" title="Color personalizado">
+                                    <input type="color" value={bgColor}
+                                        onChange={e => updateAttributes({ bgColor: e.target.value })}
+                                        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer" />
+                                    <span className="flex items-center justify-center w-7 h-7 rounded-full border-2 border-dashed border-white/20 text-[var(--text-muted)] text-xs hover:border-fuchsia-500/50">
+                                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.7-.8 1.7-1.7 0-.4-.2-.8-.4-1.1-.2-.3-.4-.6-.4-1 0-.9.8-1.7 1.7-1.7H16c3.3 0 6-2.7 6-6 0-5.5-4.5-9.5-10-9.5z"/><circle cx="7.5" cy="11.5" r="1.5"/><circle cx="10.5" cy="7.5" r="1.5"/><circle cx="16.5" cy="11.5" r="1.5"/><circle cx="13.5" cy="7.5" r="1.5"/></svg>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+
+                        {/* Border color */}
+                        <div className="flex items-center gap-3">
+                            <label className="text-[10px] text-[var(--text-muted)]">Borde:</label>
+                            <input type="color" value={borderColor || '#334155'}
+                                onChange={e => updateAttributes({ borderColor: e.target.value })}
+                                className="w-6 h-6 rounded cursor-pointer border border-white/10" />
+                            <span className="text-[10px] text-[var(--text-muted)] font-mono">{borderColor || 'default'}</span>
+                            {borderColor && (
+                                <button type="button" onClick={() => updateAttributes({ borderColor: '' })}
+                                    className="text-[10px] text-[var(--text-muted)] hover:text-red-400 underline">Reset</button>
+                            )}
+                        </div>
+
+                        {/* Quick templates */}
+                        <div>
+                            <label className="text-[10px] uppercase text-[var(--text-muted)] tracking-wider block mb-1.5">Plantillas rápidas</label>
+                            <div className="flex gap-1.5 flex-wrap">
+                                {[
+                                    { key: 'flowchart', icon: '📊', label: 'Flujo' },
+                                    { key: 'mindmap',   icon: '🌐', label: 'Mental' },
+                                    { key: 'sequence',  icon: '↔',  label: 'Secuencia' },
+                                    { key: 'graph',     icon: '🔗', label: 'Conceptual' },
+                                ].map(t => (
+                                    <button key={t.key} type="button"
+                                        onClick={() => insertTemplate(t.key)}
+                                        className="px-3 py-1.5 rounded-lg text-xs bg-white/5 border border-white/10 text-[var(--text-secondary)] hover:border-fuchsia-500/50 hover:text-fuchsia-400 transition-all flex items-center gap-1.5">
+                                        <span>{t.icon}</span> {t.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Code editor */}
                 {editing && (
                     <div style={{ background: '#0d1117' }}>
                         <textarea
@@ -407,7 +593,9 @@ function MermaidView({ node, updateAttributes }) {
                         </div>
                     </div>
                 )}
-                <div style={{ padding: '20px', background: '#0f172a', display: 'flex', justifyContent: 'center', minHeight: 80 }}>
+
+                {/* Diagram render */}
+                <div style={{ padding: '20px', background: bgColor, display: 'flex', justifyContent: 'center', minHeight: 80 }}>
                     {error
                         ? <p style={{ color: '#f87171', fontSize: 13, fontFamily: 'monospace' }}>{error}</p>
                         : svg
@@ -431,11 +619,31 @@ const MermaidNode = Node.create({
                 parseHTML: el => el.getAttribute('data-mermaid-code') || '',
                 renderHTML: attrs => ({ 'data-mermaid-code': attrs.code }),
             },
+            theme: {
+                default: 'dark',
+                parseHTML: el => el.getAttribute('data-mermaid-theme') || 'dark',
+                renderHTML: attrs => ({ 'data-mermaid-theme': attrs.theme }),
+            },
+            bgColor: {
+                default: '#0f172a',
+                parseHTML: el => el.getAttribute('data-mermaid-bg') || '#0f172a',
+                renderHTML: attrs => ({ 'data-mermaid-bg': attrs.bgColor }),
+            },
+            borderColor: {
+                default: '',
+                parseHTML: el => el.getAttribute('data-mermaid-border') || '',
+                renderHTML: attrs => attrs.borderColor ? { 'data-mermaid-border': attrs.borderColor } : {},
+            },
+            title: {
+                default: '',
+                parseHTML: el => el.getAttribute('data-mermaid-title') || '',
+                renderHTML: attrs => attrs.title ? { 'data-mermaid-title': attrs.title } : {},
+            },
         };
     },
     parseHTML() { return [{ tag: 'div[data-mermaid-code]' }]; },
-    renderHTML({ HTMLAttributes }) {
-        return ['div', mergeAttributes(HTMLAttributes, { class: 'mermaid-block' }), 0];
+    renderHTML({ node, HTMLAttributes }) {
+        return ['div', mergeAttributes(HTMLAttributes, { class: 'mermaid-block', ...(node.attrs.textAlign && { 'data-align': node.attrs.textAlign }) }), 0];
     },
     addNodeView() { return ReactNodeViewRenderer(MermaidView); },
     addCommands() {
@@ -494,12 +702,48 @@ async function uploadFile(file, token) {
     return (await res.json()).url;
 }
 
+async function uploadAudioFile(file, token) {
+    const fd = new FormData();
+    fd.append('audio', file);
+    const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/bitacora/upload-audio`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+    });
+    if (!res.ok) throw new Error('Error al subir audio');
+    return (await res.json()).url;
+}
+
 const FONT_SIZES = ['12px','14px','16px','18px','20px','24px','28px','32px','36px','48px'];
+const LINE_HEIGHTS = ['1', '1.2', '1.5', '1.8', '2'];
+const CODE_LANGUAGES = [
+    { value: 'javascript', label: 'JavaScript' },
+    { value: 'typescript', label: 'TypeScript' },
+    { value: 'html', label: 'HTML' },
+    { value: 'css', label: 'CSS' },
+    { value: 'bash', label: 'Bash / Terminal' },
+    { value: 'json', label: 'JSON' },
+    { value: 'python', label: 'Python' },
+    { value: 'sql', label: 'SQL' },
+    { value: 'yaml', label: 'YAML' },
+    { value: 'docker', label: 'Dockerfile' },
+    { value: 'markdown', label: 'Markdown' },
+    { value: 'xml', label: 'XML' },
+    { value: 'java', label: 'Java' },
+    { value: 'c', label: 'C' },
+    { value: 'cpp', label: 'C++' },
+    { value: 'csharp', label: 'C#' },
+    { value: 'go', label: 'Go' },
+    { value: 'rust', label: 'Rust' },
+    { value: 'php', label: 'PHP' },
+    { value: 'ruby', label: 'Ruby' },
+];
 
 // ─── RichEditor ───────────────────────────────────────────────────────────────
 export default function RichEditor({ value, onChange, token, fullscreen, onToggleFullscreen }) {
     const fileInputRef  = useRef(null);
     const audioInputRef = useRef(null);
+    const docInputRef   = useRef(null);
 
     const [showLinkMenu,    setShowLinkMenu]    = useState(false);
     const [linkUrl,         setLinkUrl]         = useState('');
@@ -511,8 +755,18 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
     const [showHighPick,    setShowHighPick]    = useState(false);
     const [showCalloutMenu, setShowCalloutMenu] = useState(false);
     const [showMermaidMenu, setShowMermaidMenu] = useState(false);
+    const [showTableColors, setShowTableColors] = useState(false);
     const [uploading,       setUploading]       = useState(false);
     const [fontSize,        setFontSize]        = useState('16px');
+    const [lineHeight,      setLineHeight]      = useState('1.8');
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const [showInsertMenu,  setShowInsertMenu]  = useState(false);
+    const [markdownMode,    setMarkdownMode]    = useState(false);
+    const [markdownSource,  setMarkdownSource]  = useState('');
+    const [uploadError,     setUploadError]     = useState('');
+
+    // Slash commands
+    const [slashMenu, setSlashMenu] = useState({ open: false, query: '', coords: { top: 0, left: 0 } });
 
     // Cerrar popups al hacer clic fuera
     useEffect(() => {
@@ -524,6 +778,9 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             setShowHighPick(false);
             setShowCalloutMenu(false);
             setShowMermaidMenu(false);
+            setShowEmojiPicker(false);
+            setShowInsertMenu(false);
+            setShowTableColors(false);
         }
         document.addEventListener('mousedown', close);
         return () => document.removeEventListener('mousedown', close);
@@ -536,7 +793,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             Underline,
             TextStyleKit,
             Highlight.configure({ multicolor: true }),
-            TextAlign.configure({ types: ['heading', 'paragraph'] }),
+            TextAlign.configure({ types: ['heading', 'paragraph', 'image', 'youtube', 'audio', 'callout', 'mermaid', 'accordion', 'contentButton', 'documentAttachment', 'imageGrid'] }),
             Link.configure({
                 openOnClick: false,
                 HTMLAttributes: { target: '_blank', rel: 'noopener noreferrer' },
@@ -546,17 +803,39 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             AudioNode,
             Table.configure({ resizable: false }),
             TableRow,
-            TableHeader,
-            TableCell,
+            CustomTableHeader,
+            CustomTableCell,
             CalloutExtension,
             MermaidNode,
             Superscript,
             Subscript,
-            Placeholder.configure({ placeholder: 'Escribe aquí el contenido del post…' }),
+            LineHeight,
+            AccordionExtension,
+            ContentButtonExtension,
+            DocumentAttachmentExtension,
+            ImageGridExtension,
+            Placeholder.configure({ placeholder: 'Escribe aquí… Usa "/" para insertar bloques' }),
             CharacterCount,
         ],
         content: value || '',
-        onUpdate: ({ editor }) => onChange(editor.getHTML()),
+        onUpdate: ({ editor }) => {
+            onChange(editor.getHTML());
+
+            // Slash command detection
+            try {
+                const { $from } = editor.state.selection;
+                const textBefore = $from.parent.textBetween(0, $from.parentOffset);
+                const slashMatch = textBefore.match(/\/(\w*)$/);
+                if (slashMatch && $from.parent.type.name === 'paragraph') {
+                    const coords = editor.view.coordsAtPos(editor.state.selection.from);
+                    setSlashMenu({ open: true, query: slashMatch[1], coords: { top: coords.bottom + 8, left: coords.left } });
+                } else if (slashMenu.open) {
+                    setSlashMenu(m => ({ ...m, open: false }));
+                }
+            } catch {
+                setSlashMenu(m => ({ ...m, open: false }));
+            }
+        },
         editorProps: {
             attributes: { class: 'outline-none min-h-[400px] text-gray-200 leading-relaxed' },
             handleDrop(_view, event, _slice, moved) {
@@ -600,6 +879,10 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
         const update = () => {
             const attrs = editor.getAttributes('textStyle');
             setFontSize(attrs.fontSize || '16px');
+            // Sync line-height
+            const blockAttrs = editor.getAttributes('paragraph');
+            const headingAttrs = editor.getAttributes('heading');
+            setLineHeight(blockAttrs.lineHeight || headingAttrs.lineHeight || '1.8');
         };
         editor.on('selectionUpdate', update);
         editor.on('transaction',     update);
@@ -608,11 +891,20 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
 
     const handleImageFile = useCallback(async (file) => {
         if (!file || !token) return;
+        const validationError = validateImageFile(file);
+        if (validationError) {
+            setUploadError(validationError);
+            return;
+        }
         setUploading(true);
+        setUploadError('');
         try {
             const url = await uploadFile(file, token);
             editor?.chain().focus().setImage({ src: url, alt: file.name.replace(/\.[^.]+$/, '') }).run();
-        } catch (err) { console.error(err); }
+        } catch (err) {
+            setUploadError(err.message || 'No se ha podido subir la imagen.');
+            console.error(err);
+        }
         finally { setUploading(false); }
     }, [editor, token]);
 
@@ -644,11 +936,21 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
     async function handleAudioFile(e) {
         const file = e.target.files?.[0];
         if (!file || !token) return;
+        const validationError = validateAudioFile(file);
+        if (validationError) {
+            setUploadError(validationError);
+            e.target.value = '';
+            return;
+        }
         setUploading(true);
+        setUploadError('');
         try {
-            const url = await uploadFile(file, token);
+            const url = await uploadAudioFile(file, token);
             editor?.commands.insertAudio({ src: url, title: file.name });
-        } catch (err) { console.error(err); }
+        } catch (err) {
+            setUploadError(err.message || 'No se ha podido subir el audio.');
+            console.error(err);
+        }
         finally { setUploading(false); e.target.value = ''; }
     }
 
@@ -674,6 +976,58 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             codeBlock:  () => editor.chain().focus().setCodeBlock().run(),
         };
         map[v]?.();
+    }
+
+    // Document upload
+    async function handleDocumentUpload(e) {
+        const file = e.target.files?.[0];
+        if (!file || !token) return;
+        setUploading(true);
+        try {
+            const fd = new FormData();
+            fd.append('document', file);
+            const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/bitacora/upload-document`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: fd,
+            });
+            if (!res.ok) throw new Error('Error al subir documento');
+            const data = await res.json();
+            editor?.commands.insertDocument({
+                src: data.url,
+                filename: data.filename,
+                fileType: data.fileType,
+                fileSize: data.fileSize,
+            });
+        } catch (err) { console.error(err); }
+        finally { setUploading(false); e.target.value = ''; }
+    }
+
+    // Markdown mode toggle
+    function toggleMarkdownMode() {
+        if (!editor) return;
+        if (!markdownMode) {
+            setMarkdownSource(editor.getHTML());
+            setMarkdownMode(true);
+        } else {
+            editor.commands.setContent(markdownSource, false);
+            onChange(markdownSource);
+            setMarkdownMode(false);
+        }
+    }
+
+    // Slash menu action handler (for actions needing UI)
+    function handleSlashAction(action) {
+        if (action === 'image') setTimeout(() => fileInputRef.current?.click(), 0);
+        else if (action === 'youtube') setShowYoutubeMenu(true);
+        else if (action === 'audio') setShowAudioMenu(true);
+        else if (action === 'document') setTimeout(() => docInputRef.current?.click(), 0);
+        else if (action === 'emoji') setShowEmojiPicker(true);
+        else if (action.startsWith('mermaid-')) {
+            const type = action.replace('mermaid-', '');
+            const templates = { flowchart: MERMAID_TEMPLATES.flowchart, mindmap: MERMAID_TEMPLATES.mindmap, sequence: MERMAID_TEMPLATES.sequence };
+            editor?.chain().focus().insertMermaid(templates[type] || MERMAID_TEMPLATES.flowchart).run();
+        }
     }
 
     if (!editor) return null;
@@ -718,6 +1072,14 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                     value={fontSize}
                     onChange={e => { setFontSize(e.target.value); editor.chain().focus().setFontSize(e.target.value).run(); }}>
                     {FONT_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+
+                {/* Interlineado */}
+                <select title="Interlineado"
+                    className="h-8 px-1 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border-color)] text-[var(--text-secondary)] text-xs focus:outline-none focus:border-fuchsia-500/60 cursor-pointer w-[54px] shrink-0"
+                    value={lineHeight}
+                    onChange={e => { setLineHeight(e.target.value); editor.chain().focus().setLineHeight(e.target.value).run(); }}>
+                    {LINE_HEIGHTS.map(lh => <option key={lh} value={lh}>×{lh}</option>)}
                 </select>
 
                 <Divider />
@@ -840,7 +1202,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                 <ToolBtn onClick={() => fileInputRef.current?.click()} disabled={uploading} title="Subir imagen (o arrastra y suelta)">
                     {uploading ? <div className="w-4 h-4 border-2 border-fuchsia-500/30 border-t-fuchsia-500 rounded-full animate-spin" /> : <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>}
                 </ToolBtn>
-                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageInputChange} />
+                <input ref={fileInputRef} type="file" accept={IMAGE_INPUT_ACCEPT} className="hidden" onChange={handleImageInputChange} />
 
                 {/* YouTube */}
                 <div className="relative" onMouseDown={e => e.stopPropagation()}>
@@ -878,7 +1240,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                                 className="w-full py-1.5 text-sm border border-dashed border-[var(--border-color)] rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--text-muted)] transition-colors">
                                 Subir archivo de audio
                             </button>
-                            <input ref={audioInputRef} type="file" accept="audio/*" className="hidden" onChange={handleAudioFile} />
+                            <input ref={audioInputRef} type="file" accept={AUDIO_INPUT_ACCEPT} className="hidden" onChange={handleAudioFile} />
                         </div>
                     )}
                 </div>
@@ -955,6 +1317,84 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                 <ToolBtn onClick={() => editor.chain().focus().setHorizontalRule().run()} title="Línea horizontal"><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12"/></svg></ToolBtn>
                 <ToolBtn onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()} title="Limpiar formato"><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7l4-4 10 10-4 4L4 7z"/><path d="M14 6l4 4"/><line x1="2" y1="22" x2="22" y2="22"/></svg></ToolBtn>
 
+                <Divider />
+
+                {/* Emoji */}
+                <div className="relative" onMouseDown={e => e.stopPropagation()}>
+                    <ToolBtn onClick={() => setShowEmojiPicker(p => !p)} title="Insertar emoji">
+                        <span className="text-sm">😀</span>
+                    </ToolBtn>
+                    {showEmojiPicker && (
+                        <EmojiPicker
+                            onSelect={emoji => editor?.chain().focus().insertContent(emoji).run()}
+                            onClose={() => setShowEmojiPicker(false)}
+                        />
+                    )}
+                </div>
+
+                {/* Insertar bloque especial */}
+                <div className="relative" onMouseDown={e => e.stopPropagation()}>
+                    <ToolBtn onClick={() => setShowInsertMenu(p => !p)} title="Insertar bloque especial (+)">
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </ToolBtn>
+                    {showInsertMenu && (
+                        <div className="absolute top-10 left-0 z-50 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden w-72"
+                             onMouseDown={e => e.stopPropagation()}>
+                            <div className="px-4 pt-3 pb-2 border-b border-[var(--border-default)]">
+                                <p className="text-xs font-semibold text-[var(--text-primary)]">Insertar bloque</p>
+                                <p className="text-[10px] text-[var(--text-muted)] mt-0.5">Componentes especiales para tu post</p>
+                            </div>
+                            <div className="p-1.5 flex flex-col gap-0.5">
+                                <button type="button" onClick={() => { editor.chain().focus().insertAccordion().run(); setShowInsertMenu(false); }}
+                                    className="group flex items-start gap-3 px-3 py-2.5 rounded-xl hover:bg-fuchsia-500/10 text-left transition-colors">
+                                    <span className="mt-0.5 flex items-center justify-center w-8 h-8 rounded-lg bg-violet-500/15 text-violet-400 shrink-0">
+                                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
+                                    </span>
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-medium text-[var(--text-primary)] group-hover:text-fuchsia-400 transition-colors">Acordeón</p>
+                                        <p className="text-[11px] text-[var(--text-muted)] leading-tight mt-0.5">Sección colapsable con contenido expandible</p>
+                                    </div>
+                                </button>
+                                <button type="button" onClick={() => { editor.chain().focus().insertContentButton().run(); setShowInsertMenu(false); }}
+                                    className="group flex items-start gap-3 px-3 py-2.5 rounded-xl hover:bg-fuchsia-500/10 text-left transition-colors">
+                                    <span className="mt-0.5 flex items-center justify-center w-8 h-8 rounded-lg bg-cyan-500/15 text-cyan-400 shrink-0">
+                                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="8" width="16" height="8" rx="4"/><path d="M9 12h6"/></svg>
+                                    </span>
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-medium text-[var(--text-primary)] group-hover:text-fuchsia-400 transition-colors">Botón CTA</p>
+                                        <p className="text-[11px] text-[var(--text-muted)] leading-tight mt-0.5">Botón de llamada a la acción con enlace</p>
+                                    </div>
+                                </button>
+                                <button type="button" onClick={() => { docInputRef.current?.click(); setShowInsertMenu(false); }}
+                                    className="group flex items-start gap-3 px-3 py-2.5 rounded-xl hover:bg-fuchsia-500/10 text-left transition-colors">
+                                    <span className="mt-0.5 flex items-center justify-center w-8 h-8 rounded-lg bg-amber-500/15 text-amber-400 shrink-0">
+                                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                                    </span>
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-medium text-[var(--text-primary)] group-hover:text-fuchsia-400 transition-colors">Documento</p>
+                                        <p className="text-[11px] text-[var(--text-muted)] leading-tight mt-0.5">Adjuntar PDF, ZIP o DOCX descargable</p>
+                                    </div>
+                                </button>
+                                <button type="button" onClick={() => { editor.chain().focus().insertImageGrid(2).run(); setShowInsertMenu(false); }}
+                                    className="group flex items-start gap-3 px-3 py-2.5 rounded-xl hover:bg-fuchsia-500/10 text-left transition-colors">
+                                    <span className="mt-0.5 flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-400 shrink-0">
+                                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                                    </span>
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-medium text-[var(--text-primary)] group-hover:text-fuchsia-400 transition-colors">Grid de imágenes</p>
+                                        <p className="text-[11px] text-[var(--text-muted)] leading-tight mt-0.5">Cuadrícula de 2 columnas para imágenes</p>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Markdown / Source toggle */}
+                <ToolBtn onClick={toggleMarkdownMode} active={markdownMode} title={markdownMode ? 'Modo visual' : 'Modo código fuente'}>
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
+                </ToolBtn>
+
                 {/* Pantalla completa */}
                 <div className="ml-auto">
                     <ToolBtn onClick={onToggleFullscreen} title={fullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}>
@@ -964,6 +1404,22 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                     </ToolBtn>
                 </div>
             </div>
+
+            {/* ── TOOLBAR CONTEXTUAL DE CODE BLOCK ───────────────────────── */}
+            {editor.isActive('codeBlock') && (
+                <div className="flex flex-wrap items-center gap-2 px-3 py-1.5 border-b border-[var(--border-color)] bg-[var(--bg-elevated)] text-xs">
+                    <span className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mr-1">Código:</span>
+                    <select
+                        className="h-7 px-2 rounded bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-secondary)] text-xs focus:outline-none focus:border-fuchsia-500/60 cursor-pointer"
+                        value={editor.getAttributes('codeBlock').language || 'javascript'}
+                        onChange={e => editor.chain().focus().updateAttributes('codeBlock', { language: e.target.value }).run()}
+                    >
+                        {CODE_LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+                    </select>
+                    <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().toggleCodeBlock().run(); }}
+                        className="px-2 py-1 rounded hover:bg-red-500/10 text-red-400 transition-colors ml-auto">Quitar bloque</button>
+                </div>
+            )}
 
             {/* ── TOOLBAR CONTEXTUAL DE TABLA ──────────────────────────────── */}
             {editor.isActive('table') && (
@@ -985,14 +1441,72 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                     <div className="w-px h-4 bg-[var(--border-color)] mx-0.5 self-center" />
                     <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().toggleHeaderRow().run(); }}
                         className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors">Cabecera</button>
+                    <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().mergeCells().run(); }}
+                        className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors" title="Combinar celdas">Combinar</button>
+                    <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().splitCell().run(); }}
+                        className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors" title="Dividir celda">Dividir</button>
+                    <div className="w-px h-4 bg-[var(--border-color)] mx-0.5 self-center" />
+                    {/* Color picker */}
+                    <div className="relative">
+                        <button type="button" onClick={() => setShowTableColors(v => !v)}
+                            className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors flex items-center gap-1" title="Color de celda">
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                            Color
+                        </button>
+                        {showTableColors && (
+                            <div className="absolute top-full left-0 mt-1 p-3 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-xl shadow-xl z-50 w-56" onMouseDown={e => e.preventDefault()}>
+                                <p className="text-[10px] uppercase text-[var(--text-muted)] tracking-wider mb-2">Fondo de celda</p>
+                                <div className="flex flex-wrap gap-1.5 mb-3">
+                                    {[
+                                        null,
+                                        '#fecaca', '#fed7aa', '#fef08a', '#bbf7d0', '#a5f3fc', '#bfdbfe', '#ddd6fe', '#fbcfe8',
+                                        '#dc2626', '#ea580c', '#ca8a04', '#16a34a', '#0891b2', '#2563eb', '#7c3aed', '#db2777',
+                                        '#1e1e2e', '#2a2a3a', '#3a3a4a', '#f8fafc', '#f1f5f9', '#e2e8f0',
+                                    ].map((color, i) => (
+                                        <button key={i} type="button"
+                                            onMouseDown={e => { e.preventDefault(); editor.chain().focus().setCellAttribute('backgroundColor', color).run(); setShowTableColors(false); }}
+                                            className={`w-6 h-6 rounded border transition-transform hover:scale-110 ${!color ? 'border-dashed border-[var(--border-color)]' : 'border-transparent'}`}
+                                            style={{ background: color || 'transparent' }}
+                                            title={color || 'Sin color'}
+                                        >
+                                            {!color && <span className="text-[9px] text-[var(--text-muted)]">✕</span>}
+                                        </button>
+                                    ))}
+                                </div>
+                                <p className="text-[10px] uppercase text-[var(--text-muted)] tracking-wider mb-2">Borde de celda</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {[
+                                        null, '#e5e7eb', '#d4d4d8',
+                                        '#dc2626', '#ea580c', '#16a34a', '#2563eb', '#7c3aed', '#db2777',
+                                        '#fecaca', '#bfdbfe', '#ddd6fe',
+                                    ].map((color, i) => (
+                                        <button key={i} type="button"
+                                            onMouseDown={e => { e.preventDefault(); editor.chain().focus().setCellAttribute('borderColor', color).run(); setShowTableColors(false); }}
+                                            className={`w-6 h-6 rounded border-2 transition-transform hover:scale-110 ${!color ? 'border-dashed border-[var(--border-color)]' : ''}`}
+                                            style={{ borderColor: color || undefined, background: 'transparent' }}
+                                            title={color || 'Por defecto'}
+                                        >
+                                            {!color && <span className="text-[9px] text-[var(--text-muted)]">✕</span>}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
                     <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().deleteTable().run(); }}
                         className="px-2 py-1 rounded hover:bg-red-500/10 text-red-400 transition-colors ml-auto">Eliminar tabla</button>
                 </div>
             )}
 
+            {uploadError && (
+                <div className="mx-4 mt-3 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-400">
+                    {uploadError}
+                </div>
+            )}
+
             {/* ── ÁREA DE EDICIÓN ──────────────────────────────────────────── */}
             <div
-                className="flex-1 overflow-y-auto bg-[var(--bg-primary)] focus-within:outline-none"
+                className={`flex-1 overflow-y-auto bg-[var(--bg-primary)] focus-within:outline-none ${markdownMode ? 'hidden' : ''}`}
                 style={{ minHeight: fullscreen ? 'calc(100vh - 120px)' : '420px' }}
             >
                 {/* Columna central tipo Medium */}
@@ -1000,7 +1514,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                     mx-auto px-6 py-10
                     prose prose-invert max-w-none
                     [&_.tiptap]:outline-none
-                    [&_.tiptap]:max-w-[720px] [&_.tiptap]:mx-auto
+                    [&_.tiptap]:max-w-full [&_.tiptap]:mx-auto [&_.tiptap]:px-4
                     [&_.tiptap]:text-[17px] [&_.tiptap]:leading-[1.8] [&_.tiptap]:text-[var(--text-primary)]
                     [&_.tiptap_h1]:text-[2.1em] [&_.tiptap_h1]:font-extrabold [&_.tiptap_h1]:leading-tight [&_.tiptap_h1]:mt-10 [&_.tiptap_h1]:mb-4 [&_.tiptap_h1]:text-[var(--text-primary)]
                     [&_.tiptap_h2]:text-[1.55em] [&_.tiptap_h2]:font-bold [&_.tiptap_h2]:leading-snug [&_.tiptap_h2]:mt-9 [&_.tiptap_h2]:mb-3 [&_.tiptap_h2]:text-[var(--text-primary)]
@@ -1013,7 +1527,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                     [&_.tiptap_li]:text-[var(--text-secondary)]
                     [&_.tiptap_code]:text-cyan-500 [&_.tiptap_code]:bg-[var(--bg-elevated)] [&_.tiptap_code]:px-[5px] [&_.tiptap_code]:py-[2px] [&_.tiptap_code]:rounded [&_.tiptap_code]:text-[0.87em] [&_.tiptap_code]:font-mono
                     [&_.tiptap_pre]:my-6 [&_.tiptap_pre]:rounded-xl [&_.tiptap_pre]:overflow-x-auto [&_.tiptap_pre]:text-[0.88em] [&_.tiptap_pre]:leading-relaxed [&_.tiptap_pre]:p-0
-                    [&_.tiptap_pre_code]:bg-transparent [&_.tiptap_pre_code]:text-inherit [&_.tiptap_pre_code]:p-0
+                    [&_.tiptap_pre_code]:bg-transparent [&_.tiptap_pre_code]:p-0
                     [&_.tiptap_hr]:border-[var(--border-color)] [&_.tiptap_hr]:my-10
                     [&_.tiptap_a]:text-fuchsia-500 [&_.tiptap_a]:underline [&_.tiptap_a:hover]:text-fuchsia-400
                     [&_.tiptap_img]:rounded-xl [&_.tiptap_img]:shadow-2xl [&_.tiptap_img]:my-4
@@ -1029,10 +1543,43 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                 </div>
             </div>
 
+            {/* ── MODO MARKDOWN/SOURCE ──────────────────────────────── */}
+            {markdownMode && (
+                <div className="flex-1 bg-[var(--bg-primary)]" style={{ minHeight: fullscreen ? 'calc(100vh - 120px)' : '420px' }}>
+                    <textarea
+                        value={markdownSource}
+                        onChange={e => setMarkdownSource(e.target.value)}
+                        className="w-full h-full min-h-[420px] p-6 bg-transparent text-[var(--text-secondary)] font-mono text-sm leading-relaxed outline-none resize-none"
+                        placeholder="Edita el código fuente HTML aquí…"
+                        spellCheck={false}
+                    />
+                </div>
+            )}
+
+            {/* ── SLASH MENU ───────────────────────────────────────── */}
+            {slashMenu.open && (
+                <SlashMenu
+                    editor={editor}
+                    coords={slashMenu.coords}
+                    query={slashMenu.query}
+                    onClose={() => setSlashMenu(m => ({ ...m, open: false }))}
+                    onAction={handleSlashAction}
+                />
+            )}
+
+            {/* Hidden inputs */}
+            <input ref={docInputRef} type="file" accept=".pdf,.zip,.docx,.doc" className="hidden" onChange={handleDocumentUpload} />
+
             {/* ── STATUS BAR ───────────────────────────────────────────────── */}
             <div className="flex items-center justify-between px-4 py-2 border-t border-[var(--border-color)] bg-[var(--bg-surface)] text-xs text-[var(--text-muted)] rounded-b-2xl">
-                <span>{wordCount} palabras · {charCount} caracteres</span>
-                <span>~{readMin} min de lectura</span>
+                <div className="flex items-center gap-3">
+                    <span>{wordCount} palabras · {charCount} caracteres</span>
+                    <span>~{readMin} min de lectura</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    {markdownMode && <span className="text-cyan-400 font-medium">HTML Source</span>}
+                    <span className="text-[var(--text-muted)] opacity-60">Tip: escribe "/" para insertar bloques</span>
+                </div>
             </div>
         </div>
     );

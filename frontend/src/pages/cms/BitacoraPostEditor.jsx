@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { lazy, Suspense, useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { cmsApi } from '../../lib/cmsApi';
-import RichEditor from '../../components/cms/RichEditor';
+
+const RichEditor = lazy(() => import('../../components/cms/RichEditor'));
 
 function slugify(str) {
     return str
@@ -26,10 +27,24 @@ const EMPTY_FORM = {
     ogImage: '',
     canonicalUrl: '',
     noindex: false,
+    status: 'draft',
 };
 
 const DRAFT_KEY = 'cms_post_draft';
 const AUTOSAVE_MS = 30_000;
+
+function EditorLoader() {
+    return (
+        <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-6">
+            <div className="mb-4 flex gap-2">
+                <div className="h-8 w-8 rounded-lg bg-[var(--bg-elevated)] animate-pulse" />
+                <div className="h-8 w-8 rounded-lg bg-[var(--bg-elevated)] animate-pulse" />
+                <div className="h-8 w-8 rounded-lg bg-[var(--bg-elevated)] animate-pulse" />
+            </div>
+            <div className="h-72 rounded-xl bg-[var(--bg-elevated)] animate-pulse" />
+        </div>
+    );
+}
 
 export default function BitacoraPostEditor() {
     const { token }  = useAuth();
@@ -43,9 +58,17 @@ export default function BitacoraPostEditor() {
     const [error,      setError]      = useState('');
     const [slugManual, setSlugManual] = useState(false);
     const [draftSaved, setDraftSaved] = useState(false);
+    const [toast,      setToast]      = useState(null); // { message, type: 'success'|'error' }
     const [fullscreen, setFullscreen] = useState(false);
     const [availableDraft, setAvailableDraft] = useState(null);
     const autosaveTimer = useRef(null);
+    const toastTimer = useRef(null);
+
+    function showToast(message, type = 'success') {
+        clearTimeout(toastTimer.current);
+        setToast({ message, type });
+        toastTimer.current = setTimeout(() => setToast(null), 4000);
+    }
 
     // ── Cargar post si es edición ─────────────────────────────────────────────
     useEffect(() => {
@@ -60,7 +83,9 @@ export default function BitacoraPostEditor() {
                         setAvailableDraft(parsed);
                     }
                 }
-            } catch {}
+            } catch {
+                setAvailableDraft(null);
+            }
             return;
         }
         cmsApi.getPost(token, editSlug)
@@ -77,6 +102,7 @@ export default function BitacoraPostEditor() {
                     ogImage: post.ogImage || '',
                     canonicalUrl: post.canonicalUrl || '',
                     noindex: post.noindex || false,
+                    status: post.status || 'published',
                 });
                 setSlugManual(true);
             })
@@ -93,7 +119,9 @@ export default function BitacoraPostEditor() {
                 localStorage.setItem(DRAFT_KEY, JSON.stringify(form));
                 setDraftSaved(true);
                 setTimeout(() => setDraftSaved(false), 2500);
-            } catch {}
+            } catch {
+                setDraftSaved(false);
+            }
         }, AUTOSAVE_MS);
         return () => clearTimeout(autosaveTimer.current);
     }, [form, isEdit]);
@@ -128,27 +156,46 @@ export default function BitacoraPostEditor() {
                 ...form,
                 tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
             }));
-        } catch {}
+        } catch {
+            setError('No se ha podido preparar la vista previa en este navegador.');
+        }
         window.open('/blog/preview', '_blank');
     }
 
     // ── Publicar / Actualizar ─────────────────────────────────────────────────
-    async function handleSubmit(e) {
-        e.preventDefault();
+    async function handleSubmit(e, statusOverride) {
+        if (e) e.preventDefault();
         setError('');
         setSaving(true);
 
         const payload = {
             ...form,
             tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
+            status: statusOverride || form.status || 'draft',
         };
 
         try {
             if (isEdit) {
                 await cmsApi.updatePost(token, editSlug, payload);
             } else {
-                await cmsApi.createPost(token, payload);
+                const created = await cmsApi.createPost(token, payload);
                 localStorage.removeItem(DRAFT_KEY);
+
+                // Si es borrador, redirigir a modo edición para que los
+                // siguientes guardados usen PUT en vez de POST
+                if (statusOverride === 'draft') {
+                    showToast('Post guardado en borradores');
+                    navigate(`/bitacora/posts/editar/${created.slug}`, { replace: true });
+                    return;
+                }
+            }
+            if (statusOverride === 'draft') {
+                setForm(f => ({ ...f, status: 'draft' }));
+                showToast('Borrador guardado correctamente');
+                return;                             // stay on edit page
+            }
+            if (statusOverride === 'published') {
+                showToast(isEdit ? 'Post actualizado y publicado' : 'Post publicado correctamente');
             }
             navigate('/bitacora/posts');
         } catch (err) {
@@ -156,6 +203,14 @@ export default function BitacoraPostEditor() {
         } finally {
             setSaving(false);
         }
+    }
+
+    async function handleSaveDraft() {
+        await handleSubmit(null, 'draft');
+    }
+
+    async function handlePublish(e) {
+        await handleSubmit(e, 'published');
     }
 
     if (loading) {
@@ -207,14 +262,33 @@ export default function BitacoraPostEditor() {
                         Cancelar
                     </button>
                     <button
-                        type="submit"
-                        form="post-form"
+                        type="button"
+                        onClick={handleSaveDraft}
+                        disabled={saving}
+                        className="px-4 py-2 rounded-xl text-sm font-medium border border-amber-500/50 text-amber-400 hover:bg-amber-500/10 transition-all disabled:opacity-50 flex items-center gap-2"
+                    >
+                        {saving && <div className="w-3.5 h-3.5 border-2 border-amber-400/30 border-t-amber-400 rounded-full animate-spin" />}
+                        Guardar borrador
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handlePublish}
                         disabled={saving}
                         className="px-5 py-2 rounded-xl bg-gradient-to-r from-fuchsia-600 to-cyan-500 text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2 shadow-md"
                     >
                         {saving && <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-                        {saving ? 'Guardando…' : isEdit ? 'Actualizar' : 'Publicar'}
+                        {saving ? 'Guardando…' : isEdit ? (form.status === 'draft' ? 'Publicar' : 'Actualizar') : 'Publicar'}
                     </button>
+                    {isEdit && form.status === 'published' && (
+                        <button
+                            type="button"
+                            onClick={() => handleSubmit(null, 'draft')}
+                            disabled={saving}
+                            className="px-3 py-2 rounded-xl text-xs font-medium border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-all disabled:opacity-50"
+                        >
+                            Despublicar
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -224,7 +298,7 @@ export default function BitacoraPostEditor() {
                 </div>
             )}
 
-            <form id="post-form" onSubmit={handleSubmit} className="max-w-7xl mx-auto space-y-5">
+            <form id="post-form" onSubmit={e => handleSubmit(e, 'draft')} className="max-w-7xl mx-auto space-y-5">
 
                 {/* ── Metadatos ─────────────────────────────────────────────── */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-default)]">
@@ -300,13 +374,15 @@ export default function BitacoraPostEditor() {
                 {/* ── Editor rico ───────────────────────────────────────────── */}
                 <div>
                     <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">Contenido *</label>
-                    <RichEditor
-                        value={form.content}
-                        onChange={handleContentChange}
-                        token={token}
-                        fullscreen={fullscreen}
-                        onToggleFullscreen={() => setFullscreen(f => !f)}
-                    />
+                    <Suspense fallback={<EditorLoader />}>
+                        <RichEditor
+                            value={form.content}
+                            onChange={handleContentChange}
+                            token={token}
+                            fullscreen={fullscreen}
+                            onToggleFullscreen={() => setFullscreen(f => !f)}
+                        />
+                    </Suspense>
                 </div>
 
                 {/* ── SEO Profesional ───────────────────────────────────────── */}
@@ -408,6 +484,28 @@ export default function BitacoraPostEditor() {
                     </div>
                 </div>
             </form>
+
+            {/* ── Toast notification ───────────────────────────────────── */}
+            {toast && (
+                <div className="fixed bottom-6 right-6 z-50 animate-[slideUp_0.3s_ease-out]">
+                    <div className={`flex items-center gap-2.5 px-5 py-3 rounded-xl shadow-2xl backdrop-blur-sm text-sm font-medium border ${
+                        toast.type === 'error'
+                            ? 'bg-red-500/90 border-red-400/30 text-white'
+                            : 'bg-emerald-500/90 border-emerald-400/30 text-white'
+                    }`}>
+                        {toast.type === 'error' ? (
+                            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/>
+                            </svg>
+                        ) : (
+                            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path d="M5 13l4 4L19 7"/>
+                            </svg>
+                        )}
+                        {toast.message}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
@@ -6,7 +6,40 @@ import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
 import { Helmet } from 'react-helmet-async';
+import { sanitizePostContent } from '../lib/postContentSanitizer';
 import 'highlight.js/styles/atom-one-dark.css';
+
+// Helper: render a document embed block from data attributes
+function DocumentEmbed({ src, filename, fileType, displayMode, embedHeight }) {
+    const isPdf = fileType === 'pdf';
+    const mode = displayMode || (isPdf ? 'embed' : 'link');
+    const height = parseInt(embedHeight) || 500;
+    const ICONS = { pdf: '📄', zip: '📦', docx: '📝' };
+    const icon = ICONS[fileType] || '📎';
+
+    return (
+        <div style={{ border: '1px solid var(--border-color, rgba(255,255,255,0.1))', borderRadius: 12, overflow: 'hidden', margin: '16px 0' }}>
+            {isPdf && mode === 'embed' && (
+                <iframe
+                    src={src}
+                    style={{ width: '100%', height, border: 'none', display: 'block' }}
+                    loading="lazy"
+                    title={filename}
+                    allowFullScreen
+                />
+            )}
+            <div className="doc-bar" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', background: 'var(--bg-elevated, rgba(15,15,30,0.8))' }}>
+                <span style={{ fontSize: '1.25rem' }}>{icon}</span>
+                <span className="doc-name" style={{ flex: 1, fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #e2e8f0)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>{filename}</span>
+                {!(isPdf && mode === 'embed') && src && (
+                    <a href={src} download={filename} className="doc-download" style={{ padding: '8px 16px', background: '#c026d3', color: 'white', borderRadius: 8, fontSize: 14, fontWeight: 500, textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                        Descargar
+                    </a>
+                )}
+            </div>
+        </div>
+    );
+}
 
 const BlogPost = () => {
   const { slug } = useParams();
@@ -15,6 +48,7 @@ const BlogPost = () => {
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const sanitizedContent = useMemo(() => sanitizePostContent(content), [content]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -25,7 +59,7 @@ const BlogPost = () => {
         if (!indexRes.ok) throw new Error(`Error ${indexRes.status} cargando índice`);
         const data = await indexRes.json();
 
-        const found = data.find(p => p.slug === slug);
+        const found = data.find(p => p.slug === slug && p.status !== 'draft');
         if (!found) {
           navigate('/blog', { replace: true });
           return;
@@ -126,6 +160,23 @@ const BlogPost = () => {
             remarkPlugins={[remarkGfm]}
             rehypePlugins={[rehypeRaw, rehypeHighlight]}
             components={{
+              div: ({node, ...props}) => {
+                if (props['data-document'] !== undefined) {
+                  const align = props['data-align'];
+                  const alignStyle = align === 'center' ? { display: 'flex', justifyContent: 'center' }
+                                   : align === 'right' ? { display: 'flex', justifyContent: 'flex-end' }
+                                   : undefined;
+                  const embed = <DocumentEmbed
+                    src={props['data-src']}
+                    filename={props['data-filename']}
+                    fileType={props['data-file-type']}
+                    displayMode={props['data-display-mode']}
+                    embedHeight={props['data-embed-height'] || props.embedheight}
+                  />;
+                  return alignStyle ? <div style={alignStyle}>{embed}</div> : embed;
+                }
+                return <div {...props} />;
+              },
               h1: ({node, ...props}) => <h1 className="flex items-center justify-center text-center text-4xl font-bold mt-8 mb-8 border-b border-[var(--border-color)] pb-6 text-transparent bg-clip-text bg-gradient-to-r from-violet-300 to-fuchsia-200 min-h-[80px]" {...props} />,
               h2: ({node, ...props}) => <h2 className="text-center md:text-left text-2xl md:text-3xl font-semibold mt-12 mb-6 text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-violet-300 border-b border-[var(--border-color)] pb-3" {...props} />,
               h3: ({node, ...props}) => <h3 className="text-center md:text-left text-xl md:text-2xl font-bold mt-8 mb-4 text-fuchsia-400 drop-shadow-sm" {...props} />,
@@ -135,6 +186,10 @@ const BlogPost = () => {
               ol: ({node, ...props}) => <ol className="list-decimal list-outside text-[var(--text-secondary)] space-y-2 mb-8 ml-6" {...props} />,
               li: ({node, ...props}) => <li className="pl-2 text-justify" {...props} />,
               a: ({node, title, ...props}) => {
+                // CTA button from editor
+                if (props['data-content-button'] !== undefined) {
+                  return <a {...props} />;
+                }
                 if (title === 'button') {
                   return (
                     <span className="flex justify-center my-8">
@@ -177,7 +232,7 @@ const BlogPost = () => {
               },
             }}
           >
-            {content}
+            {sanitizedContent}
           </ReactMarkdown>
         </div>
 

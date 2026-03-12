@@ -1,4 +1,4 @@
-import { motion } from "framer-motion"; // eslint-disable-line no-unused-vars
+import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import Tilt from "react-parallax-tilt";
@@ -6,7 +6,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
 import "swiper/css";
 import { Helmet } from "react-helmet-async";
-import miFoto from "../assets/mifoto.png";
+import miFoto from "../assets/mifoto-optimized.jpg";
 import { getFeaturedServices } from "../data/services";
 import ProjectCard from "../components/ProjectCard";
 import ServicesGrid from "../components/ServicesGrid";
@@ -77,6 +77,10 @@ export default function Home() {
               <img
                 src={miFoto}
                 alt="Guadalupe Cano"
+                width="448"
+                height="448"
+                fetchPriority="high"
+                decoding="async"
                 className="relative z-10 w-40 xs:w-48 md:w-56 h-40 xs:h-48 md:h-56 rounded-full object-cover shadow-[0_0_30px_rgba(124,58,237,0.15)] group-hover:shadow-[0_0_40px_rgba(6,182,212,0.3)] transition-shadow duration-700 border border-[var(--border-color)] bg-[var(--bg-surface)]"
               />
             </div>
@@ -123,7 +127,13 @@ export default function Home() {
             {techs.map((tech) => (
               <SwiperSlide key={tech.name}>
                 <div className="flex flex-col items-center gap-2">
-                  <img src={tech.logo} alt={tech.name} className="h-10 xs:h-12 mx-auto object-contain" />
+                  <img
+                    src={tech.logo}
+                    alt={tech.name}
+                    loading="lazy"
+                    decoding="async"
+                    className="h-10 xs:h-12 mx-auto object-contain"
+                  />
                 </div>
               </SwiperSlide>
             ))}

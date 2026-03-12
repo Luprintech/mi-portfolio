@@ -10,13 +10,13 @@ export default function LuprinCat({ onClose }) {
   const [message, setMessage] = useState(null);
   const [isMuted, setIsMuted] = useState(false);
   const [catPosition, setCatPosition] = useState({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
-  const [clickCount, setClickCount] = useState(0);
   const [achievement, setAchievement] = useState(false);
 
   const meowInterval = useRef(null);
   const messageInterval = useRef(null);
   const lastMousePos = useRef({ x: 0, y: 0 });
   const lastTime = useRef(Date.now());
+  const clickCountRef = useRef(0);
 
   const x = useMotionValue(catPosition.x);
   const y = useMotionValue(catPosition.y);
@@ -109,14 +109,12 @@ export default function LuprinCat({ onClose }) {
     setTimeout(() => setMessage(null), 2000);
 
     // Logro secreto 🏆
-    setClickCount((prev) => {
-      const newCount = prev + 1;
-      if (newCount >= 3 && !achievement) {
-        setAchievement(true);
-        setTimeout(() => setAchievement(false), 4000);
-      }
-      return newCount;
-    });
+    clickCountRef.current += 1;
+    if (clickCountRef.current >= 3 && !achievement) {
+      clickCountRef.current = 0;
+      setAchievement(true);
+      setTimeout(() => setAchievement(false), 4000);
+    }
   };
 
   // 🔇 Silenciar

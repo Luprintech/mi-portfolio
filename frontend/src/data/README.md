@@ -1,186 +1,55 @@
-# 📚 Guía de Administración de Proyectos
+# Guia de Proyectos
 
-## 📌 Cómo agregar o editar proyectos
+## Fuente de verdad actual
 
-Todos los proyectos de **Desarrollo Web** se gestionan desde un único archivo:
+La web publica ya no consume `src/data/webProjects.js` como fuente principal.
 
-**📂 Ubicación:** `src/data/webProjects.js`
+Los proyectos visibles en portfolio e inicio se leen desde:
 
----
+- `frontend/public/projects.json`
 
-## ✏️ Formato de un Proyecto
+El hook que los carga es:
 
-Cada proyecto puede tener **un link** (formato simple) o **múltiples links** (formato avanzado):
+- `frontend/src/hooks/useProjects.js`
 
-### 📌 Formato Simple (Un solo link)
+## Cuando editar proyectos
 
-```javascript
+- Si quieres cambiar los proyectos que muestra la web publica, edita `frontend/public/projects.json`.
+- Si el cambio viene desde el CMS, el backend actualizara ese mismo fichero o la ruta definida por `CONTENT_PATH`.
+- Antes de tocar `src/data/webProjects.js`, comprueba si sigue siendo contenido legacy o de referencia.
+
+## Formato esperado
+
+Cada proyecto sigue esta estructura base:
+
+```json
 {
-  id: 1,
-  titulo: "Mi Proyecto",
-  descripcion: "Breve descripción de qué hace el proyecto",
-  imagen: imagenVariable,
-  link: "https://...",      // ✅ Un solo link
-  tech: ["React", "CSS"],
-  featured: true,
+  "id": "mi-proyecto",
+  "title": "Mi proyecto",
+  "description": "Descripcion breve",
+  "tech": ["React", "Node.js"],
+  "github": "https://github.com/usuario/proyecto",
+  "demo": "https://mi-proyecto.com",
+  "image": "/images/mi-proyecto.jpg",
+  "featured": false,
+  "category": "code"
 }
 ```
 
-### 🔗 Formato Avanzado (Múltiples links)
+## Campos relevantes
 
-```javascript
-{
-  id: 2,
-  titulo: "Mi Proyecto Completo",
-  descripcion: "Proyecto con código en GitHub y aplicación web desplegada",
-  imagen: imagenVariable,
-  links: [                  // ✅ Array de múltiples links
-    {
-      url: "https://mi-app.com",
-      label: "Ver aplicación",
-      type: "web",          // web, github, o generic
-    },
-    {
-      url: "https://github.com/usuario/proyecto",
-      label: "Ver código",
-      type: "github",
-    },
-  ],
-  tech: ["React", "Node.js", "MySQL"],
-  featured: true,
-}
-```
+- `id`: identificador unico.
+- `title`: titulo mostrado en UI y CMS.
+- `description`: texto corto para cards.
+- `tech`: array de tecnologias.
+- `github`: enlace al repositorio si existe.
+- `demo`: enlace al proyecto desplegado si existe.
+- `image`: ruta publica de la imagen.
+- `featured`: si es `true`, puede aparecer en inicio.
+- `category`: usa `code` o `cms`.
 
-#### Tipos de links disponibles:
-- `"web"` - Botón con gradiente fuchsia/cyan y icono de web 🌐
-- `"github"` - Botón gris oscuro con icono de GitHub 🐙
-- `"generic"` - Botón morado/rosa con icono genérico 🔗
+## Comprobacion rapida
 
----
-
-## 🎯 Proyectos Destacados en INICIO
-
-- Solo aparecen proyectos con **`featured: true`**
-- **Máximo 3 proyectos** destacados se muestran en Inicio
-- Si hay más de 3 con `featured: true`, solo se muestran los primeros 3
-
-### ¿Cómo destacar un proyecto?
-
-```javascript
-featured: true,  // ⭐ Aparece en Inicio
-```
-
-### ¿Cómo quitar un proyecto del Inicio?
-
-```javascript
-featured: false, // Solo aparece en Portfolio
-```
-
----
-
-## 📝 Ejemplo: Agregar un nuevo proyecto
-
-### 1️⃣ Importa la imagen (si está en assets)
-
-```javascript
-import calculadora from "../assets/portfolio/calculadora3d.png";
-import miNuevoProyecto from "../assets/portfolio/mi-proyecto.png"; // ⬅️ NUEVO
-```
-
-### 2️⃣ Agrega el proyecto al array
-
-**Opción A: Con un solo link**
-```javascript
-export const webProjects = [
-  // ... proyectos existentes ...
-  
-  {
-    id: 4,
-    titulo: "Mi Portfolio Personal",
-    descripcion: "Sitio web personal con mis proyectos",
-    imagen: miNuevoProyecto,
-    link: "https://mi-portfolio.com",
-    tech: ["React", "Tailwind"],
-    featured: false,
-  },
-];
-```
-
-**Opción B: Con múltiples links**
-```javascript
-export const webProjects = [
-  // ... proyectos existentes ...
-  
-  {
-    id: 4,
-    titulo: "Tienda Online",
-    descripcion: "E-commerce desarrollado con MERN stack",
-    imagen: miNuevoProyecto,
-    links: [
-      {
-        url: "https://tienda-demo.com",
-        label: "Ver tienda",
-        type: "web",
-      },
-      {
-        url: "https://github.com/usuario/tienda",
-        label: "Ver código",
-        type: "github",
-      },
-    ],
-    tech: ["React", "Node.js", "MongoDB", "Express"],
-    featured: true, // Aparecerá en Inicio
-  },
-];
-```
-
-
----
-
-## 🔄 Dónde se usan los proyectos
-
-### 🏠 **Inicio** (`src/pages/Home.jsx`)
-- Muestra solo los **3 primeros proyectos con `featured: true`**
-- Usa la función `getFeaturedProjects()`
-
-### 💼 **Portfolio > Desarrollo Web** (`src/pages/portfolio/desarrollo-web.jsx`)
-- Muestra **TODOS** los proyectos
-- Usa la función `getAllWebProjects()`
-
----
-
-## 🎨 Personalización
-
-### Cambiar el número de proyectos destacados
-
-En `src/data/webProjects.js`, línea 52:
-
-```javascript
-export const getFeaturedProjects = () => {
-  return webProjects.filter((p) => p.featured).slice(0, 3); // ⬅️ Cambia el 3
-};
-```
-
----
-
-## ⚠️ Importante
-
-- **NO modifiques** `Home.jsx` o `desarrollo-web.jsx` para agregar proyectos
-- **Solo edita** `src/data/webProjects.js`
-- Asegúrate de que cada proyecto tenga un **ID único**
-- Importa las imágenes al inicio del archivo
-
----
-
-## 📌 Resumen Rápido
-
-| Acción | Dónde editarlo |
-|--------|---------------|
-| Agregar proyecto | `src/data/webProjects.js` |
-| Destacar en Inicio | Poner `featured: true` |
-| Quitar de Inicio | Poner `featured: false` |
-| Cambiar orden | Reordenar en el array |
-
----
-
-✅ **Con este sistema, solo tocas un archivo para gestionar todo**
+- Inicio usa `featuredProjects` desde `useProjects()`.
+- Portfolio divide proyectos entre `code` y `cms`.
+- Si cambias el esquema JSON, revisa tambien `frontend/src/hooks/useProjects.js`, `frontend/src/components/ProjectCard.jsx` y el CMS.

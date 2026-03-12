@@ -8,7 +8,7 @@ import { Rocket, Calendar, Layers, GraduationCap } from "lucide-react";
 import { FaBolt, FaPlug, FaDesktop, FaRobot, FaSyncAlt, FaWordpress, FaYoutube } from "react-icons/fa";
 import { MdSearch, MdSchool, MdAutorenew } from "react-icons/md";
 import { BsBroadcast } from "react-icons/bs";
-import mifoto from "../assets/pc.jpg";
+import mifoto from "../assets/pc-optimized.jpg";
 import Timeline from "../components/Timeline.jsx";
 import TechSkills from "../components/TechSkills.jsx";
 
@@ -97,6 +97,9 @@ export default function SobreMi() {
                   <img
                     src={mifoto}
                     alt="Guadalupe Cano"
+                    width="176"
+                    height="176"
+                    decoding="async"
                     className="w-36 h-36 md:w-44 md:h-44 rounded-full object-cover bg-[var(--bg-surface)]"
                   />
                 </div>

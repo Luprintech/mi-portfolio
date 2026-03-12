@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { cmsApi } from '../../lib/cmsApi';
+import { IMAGE_INPUT_ACCEPT, IMAGE_UPLOAD_LABEL, validateImageFile } from '../../lib/mediaUploadPolicy';
 import { slugify } from '../../utils/slugify';
 
 const EMPTY = {
@@ -75,6 +76,8 @@ export default function BitacoraProjectEditor() {
         setImgError('');
         setImgUploading(true);
         try {
+            const validationError = validateImageFile(file);
+            if (validationError) throw new Error(validationError);
             const { url } = await cmsApi.uploadImage(token, file);
             setForm(f => ({ ...f, image: url }));
         } catch (err) {
@@ -241,7 +244,7 @@ export default function BitacoraProjectEditor() {
                     <input
                         ref={fileInputRef}
                         type="file"
-                        accept="image/*"
+                        accept={IMAGE_INPUT_ACCEPT}
                         onChange={handleImageUpload}
                         className="sr-only"
                     />
@@ -291,7 +294,7 @@ export default function BitacoraProjectEditor() {
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                                     </svg>
                                     <span className="text-xs font-medium">Haz clic para seleccionar una imagen</span>
-                                    <span className="text-xs opacity-60">JPG, PNG, WebP, SVG — máx. 5 MB</span>
+                                    <span className="text-xs opacity-60">{IMAGE_UPLOAD_LABEL} — máx. 5 MB</span>
                                 </>
                             )}
                         </button>

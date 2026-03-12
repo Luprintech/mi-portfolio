@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { cmsApi } from '../../lib/cmsApi';
@@ -11,16 +11,16 @@ export default function BitacoraProjects() {
     const [pendingDelete, setPendingDelete] = useState(null);
     const [deleteError,   setDeleteError]   = useState('');
 
-    async function load() {
+    const load = useCallback(async () => {
         setLoading(true);
         try {
             setProjects(await cmsApi.getProjects(token));
         } finally {
             setLoading(false);
         }
-    }
+    }, [token]);
 
-    useEffect(() => { load(); }, [token]);
+    useEffect(() => { load(); }, [load]);
 
     function requestDelete(id) {
         setDeleteError('');

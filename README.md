@@ -20,7 +20,7 @@ El proyecto está diseñado bajo un modelo híbrido:
 
 Para lograr un rendimiento óptimo sin depender de bases de datos externas pesadas o CMS monolíticos, se ha implementado un sistema "Headless Estático":
 
-1. **Catálogo de Proyectos (JSON)**: Los proyectos (`/src/data/projects.json`) se cargan mediante un Custom Hook (`useProjects.js`), permitiendo filtrado rápido y actualización en caliente sin recompilar.
+1. **Catálogo de Proyectos (JSON)**: Los proyectos viven en `frontend/public/projects.json` y la web los carga mediante `frontend/src/hooks/useProjects.js`. El CMS escribe sobre este mismo fichero o sobre la ruta definida en `CONTENT_PATH`.
 2. **Motor de Blog (Markdown + JSON)**: Los artículos se redactan en ficheros `.md` puros ubicados en `/public/posts/`. Un índice centralizado (`index.json`) maneja el mapeo y los metadatos (slug, tags, fecha).
 3. **Renderizado de Markdown**: Mediante `react-markdown` equipado con plugins avanzados (`remark-gfm`, `rehype-highlight`), el Markdown se inyecta directamente adaptando reglas CSS exclusivas para inyectarle estética premium de Tailwind a las imágenes, listas, código y crear botones mágicos con `[Link](url "button")`.
 
@@ -41,10 +41,10 @@ El despliegue local requiere encender dos servidores aislados. Asume tener insta
 cd backend
 npm install
 cp .env.example .env
-npm start
+node server.js
 ```
 
-_Asegúrate de configurar los parámetros SMTP dentro del nuevo archivo .env antes de iniciar._
+_Asegúrate de configurar las variables obligatorias del CMS (`JWT_SECRET`, `CMS_USERNAME`, `CMS_PASSWORD`) y, si vas a usar contacto o chat, también SMTP y Gemini en el nuevo `.env`._
 
 ### Frontend
 

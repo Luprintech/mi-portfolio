@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion as Motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, X, Send } from "lucide-react";
-import mifoto from "../assets/pc.jpg";
+import mifoto from "../assets/pc-optimized.jpg";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -88,6 +88,10 @@ function TypingIndicator() {
       <img
         src={mifoto}
         alt="Guadalupe"
+        width="24"
+        height="24"
+        loading="lazy"
+        decoding="async"
         className="w-6 h-6 rounded-full object-cover shrink-0 mb-1"
       />
       <div className="px-4 py-3 rounded-2xl rounded-bl-sm bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex gap-1 items-center">
@@ -116,6 +120,10 @@ function MessageBubble({ msg }) {
         <img
           src={mifoto}
           alt="Guadalupe"
+          width="24"
+          height="24"
+          loading="lazy"
+          decoding="async"
           className="w-6 h-6 rounded-full object-cover shrink-0 mb-1"
         />
       )}
@@ -135,20 +143,12 @@ function MessageBubble({ msg }) {
 /* ─── COMPONENTE PRINCIPAL ─── */
 export default function ChatBot() {
   const [isOpen, setIsOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640);
   const [messages, setMessages] = useState([WELCOME_MESSAGE]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);       // { msg, isWarning }
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
-
-  /* Detecta cambios de tamaño de pantalla */
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 640);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   /* Scroll automático al último mensaje */
   useEffect(() => {
@@ -247,6 +247,10 @@ export default function ChatBot() {
                 <img
                   src={mifoto}
                   alt="Guadalupe"
+                  width="36"
+                  height="36"
+                  loading="lazy"
+                  decoding="async"
                   className="w-9 h-9 rounded-full object-cover ring-2 ring-fuchsia-500/40"
                 />
                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-[var(--bg-elevated)]" />

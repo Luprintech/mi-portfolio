@@ -8,7 +8,6 @@ const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID || 'G-XXXXXXXXX
 const COOKIE_CONSENT_KEY = 'user_cookie_consent';
 
 export default function CookieBanner() {
-  const [consentState, setConsentState] = useState(null); // 'accepted', 'rejected', 'configured', null
   const [showBanner, setShowBanner] = useState(false);
   const [showConfig, setShowConfig] = useState(false);
 
@@ -21,8 +20,6 @@ export default function CookieBanner() {
 
     if (savedConsent) {
       const parsedConsent = JSON.parse(savedConsent);
-      setConsentState(parsedConsent.status);
-
       // 2. Si fue aceptado (total o parcialmente con analíticas), cargar GA4
       if (parsedConsent.status === 'accepted' || (parsedConsent.status === 'configured' && parsedConsent.analytics)) {
         loadGoogleAnalytics(GA_MEASUREMENT_ID);
@@ -43,7 +40,6 @@ export default function CookieBanner() {
   const handleAcceptAll = () => {
     const consentObj = { status: 'accepted', analytics: true, timestamp: new Date().toISOString() };
     localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(consentObj));
-    setConsentState('accepted');
     setShowBanner(false);
     loadGoogleAnalytics(GA_MEASUREMENT_ID);
   };
@@ -51,7 +47,6 @@ export default function CookieBanner() {
   const handleRejectAll = () => {
     const consentObj = { status: 'rejected', analytics: false, timestamp: new Date().toISOString() };
     localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(consentObj));
-    setConsentState('rejected');
     setShowBanner(false);
     disableGoogleAnalytics(GA_MEASUREMENT_ID);
   };
@@ -59,7 +54,6 @@ export default function CookieBanner() {
   const handleSaveConfig = () => {
     const consentObj = { status: 'configured', analytics: analyticsEnabled, timestamp: new Date().toISOString() };
     localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(consentObj));
-    setConsentState('configured');
     setShowBanner(false);
     setShowConfig(false);
 

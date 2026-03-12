@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { cmsApi } from '../../lib/cmsApi';
@@ -10,17 +10,18 @@ export default function BitacoraPosts() {
     const [deleting,      setDeleting]      = useState(null);
     const [pendingDelete, setPendingDelete] = useState(null);
     const [deleteError,   setDeleteError]   = useState('');
+    const [filter,        setFilter]        = useState('all'); // 'all' | 'draft' | 'published'
 
-    async function load() {
+    const load = useCallback(async () => {
         setLoading(true);
         try {
             setPosts(await cmsApi.getPosts(token));
         } finally {
             setLoading(false);
         }
-    }
+    }, [token]);
 
-    useEffect(() => { load(); }, [token]);
+    useEffect(() => { load(); }, [load]);
 
     function requestDelete(slug) {
         setDeleteError('');
@@ -52,6 +53,21 @@ export default function BitacoraPosts() {
                 <div>
                     <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-1">Posts</h1>
                     <p className="text-sm text-[var(--text-secondary)]">{posts.length} entradas en el blog</p>
+                    <div className="flex gap-1 mt-2">
+                        {[['all', 'Todos'], ['published', 'Publicados'], ['draft', 'Borradores']].map(([key, label]) => (
+                            <button
+                                key={key}
+                                onClick={() => setFilter(key)}
+                                className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+                                    filter === key
+                                        ? 'bg-fuchsia-500/20 text-fuchsia-400'
+                                        : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]'
+                                }`}
+                            >
+                                {label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
                 <Link
                     to="/bitacora/posts/nuevo"
@@ -83,13 +99,20 @@ export default function BitacoraPosts() {
                 </div>
             ) : (
                 <div className="space-y-2">
-                    {posts.map(post => (
+                    {posts.filter(p => filter === 'all' || (p.status || 'published') === filter).map(post => (
                         <div
                             key={post.slug}
                             className="flex items-center gap-4 px-5 py-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-default)] hover:border-[var(--border-color)] transition-all"
                         >
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{post.title}</p>
+                                <div className="flex items-center gap-2">
+                                    <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{post.title}</p>
+                                    {(post.status || 'published') === 'draft' ? (
+                                        <span className="shrink-0 text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 font-medium">Borrador</span>
+                                    ) : (
+                                        <span className="shrink-0 text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-medium">Publicado</span>
+                                    )}
+                                </div>
                                 <div className="flex items-center gap-3 mt-1">
                                     <span className="text-xs text-[var(--text-secondary)]">{post.date}</span>
                                     <div className="flex gap-1.5 flex-wrap">

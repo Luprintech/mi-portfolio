@@ -21,7 +21,8 @@ const Blog = () => {
         const res = await fetch('/posts/index.json', { signal: controller.signal });
         if (!res.ok) throw new Error(`Error ${res.status} cargando artículos`);
         const data = await res.json();
-        const sorted = [...data].sort((a, b) => new Date(b.date) - new Date(a.date));
+        const published = data.filter(p => p.status !== 'draft');
+        const sorted = [...published].sort((a, b) => new Date(b.date) - new Date(a.date));
         setPosts(sorted);
       } catch (err) {
         if (err.name !== 'AbortError') {

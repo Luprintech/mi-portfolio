@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import DOMPurify from 'dompurify';
+import { sanitizePostContent } from '../lib/postContentSanitizer';
 
 // Mismo estilo visual que BlogPost.jsx — renderiza HTML del editor TipTap
 export default function BlogPostPreview() {
     const [post, setPost] = useState(null);
+    const contentRef = useRef(null);
 
     useEffect(() => {
         try {
@@ -15,6 +16,57 @@ export default function BlogPostPreview() {
             // sessionStorage no disponible
         }
     }, []);
+
+    const cleanHtml = post ? sanitizePostContent(post.content || '') : '';
+
+    // Hydrate document embed blocks after render
+    useEffect(() => {
+        if (!contentRef.current) return;
+        contentRef.current.querySelectorAll('[data-document]').forEach(el => {
+            if (el.querySelector('iframe, .doc-bar')) return;
+            const src = el.getAttribute('data-src');
+            const filename = el.getAttribute('data-filename');
+            const fileType = el.getAttribute('data-file-type');
+            const mode = el.getAttribute('data-display-mode') || 'embed';
+            const height = parseInt(el.getAttribute('data-embed-height') || el.getAttribute('embedheight')) || 500;
+            if (!src || !filename) return;
+            const isPdf = fileType === 'pdf';
+            const ICONS = { pdf: '\uD83D\uDCC4', zip: '\uD83D\uDCE6', docx: '\uD83D\uDCDD' };
+            const icon = ICONS[fileType] || '\uD83D\uDCCE';
+            el.textContent = '';
+            el.style.cssText = 'border:1px solid var(--border-color,rgba(255,255,255,0.1));border-radius:12px;overflow:hidden;margin:16px 0';
+            if (isPdf && mode === 'embed') {
+                const iframe = document.createElement('iframe');
+                iframe.src = src;
+                iframe.style.cssText = `width:100%;height:${height}px;border:none;display:block`;
+                iframe.loading = 'lazy';
+                iframe.title = filename;
+                el.appendChild(iframe);
+            }
+            const bar = document.createElement('div');
+            bar.className = 'doc-bar';
+            bar.style.cssText = 'display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--bg-elevated,rgba(15,15,30,0.8))';
+            const iconSpan = document.createElement('span');
+            iconSpan.style.fontSize = '1.25rem';
+            iconSpan.textContent = icon;
+            bar.appendChild(iconSpan);
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'doc-name';
+            nameSpan.style.cssText = 'flex:1;font-size:14px;font-weight:500;color:var(--text-primary,#e2e8f0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0';
+            nameSpan.textContent = filename;
+            bar.appendChild(nameSpan);
+            if (!(isPdf && mode === 'embed') && src) {
+                const dl = document.createElement('a');
+                dl.href = src;
+                dl.download = filename;
+                dl.textContent = 'Descargar';
+                dl.className = 'doc-download';
+                dl.style.cssText = 'padding:8px 16px;background:#c026d3;color:white;border-radius:8px;font-size:14px;font-weight:500;text-decoration:none;white-space:nowrap';
+                bar.appendChild(dl);
+            }
+            el.appendChild(bar);
+        });
+    }, [cleanHtml]);
 
     if (!post) {
         return (
@@ -29,13 +81,6 @@ export default function BlogPostPreview() {
             </div>
         );
     }
-
-    const cleanHtml = DOMPurify.sanitize(post.content || '', {
-        ADD_TAGS: ['iframe', 'audio', 'video', 'source'],
-        ADD_ATTR: ['allowfullscreen', 'frameborder', 'controls', 'src', 'type',
-                   'allow', 'loading', 'style', 'class', 'target', 'rel'],
-        FORCE_BODY: true,
-    });
 
     const dateStr = post.date
         ? new Date(`${post.date}T00:00:00`).toLocaleDateString('es-ES', {
@@ -90,6 +135,7 @@ export default function BlogPostPreview() {
                 <div className="bg-[var(--bg-surface)] backdrop-blur-md rounded-2xl border border-[var(--border-color)] shadow-[var(--shadow-md)] p-6 md:p-10">
                     {cleanHtml ? (
                         <div
+                            ref={contentRef}
                             className="
                                 prose prose-invert max-w-none
                                 prose-headings:font-bold

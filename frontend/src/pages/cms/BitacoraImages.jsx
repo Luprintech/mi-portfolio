@@ -1,6 +1,7 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { cmsApi } from '../../lib/cmsApi';
+import { IMAGE_INPUT_ACCEPT, IMAGE_UPLOAD_LABEL, validateImageFile } from '../../lib/mediaUploadPolicy';
 
 export default function BitacoraImages() {
     const { token }   = useAuth();
@@ -13,7 +14,7 @@ export default function BitacoraImages() {
     const [error,     setError]     = useState('');
     const fileInput = useRef(null);
 
-    async function load() {
+    const load = useCallback(async () => {
         setLoading(true);
         try {
             setImages(await cmsApi.getImages(token));
@@ -22,9 +23,9 @@ export default function BitacoraImages() {
         } finally {
             setLoading(false);
         }
-    }
+    }, [token]);
 
-    useEffect(() => { load(); }, [token]);
+    useEffect(() => { load(); }, [load]);
 
     async function handleUpload(e) {
         const files = Array.from(e.target.files || []);
@@ -33,6 +34,8 @@ export default function BitacoraImages() {
         setError('');
         try {
             for (const file of files) {
+                const validationError = validateImageFile(file);
+                if (validationError) throw new Error(validationError);
                 const result = await cmsApi.uploadImage(token, file);
                 setImages(prev => [result, ...prev]);
             }
@@ -75,7 +78,7 @@ export default function BitacoraImages() {
 
     function handleDrop(e) {
         e.preventDefault();
-        const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+        const files = Array.from(e.dataTransfer.files).filter(file => !validateImageFile(file));
         if (!files.length) return;
         const dt = new DataTransfer();
         files.forEach(f => dt.items.add(f));
@@ -112,7 +115,7 @@ export default function BitacoraImages() {
                 <input
                     ref={fileInput}
                     type="file"
-                    accept="image/*"
+                    accept={IMAGE_INPUT_ACCEPT}
                     multiple
                     className="hidden"
                     onChange={handleUpload}
@@ -135,7 +138,7 @@ export default function BitacoraImages() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 <p className="text-sm text-[var(--text-secondary)]">Arrastra imágenes aquí o <span className="text-fuchsia-400">haz clic para seleccionar</span></p>
-                <p className="text-xs text-[var(--text-muted)] mt-1">JPG, PNG, WebP, GIF, SVG — máx. 5 MB por imagen</p>
+                <p className="text-xs text-[var(--text-muted)] mt-1">{IMAGE_UPLOAD_LABEL} — máx. 5 MB por imagen</p>
             </div>
 
             <p className="text-xs text-[var(--text-muted)] mb-4">

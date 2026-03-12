@@ -9,7 +9,8 @@
       "React",
       "Laravel"
     ],
-    "filename": "diseno-arquitectura-vocaccion.md"
+    "filename": "diseno-arquitectura-vocaccion.md",
+    "status": "published"
   },
   {
     "slug": "synology-docker-deploy",
@@ -24,6 +25,7 @@
       "HTTPS",
       "Despliegue"
     ],
-    "filename": "synology-docker-deploy.md"
+    "filename": "synology-docker-deploy.md",
+    "status": "published"
   }
 ]

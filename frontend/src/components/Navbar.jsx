@@ -97,20 +97,19 @@ export default function Navbar() {
 
   // Gato y logo
   const [catVisible, setCatVisible] = useState(false);
-  const [clickCount, setClickCount] = useState(0);
   const clickTimeoutRef = useRef(null);
+  const clickCountRef = useRef(0);
 
   const handleLogoClick = () => {
-    setClickCount((prev) => {
-      const next = prev + 1;
-      if (clickTimeoutRef.current) clearTimeout(clickTimeoutRef.current);
-      clickTimeoutRef.current = setTimeout(() => setClickCount(0), 2000);
-      if (next >= 5) {
-        setCatVisible(true);
-        return 0;
-      }
-      return next;
-    });
+    clickCountRef.current += 1;
+    if (clickTimeoutRef.current) clearTimeout(clickTimeoutRef.current);
+    clickTimeoutRef.current = setTimeout(() => {
+      clickCountRef.current = 0;
+    }, 2000);
+    if (clickCountRef.current >= 5) {
+      clickCountRef.current = 0;
+      setCatVisible(true);
+    }
   };
   const handleCloseCat = () => setCatVisible(false);
   const goHome = () => navigate("/");
