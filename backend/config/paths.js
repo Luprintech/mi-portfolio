@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // CONTENT_PATH define la raiz compartida de posts, proyectos y sitemap.
-const CONTENT_PATH = process.env.CONTENT_PATH
+export const CONTENT_PATH = process.env.CONTENT_PATH
     ? path.resolve(process.env.CONTENT_PATH)
     : path.join(__dirname, '../../frontend/public');
 

@@ -1,7 +1,8 @@
-import { lazy, Suspense, useState, useEffect, useCallback, useRef } from 'react';
+import { lazy, Suspense, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { cmsApi } from '../../lib/cmsApi';
+import { X } from 'lucide-react';
 
 const RichEditor = lazy(() => import('../../components/cms/RichEditor'));
 
@@ -27,11 +28,25 @@ const EMPTY_FORM = {
     ogImage: '',
     canonicalUrl: '',
     noindex: false,
+    featured: false,
     status: 'draft',
 };
 
 const DRAFT_KEY = 'cms_post_draft';
 const AUTOSAVE_MS = 30_000;
+const TITLE_MAX = 160;
+const EXCERPT_MAX = 320;
+
+// Strip HTML tags for word count
+function stripHtml(html) {
+    return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function countWords(text) {
+    const clean = stripHtml(text);
+    if (!clean) return 0;
+    return clean.split(/\s+/).filter(Boolean).length;
+}
 
 function EditorLoader() {
     return (
@@ -46,6 +61,51 @@ function EditorLoader() {
     );
 }
 
+// Pastel tag colors cycling through a fixed palette
+const TAG_COLORS = [
+    'bg-fuchsia-500/15 text-fuchsia-400 border-fuchsia-500/20',
+    'bg-cyan-500/15 text-cyan-400 border-cyan-500/20',
+    'bg-violet-500/15 text-violet-400 border-violet-500/20',
+    'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
+    'bg-amber-500/15 text-amber-400 border-amber-500/20',
+    'bg-rose-500/15 text-rose-400 border-rose-500/20',
+];
+
+function TagChips({ tagsString, onChange }) {
+    const tags = useMemo(
+        () => tagsString.split(',').map(t => t.trim()).filter(Boolean),
+        [tagsString]
+    );
+
+    function removeTag(index) {
+        const next = tags.filter((_, i) => i !== index);
+        onChange(next.join(', '));
+    }
+
+    if (tags.length === 0) return null;
+
+    return (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+            {tags.map((tag, i) => (
+                <span
+                    key={`${tag}-${i}`}
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${TAG_COLORS[i % TAG_COLORS.length]}`}
+                >
+                    {tag}
+                    <button
+                        type="button"
+                        onClick={() => removeTag(i)}
+                        aria-label={`Eliminar tag ${tag}`}
+                        className="flex h-3.5 w-3.5 items-center justify-center rounded-full opacity-60 hover:opacity-100 transition-opacity"
+                    >
+                        <X className="h-2.5 w-2.5" />
+                    </button>
+                </span>
+            ))}
+        </div>
+    );
+}
+
 export default function BitacoraPostEditor() {
     const { token }  = useAuth();
     const navigate   = useNavigate();
@@ -53,6 +113,7 @@ export default function BitacoraPostEditor() {
     const isEdit = !!editSlug;
 
     const [form,       setForm]       = useState(EMPTY_FORM);
+    const [initialForm, setInitialForm] = useState(EMPTY_FORM); // for dirty detection
     const [loading,    setLoading]    = useState(isEdit);
     const [saving,     setSaving]     = useState(false);
     const [error,      setError]      = useState('');
@@ -64,6 +125,15 @@ export default function BitacoraPostEditor() {
     const autosaveTimer = useRef(null);
     const toastTimer = useRef(null);
 
+    // Dirty state: form differs from initial
+    const isDirty = useMemo(() => {
+        return JSON.stringify(form) !== JSON.stringify(initialForm);
+    }, [form, initialForm]);
+
+    // Word count for content
+    const wordCount = useMemo(() => countWords(form.content), [form.content]);
+    const readingMinutes = Math.max(1, Math.ceil(wordCount / 200));
+
     function showToast(message, type = 'success') {
         clearTimeout(toastTimer.current);
         setToast({ message, type });
@@ -74,11 +144,11 @@ export default function BitacoraPostEditor() {
     useEffect(() => {
         if (!isEdit) {
             setForm(EMPTY_FORM);
+            setInitialForm(EMPTY_FORM);
             try {
                 const draft = localStorage.getItem(DRAFT_KEY);
                 if (draft) {
                     const parsed = JSON.parse(draft);
-                    // Solo sugerir si el borrador tiene algo de contenido
                     if (parsed.title || parsed.content) {
                         setAvailableDraft(parsed);
                     }
@@ -90,7 +160,7 @@ export default function BitacoraPostEditor() {
         }
         cmsApi.getPost(token, editSlug)
             .then(post => {
-                setForm({
+                const loaded = {
                     title:   post.title,
                     slug:    post.slug,
                     date:    post.date,
@@ -102,8 +172,11 @@ export default function BitacoraPostEditor() {
                     ogImage: post.ogImage || '',
                     canonicalUrl: post.canonicalUrl || '',
                     noindex: post.noindex || false,
+                    featured: post.featured || false,
                     status: post.status || 'published',
-                });
+                };
+                setForm(loaded);
+                setInitialForm(loaded);
                 setSlugManual(true);
             })
             .catch(err => setError(err.message))
@@ -137,7 +210,10 @@ export default function BitacoraPostEditor() {
     }, [slugManual]);
 
     function handleChange(field) {
-        return (e) => setForm(f => ({ ...f, [field]: e.target.value }));
+        return (e) => {
+            const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+            setForm(f => ({ ...f, [field]: value }));
+        };
     }
 
     function handleSlugChange(e) {
@@ -147,6 +223,10 @@ export default function BitacoraPostEditor() {
 
     function handleContentChange(html) {
         setForm(f => ({ ...f, content: html }));
+    }
+
+    function handleTagsChange(newTagsString) {
+        setForm(f => ({ ...f, tags: newTagsString }));
     }
 
     // ── Vista previa en nueva pestaña
@@ -181,8 +261,6 @@ export default function BitacoraPostEditor() {
                 const created = await cmsApi.createPost(token, payload);
                 localStorage.removeItem(DRAFT_KEY);
 
-                // Si es borrador, redirigir a modo edición para que los
-                // siguientes guardados usen PUT en vez de POST
                 if (statusOverride === 'draft') {
                     showToast('Post guardado en borradores');
                     navigate(`/bitacora/posts/editar/${created.slug}`, { replace: true });
@@ -191,8 +269,9 @@ export default function BitacoraPostEditor() {
             }
             if (statusOverride === 'draft') {
                 setForm(f => ({ ...f, status: 'draft' }));
+                setInitialForm(f => ({ ...f, status: 'draft' }));
                 showToast('Borrador guardado correctamente');
-                return;                             // stay on edit page
+                return;
             }
             if (statusOverride === 'published') {
                 showToast(isEdit ? 'Post actualizado y publicado' : 'Post publicado correctamente');
@@ -221,6 +300,9 @@ export default function BitacoraPostEditor() {
         );
     }
 
+    const titleLen = form.title.length;
+    const excerptLen = form.excerpt.length;
+
     return (
         <div className={`min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] p-6 transition-colors duration-300 ${fullscreen ? 'overflow-hidden' : ''}`}>
 
@@ -237,6 +319,7 @@ export default function BitacoraPostEditor() {
                             type="button"
                             onClick={() => {
                                 setForm(availableDraft);
+                                setInitialForm(availableDraft);
                                 setAvailableDraft(null);
                             }}
                             className="text-xs text-fuchsia-400 mt-1 hover:text-fuchsia-300 underline"
@@ -269,6 +352,14 @@ export default function BitacoraPostEditor() {
                     >
                         {saving && <div className="w-3.5 h-3.5 border-2 border-amber-400/30 border-t-amber-400 rounded-full animate-spin" />}
                         Guardar borrador
+                        {/* Dirty indicator */}
+                        {isDirty && !saving && (
+                            <span
+                                className="h-2 w-2 rounded-full bg-orange-400 shrink-0"
+                                title="Hay cambios sin guardar"
+                                aria-label="Cambios sin guardar"
+                            />
+                        )}
                     </button>
                     <button
                         type="button"
@@ -315,6 +406,11 @@ export default function BitacoraPostEditor() {
                             placeholder="Título del post…"
                             className="w-full px-4 py-3 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-default)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-fuchsia-500/60 focus:ring-1 focus:ring-fuchsia-500/40 transition-all text-sm shadow-sm"
                         />
+                        {/* Title character counter */}
+                        <p className={`mt-1.5 text-right text-[10px] font-medium ${titleLen > TITLE_MAX ? 'text-red-500' : 'text-[var(--text-muted)]'}`}>
+                            {titleLen}/{TITLE_MAX}
+                            {titleLen > TITLE_MAX && <span className="ml-1">— demasiado largo</span>}
+                        </p>
                     </div>
 
                     {/* Slug */}
@@ -356,6 +452,8 @@ export default function BitacoraPostEditor() {
                             placeholder="React, Node.js, Docker"
                             className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-default)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-fuchsia-500/60 focus:ring-1 focus:ring-fuchsia-500/40 transition-all text-sm shadow-sm"
                         />
+                        {/* Visual tag chips */}
+                        <TagChips tagsString={form.tags} onChange={handleTagsChange} />
                     </div>
 
                     {/* Excerpt */}
@@ -368,12 +466,44 @@ export default function BitacoraPostEditor() {
                             placeholder="Breve descripción que aparece en el listado del blog…"
                             className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-default)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-fuchsia-500/60 focus:ring-1 focus:ring-fuchsia-500/40 transition-all text-sm resize-none shadow-sm"
                         />
+                        {/* Excerpt character counter */}
+                        <p className={`mt-1.5 text-right text-[10px] font-medium ${excerptLen > EXCERPT_MAX ? 'text-red-500' : 'text-[var(--text-muted)]'}`}>
+                            {excerptLen}/{EXCERPT_MAX}
+                            {excerptLen > EXCERPT_MAX && <span className="ml-1">— demasiado largo</span>}
+                        </p>
+                    </div>
+
+                    <div className="lg:col-span-2 mt-1">
+                        <label className="flex items-center gap-3 cursor-pointer group w-fit">
+                            <div className={`relative h-5 w-10 rounded-full transition-colors ${form.featured ? 'bg-fuchsia-500' : 'bg-[var(--text-secondary)] opacity-50'}`}>
+                                <span className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${form.featured ? 'translate-x-5' : ''}`} />
+                                <input
+                                    type="checkbox"
+                                    checked={form.featured}
+                                    onChange={handleChange('featured')}
+                                    className="sr-only"
+                                />
+                            </div>
+                            <span className="text-sm font-medium text-[var(--text-primary)] transition-colors group-hover:text-fuchsia-500">
+                                Marcar como artículo destacado
+                            </span>
+                        </label>
+                        <p className="mt-2 text-xs leading-relaxed text-[var(--text-muted)]">
+                            El blog mostrará este post en la zona destacada de la portada. Si activas esta opción en otro artículo, sustituirá al actual.
+                        </p>
                     </div>
                 </div>
 
                 {/* ── Editor rico ───────────────────────────────────────────── */}
                 <div>
-                    <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">Contenido *</label>
+                    <div className="flex items-baseline justify-between mb-2">
+                        <label className="text-xs font-medium text-[var(--text-secondary)]">Contenido *</label>
+                        {wordCount > 0 && (
+                            <span className="text-[10px] text-[var(--text-muted)]">
+                                ~{wordCount.toLocaleString('es-ES')} palabras · {readingMinutes} min de lectura
+                            </span>
+                        )}
+                    </div>
                     <Suspense fallback={<EditorLoader />}>
                         <RichEditor
                             value={form.content}
@@ -388,7 +518,7 @@ export default function BitacoraPostEditor() {
                 {/* ── SEO Profesional ───────────────────────────────────────── */}
                 <div className="space-y-4 p-5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-default)]">
                     <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-widest">SEO Profesional</p>
-                    
+
                     {/* Google Preview */}
                     <div className="p-4 bg-[var(--bg-primary)] rounded-xl mb-6 font-sans max-w-2xl border border-[var(--border-default)]">
                         <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-2 font-semibold">Previsualización de Google</p>
@@ -425,7 +555,7 @@ export default function BitacoraPostEditor() {
                                 } text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-fuchsia-500/40 text-sm shadow-sm`}
                             />
                         </div>
-                        
+
                         <div>
                             <div className="flex justify-between items-center mb-1.5">
                                 <label className="block text-xs font-medium text-[var(--text-secondary)]">Meta Description</label>

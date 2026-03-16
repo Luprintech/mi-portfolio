@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { publicRequest } from '../lib/publicApi';
 
 export function useProjects() {
     const [projects, setProjects] = useState([]);
@@ -10,9 +11,7 @@ export function useProjects() {
 
         const fetchProjects = async () => {
             try {
-                const res = await fetch('/projects.json', { signal: controller.signal });
-                if (!res.ok) throw new Error(`Error ${res.status} cargando proyectos`);
-                const data = await res.json();
+                const data = await publicRequest('/api/projects', { signal: controller.signal });
                 setProjects(Array.isArray(data) ? data : []);
             } catch (err) {
                 if (err.name !== 'AbortError') {

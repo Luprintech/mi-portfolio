@@ -1,26 +1,32 @@
-# Guia de Proyectos
+# Guía de proyectos
 
 ## Fuente de verdad actual
 
-La web publica ya no consume `src/data/webProjects.js` como fuente principal.
+La web pública ya no usa `frontend/public/projects.json` como fuente de verdad principal.
 
-Los proyectos visibles en portfolio e inicio se leen desde:
+Los proyectos visibles en portfolio e inicio se leen desde la API pública:
 
-- `frontend/public/projects.json`
+- `GET /api/projects`
 
-El hook que los carga es:
+El hook que los consume es:
 
 - `frontend/src/hooks/useProjects.js`
 
-## Cuando editar proyectos
+## Persistencia real
 
-- Si quieres cambiar los proyectos que muestra la web publica, edita `frontend/public/projects.json`.
-- Si el cambio viene desde el CMS, el backend actualizara ese mismo fichero o la ruta definida por `CONTENT_PATH`.
-- Antes de tocar `src/data/webProjects.js`, comprueba si sigue siendo contenido legacy o de referencia.
+Los proyectos viven en PostgreSQL, en la tabla `projects`.
 
-## Formato esperado
+El archivo `frontend/public/projects.json` queda como contenido legacy de arranque para la importación inicial a la base de datos, pero no debe editarse como flujo habitual de mantenimiento.
 
-Cada proyecto sigue esta estructura base:
+## Cuándo editar proyectos
+
+- Si quieres cambiar los proyectos del portfolio, usa el CMS.
+- Si necesitas una migración manual, revisa primero `backend/lib/contentRepository.js` y `backend/lib/database.js`.
+- Antes de tocar `src/data/webProjects.js`, comprueba si sigue siendo material legado o de referencia interna.
+
+## Contrato esperado
+
+Cada proyecto expone esta estructura pública:
 
 ```json
 {
@@ -30,26 +36,14 @@ Cada proyecto sigue esta estructura base:
   "tech": ["React", "Node.js"],
   "github": "https://github.com/usuario/proyecto",
   "demo": "https://mi-proyecto.com",
-  "image": "/images/mi-proyecto.jpg",
+  "image": "/posts/images/mi-proyecto.jpg",
   "featured": false,
   "category": "code"
 }
 ```
 
-## Campos relevantes
-
-- `id`: identificador unico.
-- `title`: titulo mostrado en UI y CMS.
-- `description`: texto corto para cards.
-- `tech`: array de tecnologias.
-- `github`: enlace al repositorio si existe.
-- `demo`: enlace al proyecto desplegado si existe.
-- `image`: ruta publica de la imagen.
-- `featured`: si es `true`, puede aparecer en inicio.
-- `category`: usa `code` o `cms`.
-
-## Comprobacion rapida
+## Comprobación rápida
 
 - Inicio usa `featuredProjects` desde `useProjects()`.
 - Portfolio divide proyectos entre `code` y `cms`.
-- Si cambias el esquema JSON, revisa tambien `frontend/src/hooks/useProjects.js`, `frontend/src/components/ProjectCard.jsx` y el CMS.
+- Si cambias el contrato, revisa también `frontend/src/hooks/useProjects.js`, `frontend/src/components/ProjectCard.jsx`, el CMS y `backend/routes/publicContent.js`.

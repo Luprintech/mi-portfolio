@@ -1,20 +1,43 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=portfolio_cms
+      - POSTGRES_USER=portfolio
+      - POSTGRES_PASSWORD=portfolio
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - portfolio_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portfolio -d portfolio_cms"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # ── Backend: Node.js + Express ─────────────────────────────────────────────
   backend:
     build:
-      context: .                   # raíz para poder copiar frontend/public
+      context: .
       dockerfile: backend/Dockerfile
-    env_file: ./backend/.env       # usa el .env existente del backend
+    env_file: ./backend/.env
     environment:
       - NODE_ENV=production
       - CONTENT_PATH=/data/content
+      - PGHOST=postgres
+      - PGPORT=5432
+      - PGUSER=portfolio
+      - PGPASSWORD=portfolio
+      - PGDATABASE=portfolio_cms
     volumes:
       - content_data:/data/content
     expose:
       - "3000"
     networks:
       - portfolio_net
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
@@ -22,15 +45,14 @@ services:
       timeout: 5s
       retries: 3
 
-  # ── Frontend: nginx + React build ─────────────────────────────────────────
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "8081:80"                  # Puerto externo configurable en Synology
+      - "8081:80"
     volumes:
-      - content_data:/data/content:ro   # solo lectura para nginx
+      - content_data:/data/content:ro
     networks:
       - portfolio_net
     depends_on:
@@ -38,11 +60,10 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-# ── Volumen compartido (posts, proyectos, imágenes CMS) ───────────────────────
 volumes:
   content_data:
+  postgres_data:
 
-# ── Red interna para que nginx encuentre el backend por nombre ────────────────
 networks:
   portfolio_net:
     driver: bridge

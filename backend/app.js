@@ -4,7 +4,10 @@ import helmet from 'helmet';
 import cors from 'cors';
 import { corsOptions } from './config/cors.js';
 import { AUDIO_DIR, DOCS_DIR, IMAGES_DIR } from './config/paths.js';
+import { ensureDatabaseReady } from './lib/database.js';
+import { listPostsForSitemap } from './lib/contentRepository.js';
 import { logger } from './lib/logger.js';
+import { generateSitemap } from './lib/sitemap.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { notFoundHandler } from './middleware/notFoundHandler.js';
 import { attachRequestContext } from './middleware/requestContext.js';
@@ -15,6 +18,7 @@ import contactRoutes from './routes/contact.js';
 import imagesRoutes from './routes/images.js';
 import postsRoutes from './routes/posts.js';
 import projectsRoutes from './routes/projects.js';
+import publicContentRoutes from './routes/publicContent.js';
 
 const REQUIRED_ENV = ['JWT_SECRET', 'CMS_USERNAME', 'CMS_PASSWORD'];
 
@@ -26,8 +30,10 @@ function validateRequiredEnv() {
     }
 }
 
-export function createApp() {
+export async function createApp() {
     validateRequiredEnv();
+    await ensureDatabaseReady();
+    await generateSitemap(listPostsForSitemap);
 
     const app = express();
     app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal']);
@@ -56,6 +62,7 @@ export function createApp() {
     app.use('/api/bitacora/posts', postsRoutes);
     app.use('/api/bitacora/projects', projectsRoutes);
     app.use('/api/bitacora', imagesRoutes);
+    app.use('/api', publicContentRoutes);
     app.use('/api/contact', contactRoutes);
     app.use('/api/chat', chatRoutes);
 

@@ -1,7 +1,11 @@
 import { Router } from 'express';
-import fsExtra from 'fs-extra';
 import { logger } from '../lib/logger.js';
-import { PROJECTS_FILE } from '../config/paths.js';
+import {
+    createProject,
+    deleteProject,
+    listProjectsForCms,
+    updateProject,
+} from '../lib/contentRepository.js';
 import { verifyCmsToken } from '../middleware/auth.js';
 import { sanitizeProjectInput, validateRouteSlug } from '../utils/contentValidation.js';
 import { createHttpError } from '../utils/httpErrors.js';
@@ -13,8 +17,7 @@ router.use(verifyCmsToken);
 
 router.get('/', async (_req, res, next) => {
     try {
-        const projects = await fsExtra.readJson(PROJECTS_FILE);
-        res.json(projects);
+        res.json(await listProjectsForCms());
     } catch (error) {
         next(createHttpError(500, 'Error leyendo los proyectos', { cause: error }));
     }
@@ -27,22 +30,20 @@ router.post('/', async (req, res, next) => {
             return res.status(400).json({ error: errors[0] });
         }
 
-        const projects = await fsExtra.readJson(PROJECTS_FILE);
-        if (projects.find(project => project.id === data.id)) {
-            return res.status(409).json({ error: 'Ya existe un proyecto con ese ID' });
-        }
-
-        projects.push(data);
-        await fsExtra.writeJson(PROJECTS_FILE, projects, { spaces: 2 });
+        const created = await createProject(data);
 
         projectsLogger.info('Project created', {
             requestId: req.requestId,
-            projectId: data.id,
+            projectId: created.id,
             username: req.user?.username || null,
         });
 
-        res.status(201).json(data);
+        res.status(201).json(created);
     } catch (error) {
+        if (error.code === '23505') {
+            return res.status(409).json({ error: 'Ya existe un proyecto con ese ID' });
+        }
+
         next(createHttpError(500, 'Error creando el proyecto', { cause: error }));
     }
 });
@@ -52,17 +53,13 @@ router.put('/:id', async (req, res, next) => {
         const id = validateRouteSlug(req.params.id);
         if (!id) return res.status(400).json({ error: 'ID de proyecto no valido' });
 
-        const projects = await fsExtra.readJson(PROJECTS_FILE);
-        const index = projects.findIndex(project => project.id === id);
-        if (index === -1) return res.status(404).json({ error: 'Proyecto no encontrado' });
-
         const { errors, data } = sanitizeProjectInput(req.body, { partial: true });
         if (errors.length) {
             return res.status(400).json({ error: errors[0] });
         }
 
-        projects[index] = { ...projects[index], ...data };
-        await fsExtra.writeJson(PROJECTS_FILE, projects, { spaces: 2 });
+        const updated = await updateProject(id, data);
+        if (!updated) return res.status(404).json({ error: 'Proyecto no encontrado' });
 
         projectsLogger.info('Project updated', {
             requestId: req.requestId,
@@ -70,7 +67,7 @@ router.put('/:id', async (req, res, next) => {
             username: req.user?.username || null,
         });
 
-        res.json(projects[index]);
+        res.json(updated);
     } catch (error) {
         next(createHttpError(500, 'Error actualizando el proyecto', { cause: error }));
     }
@@ -81,12 +78,8 @@ router.delete('/:id', async (req, res, next) => {
         const id = validateRouteSlug(req.params.id);
         if (!id) return res.status(400).json({ error: 'ID de proyecto no valido' });
 
-        const projects = await fsExtra.readJson(PROJECTS_FILE);
-        const index = projects.findIndex(project => project.id === id);
-        if (index === -1) return res.status(404).json({ error: 'Proyecto no encontrado' });
-
-        projects.splice(index, 1);
-        await fsExtra.writeJson(PROJECTS_FILE, projects, { spaces: 2 });
+        const deleted = await deleteProject(id);
+        if (!deleted) return res.status(404).json({ error: 'Proyecto no encontrado' });
 
         projectsLogger.info('Project deleted', {
             requestId: req.requestId,

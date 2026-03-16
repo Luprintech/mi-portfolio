@@ -1,39 +1,40 @@
 # Ecosistema Digital Personal - Portfolio
 
-Plataforma unificada para la presentación de perfil profesional, documentación técnica, portafolio de desarrollo y blog personal. Desarrollado con una arquitectura desacoplada Frontend/Backend escalable, un sistema de gestión de contenido estático (JSON/Markdown) y foco en el rendimiento visual.
+Portfolio full-stack con blog técnico y CMS propio. La aplicación está separada en frontend y backend, con contenido editorial persistido en PostgreSQL, media en almacenamiento compartido y una capa pública preparada para servir portfolio, blog y páginas sin acoplar el contenido al despliegue.
 
-## Stack Tecnológico
+## Stack tecnológico
 
-**Frontend**: React, Vite, Tailwind CSS, Framer Motion, React-Markdown, Swiper.
-**Backend**: Node.js, Express.
-**Integraciones y Seguridad**: Nodemailer, Helmet, Express-Rate-Limit, Express-Validator, CORS.
-**Gestión de Contenido**: JSON estático (Proyectos), Markdown avanzado (Blog).
+- Frontend: React, Vite, Tailwind CSS, Framer Motion, React Markdown.
+- Backend: Node.js, Express.
+- Persistencia: PostgreSQL para posts y proyectos.
+- Media editorial: imágenes, documentos, audio y sitemap en `CONTENT_PATH`.
+- Integraciones y seguridad: Helmet, CORS, Nodemailer, JWT y multer.
 
-## Arquitectura del Proyecto
+## Arquitectura actual
 
-El proyecto está diseñado bajo un modelo híbrido:
+- `frontend/`: SPA pública y panel CMS.
+- `backend/`: API REST para autenticación, CRUD del CMS, contacto y chat.
+- `postgres`: fuente de verdad del contenido estructurado.
+- `CONTENT_PATH`: almacenamiento persistente de media editorial y archivos públicos auxiliares.
 
-- `/frontend`: SPA (Single Page Application) que consume contenido estático incrustado dinámicamente (`.json` y `.md`) para lograr velocidad extrema y SEO amigable, conectándose al backend solo para servicios transaccionales.
-- `/backend`: Servicio API RESTful puro con endpoints protegidos, encargado del procesamiento de datos y comunicación externa (SMTP).
+### Dónde se guarda cada cosa
 
-## Sistema de Contenido Estático
+- Posts del blog: tabla `posts` en PostgreSQL.
+- Proyectos del portfolio: tabla `projects` en PostgreSQL.
+- Imágenes, documentos y audio: filesystem persistente bajo `CONTENT_PATH/posts`.
+- Sitemap: archivo `sitemap.xml` generado por el backend en `CONTENT_PATH`.
 
-Para lograr un rendimiento óptimo sin depender de bases de datos externas pesadas o CMS monolíticos, se ha implementado un sistema "Headless Estático":
+## Migración desde el sistema legacy
 
-1. **Catálogo de Proyectos (JSON)**: Los proyectos viven en `frontend/public/projects.json` y la web los carga mediante `frontend/src/hooks/useProjects.js`. El CMS escribe sobre este mismo fichero o sobre la ruta definida en `CONTENT_PATH`.
-2. **Motor de Blog (Markdown + JSON)**: Los artículos se redactan en ficheros `.md` puros ubicados en `/public/posts/`. Un índice centralizado (`index.json`) maneja el mapeo y los metadatos (slug, tags, fecha).
-3. **Renderizado de Markdown**: Mediante `react-markdown` equipado con plugins avanzados (`remark-gfm`, `rehype-highlight`), el Markdown se inyecta directamente adaptando reglas CSS exclusivas para inyectarle estética premium de Tailwind a las imágenes, listas, código y crear botones mágicos con `[Link](url "button")`.
+El backend conserva una importación inicial automática desde los archivos históricos:
 
-## Características Principales
+- `frontend/public/posts/index.json`
+- `frontend/public/posts/*.md`
+- `frontend/public/projects.json`
 
-- **Identidad Visual Consistente**: Theme oscuro de alta fidelidad, unificado mediante tokens transversales, con manejo avanzado de interactividad a través de Framer Motion y Tailwind CSS.
-- **Grillas y Layouts Responsivos**: Uso intensivo de CSS Grid y Flexbox estructurado en base a variables Mobile-First (breakpoints md, lg, xl).
-- **Procesamiento de Formularios Seguro**: Comunicación HTTP hacia la API usando estado de red (`idle`, `submitting`, `success`, `error`).
-- **SEO Dinámico**: Implementación de `react-helmet-async` para mutar metaetiquetas Open Graph (título, descripción) bajo demanda para cada post del blog.
+En el primer arranque con la base de datos vacía, esos datos se importan una sola vez a PostgreSQL. A partir de ese momento, la fuente de verdad pasa a ser la base de datos.
 
-## Ejecución en Desarrollo (Local)
-
-El despliegue local requiere encender dos servidores aislados. Asume tener instalados Node.js v18+ y un gestor de paquetes.
+## Desarrollo local
 
 ### Backend
 
@@ -41,58 +42,64 @@ El despliegue local requiere encender dos servidores aislados. Asume tener insta
 cd backend
 npm install
 cp .env.example .env
-node server.js
+npm start
 ```
 
-_Asegúrate de configurar las variables obligatorias del CMS (`JWT_SECRET`, `CMS_USERNAME`, `CMS_PASSWORD`) y, si vas a usar contacto o chat, también SMTP y Gemini en el nuevo `.env`._
+Variables mínimas obligatorias:
+
+- `JWT_SECRET`
+- `CMS_USERNAME`
+- `CMS_PASSWORD`
+- `PGHOST`
+- `PGPORT`
+- `PGUSER`
+- `PGPASSWORD`
+- `PGDATABASE`
+
+También puedes usar `DATABASE_URL` en lugar de las variables separadas de PostgreSQL.
 
 ### Frontend
 
 ```bash
 cd frontend
 npm install
-cp .env.example .env
 npm run dev
 ```
 
-## Despliegue en Producción
+Si el backend no corre en el mismo origen, configura `VITE_API_URL`.
 
-### Opción A — Docker (Recomendado: Synology NAS, VPS, servidor propio)
+## Despliegue en producción
 
-El proyecto incluye una configuración Docker completa lista para usar:
-
-```
-docker-compose.yml           ← orquestación de servicios
-frontend/Dockerfile          ← build React + nginx alpine
-frontend/nginx.docker.conf   ← nginx con proxy /api/ al backend
-backend/Dockerfile           ← Node.js 20 alpine
-backend/docker-entrypoint.sh ← inicialización del volumen de contenido
-```
-
-**Requisitos**: Docker y Docker Compose instalados.
+### Opción recomendada: Docker Compose
 
 ```bash
-# Configura las variables de entorno del backend
 cp backend/.env.example backend/.env
-# Edita backend/.env con tus valores reales
+# Edita backend/.env con valores reales
 
-# Construye y arranca todos los servicios
 docker-compose up -d --build
 ```
 
-La aplicación quedará disponible en el puerto `8081` (configurable en `docker-compose.yml`).
+Servicios incluidos:
 
-**Detalles de la arquitectura Docker:**
-- El frontend (nginx) sirve los assets estáticos y hace proxy de `/api/*` al backend.
-- El contenido del CMS (posts, proyectos, imágenes) se persiste en un volumen Docker (`content_data`) compartido entre ambos contenedores.
-- En el primer arranque, el volumen se inicializa automáticamente con el contenido de `frontend/public`.
-- El backend no es accesible directamente desde el exterior, solo a través de nginx.
+- `frontend`: nginx sirviendo la SPA y haciendo proxy de `/api` al backend.
+- `backend`: API Express + CMS.
+- `postgres`: base de datos PostgreSQL persistente.
 
-### Opción B — Despliegue clásico en la nube
+Volúmenes persistentes:
 
-Como resultado de esta arquitectura técnica dividida, el despliegue requiere dos ambientes:
+- `postgres_data`: datos de PostgreSQL.
+- `content_data`: media del CMS y sitemap.
 
-- **Frontend HTTP Estático (Recomendado: Vercel, Netlify o GitHub Pages)**: Servir estáticamente, la carga de JSONs y Markdown funcionará sin fricción. Inyectar variable `VITE_API_URL` apuntando al Backend.
-- **Backend Node Persistente (Recomendado: Railway, Render o VPS)**: El entorno debe mantener vivo el proceso `node server.js`. Si se opta por VPS autogestionado, requiere PM2 con proxy inverso (Nginx).
+## Buenas prácticas operativas
 
+- No borres `postgres_data` ni `content_data` en producción.
+- Evita `docker-compose down -v` salvo que quieras eliminar datos.
+- Haz backup periódico de PostgreSQL y del almacenamiento de `CONTENT_PATH`.
+- Mantén `FRONTEND_URL` bien configurado para generar canónicas y sitemap correctos.
 
+## Endpoints públicos relevantes
+
+- `GET /api/posts`
+- `GET /api/posts/:slug`
+- `GET /api/projects`
+- `GET /api/health`

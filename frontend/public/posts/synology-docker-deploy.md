@@ -1,5 +1,7 @@
 # Cómo desplegué mi portfolio React + Node.js en un Synology con Docker, HTTPS y dominio propio (sin depender de ningún hosting)
 
+![Despliegue del portfolio React y Node.js en Synology con Docker y HTTPS](/posts/images/synology-docker-deploy-cover.png)
+
 Después de terminar mi portfolio con **React (Vite)** en el frontend y **Node.js + Express** en el backend, tenía varias opciones para publicarlo:
 
 - Subirlo a un **VPS**

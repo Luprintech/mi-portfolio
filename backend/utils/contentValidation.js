@@ -147,6 +147,10 @@ export function sanitizePostInput(input, { partial = false } = {}) {
         data.noindex = normalizeBoolean(input.noindex, false);
     }
 
+    if (input.featured !== undefined) {
+        data.featured = normalizeBoolean(input.featured, false);
+    }
+
     if (!partial || input.status !== undefined) {
         const status = normalizeText(input.status, { allowEmpty: false, maxLength: 16 });
         if (!status || !['draft', 'published'].includes(status)) errors.push('El estado no es valido.');
