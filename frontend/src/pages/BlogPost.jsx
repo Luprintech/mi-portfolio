@@ -6,7 +6,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
 import { Helmet } from 'react-helmet-async';
-import { ArrowLeft, ArrowRight, CalendarDays, ChevronDown, ChevronUp, Clock3 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CalendarDays, ChevronUp, Clock3 } from 'lucide-react';
 import { sanitizePostContent } from '../lib/postContentSanitizer';
 import { publicRequest } from '../lib/publicApi';
 import 'highlight.js/styles/atom-one-dark.css';
@@ -218,10 +218,10 @@ function buildMarkdownComponents() {
       <p className="mb-6 text-[1.02rem] leading-8 text-justify text-[var(--text-secondary)]" {...props} />
     ),
     ul: ({ node, ...props }) => (
-      <ul className="mb-8 ml-6 list-disc space-y-3 text-[1.02rem] leading-8 text-[var(--text-secondary)]" {...props} />
+      <ul className="mb-8 ml-6 list-disc space-y-3 text-justify text-[1.02rem] leading-8 text-[var(--text-secondary)]" {...props} />
     ),
     ol: ({ node, ...props }) => (
-      <ol className="mb-8 ml-6 list-decimal space-y-3 text-[1.02rem] leading-8 text-[var(--text-secondary)]" {...props} />
+      <ol className="mb-8 ml-6 list-decimal space-y-3 text-justify text-[1.02rem] leading-8 text-[var(--text-secondary)]" {...props} />
     ),
     li: ({ node, ...props }) => <li className="pl-2 text-justify" {...props} />,
     a: ({ node, title, ...props }) => {
@@ -282,7 +282,10 @@ function buildMarkdownComponents() {
       <th className="border-b border-[var(--border-default)] px-4 py-3 text-sm font-semibold text-[var(--text-primary)]" {...props} />
     ),
     td: ({ node, ...props }) => (
-      <td className="border-b border-[var(--border-default)] px-4 py-3 text-sm leading-7 text-[var(--text-secondary)]" {...props} />
+      <td
+        className="border-b border-[var(--border-default)] px-4 py-3 text-justify text-sm leading-7 text-[var(--text-secondary)]"
+        {...props}
+      />
     ),
     code: ({ node, inline, className, children, ...props }) =>
       inline ? (
@@ -293,18 +296,20 @@ function buildMarkdownComponents() {
           {children}
         </code>
       ) : (
-        <div className="relative mb-8 overflow-hidden rounded-[1.25rem] border border-[var(--border-default)]">
-          <div className="flex items-center gap-2 border-b border-white/5 bg-[var(--bg-code-header)] px-4 py-3" aria-hidden="true">
+        <div className="terminal-window relative mb-8 overflow-hidden rounded-[1.25rem] border border-[var(--border-default)]">
+          <div
+            className="terminal-window__header flex items-center gap-2 border-b border-white/5 bg-[var(--bg-code-header)] px-4 py-3"
+            aria-hidden="true"
+          >
             <span className="h-3 w-3 rounded-full bg-red-500/80" />
             <span className="h-3 w-3 rounded-full bg-yellow-500/80" />
             <span className="h-3 w-3 rounded-full bg-green-500/80" />
           </div>
-          <code
-            className={`${className} block overflow-x-auto bg-[var(--bg-code)] p-5 font-mono text-sm leading-7`}
-            {...props}
-          >
-            {children}
-          </code>
+          <pre className="terminal-window__body overflow-x-auto bg-[var(--bg-code)] p-5">
+            <code className={`${className || ''} block font-mono text-sm leading-7`} {...props}>
+              {children}
+            </code>
+          </pre>
         </div>
       ),
   };
@@ -350,6 +355,38 @@ function extractHeadings(content) {
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
+const PUBLIC_SITE_URL = import.meta.env.VITE_SITE_URL || 'https://guadalupecano.es';
+
+function resolvePublicPostUrl(postMeta) {
+  if (postMeta?.canonicalUrl) return postMeta.canonicalUrl;
+
+  if (typeof window === 'undefined') return PUBLIC_SITE_URL;
+
+  const currentUrl = new URL(window.location.href);
+  const isLocalHost = ['localhost', '127.0.0.1'].includes(currentUrl.hostname);
+
+  if (isLocalHost) {
+    return new URL(currentUrl.pathname, PUBLIC_SITE_URL).href;
+  }
+
+  return currentUrl.href;
+}
+
+function buildShareLinks(postMeta) {
+  const url = resolvePublicPostUrl(postMeta);
+  const title = postMeta?.seoTitle || postMeta?.title || 'Articulo';
+  const encodedUrl = encodeURIComponent(url);
+  const encodedTitle = encodeURIComponent(title);
+
+  return {
+    url,
+    title,
+    twitter: `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`,
+    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
+    whatsapp: `https://api.whatsapp.com/send?text=${encodeURIComponent(`${title} ${url}`)}`,
+  };
+}
+
 const BlogPost = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -359,8 +396,8 @@ const BlogPost = () => {
   const [error, setError] = useState(null);
   const [readProgress, setReadProgress] = useState(0);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [tocOpen, setTocOpen] = useState(false);
   const [activeHeadingId, setActiveHeadingId] = useState('');
+  const [copied, setCopied] = useState(false);
 
   const sanitizedContent = useMemo(() => sanitizePostContent(content), [content]);
 
@@ -436,6 +473,19 @@ const BlogPost = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  async function handleCopyLink() {
+    if (typeof navigator === 'undefined') return;
+
+    try {
+      await navigator.clipboard.writeText(buildShareLinks(postMeta).url);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2200);
+    } catch (copyError) {
+      console.error('No se pudo copiar el enlace del artículo:', copyError);
+      setCopied(false);
+    }
+  }
+
   // ── States ────────────────────────────────────────────────────────────────────
 
   if (loading) return <PostSkeleton />;
@@ -455,15 +505,17 @@ const BlogPost = () => {
 
   if (!postMeta) return null;
 
-  const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
-  const shareTitle = encodeURIComponent(postMeta.seoTitle || postMeta.title);
-  const shareUrlEncoded = encodeURIComponent(shareUrl);
+  const shareLinks = buildShareLinks(postMeta); /*
+    ? `${postMeta.title} — ${postMeta.excerpt}`
 
+
+  */
   return (
     <div className="relative min-h-screen bg-[var(--bg-primary)] px-6 py-24 text-[var(--text-primary)] selection:bg-violet-500/30 md:px-10 lg:px-14">
       <Helmet>
         <title>{postMeta.seoTitle || postMeta.title} | Guadalupe Cano</title>
         <meta name="description" content={postMeta.seoDescription || postMeta.excerpt} />
+        <meta property="og:url" content={shareLinks.url} />
         <meta property="og:title" content={postMeta.seoTitle || postMeta.title} />
         <meta property="og:description" content={postMeta.seoDescription || postMeta.excerpt} />
         {postMeta.ogImage && (
@@ -474,6 +526,7 @@ const BlogPost = () => {
         )}
         <meta property="og:type" content="article" />
         <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:url" content={shareLinks.url} />
         <meta name="twitter:title" content={postMeta.seoTitle || postMeta.title} />
         <meta name="twitter:description" content={postMeta.seoDescription || postMeta.excerpt} />
         {postMeta.ogImage && (
@@ -503,12 +556,12 @@ const BlogPost = () => {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(6,182,212,0.08),transparent_30%),radial-gradient(circle_at_80%_0%,rgba(232,121,249,0.08),transparent_20%),linear-gradient(180deg,var(--bg-primary)_0%,var(--bg-secondary)_100%)]" />
       <div className="pointer-events-none absolute inset-0 bg-noise opacity-[0.02] mix-blend-overlay" />
 
-      <motion.article
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="relative z-10 mx-auto w-full max-w-6xl"
-      >
+      <article className="relative z-10 mx-auto w-full max-w-6xl">
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45 }}
+        >
         {/* ── Header ─────────────────────────────────────────────────────────── */}
         <header className="mx-auto max-w-4xl">
           <Link
@@ -549,49 +602,12 @@ const BlogPost = () => {
           </div>
         </header>
 
-        {/* ── Mobile ToC (collapsible) ──────────────────────────────────────── */}
-        {hasToc && (
-          <div className="mx-auto mt-8 max-w-4xl xl:hidden">
-            <div className="rounded-[1.4rem] border border-[var(--border-default)] bg-[var(--bg-elevated)]/72">
-              <button
-                type="button"
-                onClick={() => setTocOpen((o) => !o)}
-                className="flex w-full items-center justify-between px-5 py-4 text-left"
-                aria-expanded={tocOpen}
-              >
-                <span className="text-[0.72rem] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">
-                  Tabla de contenidos
-                </span>
-                {tocOpen ? (
-                  <ChevronUp className="h-4 w-4 text-[var(--text-muted)]" />
-                ) : (
-                  <ChevronDown className="h-4 w-4 text-[var(--text-muted)]" />
-                )}
-              </button>
-              <AnimatePresence initial={false}>
-                {tocOpen && (
-                  <motion.div
-                    key="toc-mobile"
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden border-t border-[var(--border-default)] px-5 py-4"
-                  >
-                    <TableOfContents headings={headings} activeId={activeHeadingId} />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-        )}
-
         {/* ── Main layout: sidebar + content ───────────────────────────────── */}
-        <div className="mx-auto mt-10 grid max-w-6xl gap-10 xl:grid-cols-[260px_minmax(0,1fr)] xl:items-start">
+        <div className="mx-auto mt-10 grid max-w-6xl gap-10 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
 
-          {/* ── Sidebar (left, sticky) ────────────────────────────────────── */}
-          <aside className="hidden xl:block self-start">
-            <div className="sticky top-28 max-h-[calc(100vh-8rem)] overflow-y-auto space-y-4 pr-1">
+          {/* ── Sidebar (desktop, sticky) ─────────────────────────────────── */}
+          <aside className="order-2 hidden self-start lg:block lg:sticky lg:top-28">
+            <div className="space-y-4">
               {/* ToC panel */}
               {hasToc && (
                 <div className="rounded-[1.6rem] border border-[var(--border-default)] bg-[var(--bg-elevated)]/72 p-5">
@@ -644,8 +660,8 @@ const BlogPost = () => {
             </div>
           </aside>
 
-          <div className="min-w-0">
-            <div className="rounded-[2rem] border border-[var(--border-default)] bg-[var(--bg-elevated)]/78 px-6 py-8 shadow-[0_20px_80px_rgba(15,23,42,0.06)] md:px-10 md:py-12">
+          <div className="order-1 min-w-0">
+            <div className="rounded-[2rem] border border-[var(--border-default)] bg-[var(--bg-elevated)]/78 px-6 py-8 text-justify shadow-[0_20px_80px_rgba(15,23,42,0.06)] md:px-10 md:py-12">
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 rehypePlugins={[rehypeRaw, rehypeHighlight]}
@@ -662,7 +678,7 @@ const BlogPost = () => {
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <a
-                  href={`https://twitter.com/intent/tweet?text=${shareTitle}&url=${shareUrlEncoded}`}
+                  href={shareLinks.twitter}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--bg-surface)]/80 px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-all hover:border-[#1d9bf0]/30 hover:text-[#1d9bf0]"
@@ -674,7 +690,7 @@ const BlogPost = () => {
                   X / Twitter
                 </a>
                 <a
-                  href={`https://www.linkedin.com/sharing/share-offsite/?url=${shareUrlEncoded}`}
+                  href={shareLinks.linkedin}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--bg-surface)]/80 px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-all hover:border-[#0a66c2]/30 hover:text-[#0a66c2]"
@@ -686,7 +702,7 @@ const BlogPost = () => {
                   LinkedIn
                 </a>
                 <a
-                  href={`https://wa.me/?text=${shareTitle}%20${shareUrlEncoded}`}
+                  href={shareLinks.whatsapp}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--bg-surface)]/80 px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-all hover:border-[#25d366]/30 hover:text-[#25d366]"
@@ -697,6 +713,18 @@ const BlogPost = () => {
                   </svg>
                   WhatsApp
                 </a>
+                <button
+                  type="button"
+                  onClick={handleCopyLink}
+                  className="inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--bg-surface)]/80 px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-all hover:border-[var(--accent-secondary)]/30 hover:text-[var(--accent-secondary)]"
+                  aria-label="Copiar enlace del artículo"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
+                  {copied ? 'Enlace copiado' : 'Copiar enlace'}
+                </button>
               </div>
             </div>
 
@@ -724,7 +752,8 @@ const BlogPost = () => {
           </div>
 
         </div>
-      </motion.article>
+        </motion.div>
+      </article>
 
       {/* ── Scroll-to-top button ──────────────────────────────────────────────── */}
       <AnimatePresence>

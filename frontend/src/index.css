@@ -425,6 +425,51 @@ a[data-content-button][data-align="right"]  { display: block; margin: 16px 0 16p
 .prose-blog a[data-content-button]:hover,
 .prose a[data-content-button]:hover { opacity: 0.85; }
 
+/* ============================================================
+   Terminal window - published blog
+   ============================================================ */
+.terminal-window {
+  background: var(--bg-code);
+  border-color: rgba(148, 163, 184, 0.18);
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.16);
+}
+
+.terminal-window__header {
+  background:
+    linear-gradient(180deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 0.98) 100%);
+}
+
+.terminal-window__body {
+  margin: 0;
+  background: var(--bg-code);
+  color: #e6edf3;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.terminal-window__body,
+.terminal-window__body code,
+.terminal-window__body span {
+  font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', Consolas, monospace;
+}
+
+.terminal-window__body code {
+  color: inherit;
+  background: transparent;
+  white-space: inherit;
+}
+
+.terminal-window__body code:not(.hljs),
+.terminal-window__body code:not(.hljs) span {
+  color: inherit;
+}
+
+:root[data-theme="dark"] .terminal-window {
+  border-color: rgba(148, 163, 184, 0.16);
+  box-shadow: 0 20px 48px rgba(2, 6, 23, 0.32);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
