@@ -43,6 +43,7 @@ eslint*_results.json
 
 # Claude Code (worktrees internos, no subir a git)
 .claude/
+.atl/
 
 # Scripts de despliegue (pueden contener credenciales SSH)
 deploy.ps1

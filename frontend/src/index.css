@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+@theme {
+  --breakpoint-xs: 475px;
+}
+
 /* ============================================================
    SISTEMA DE VARIABLES CSS — LIGHT / DARK MODE
    Luprintech Portfolio
@@ -21,6 +25,9 @@
 :root,
 :root[data-theme="dark"] {
   color-scheme: dark;
+  --nav-height: 5rem;
+  --section-gutter-x: clamp(1.25rem, 2vw, 2.5rem);
+  --section-gutter-y: clamp(1rem, 2.2vh, 1.75rem);
 
   /* Fondos */
   --bg-primary: #0b1120;
@@ -38,6 +45,7 @@
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
   --text-inverse: #0b1120;
+  --hero-typewriter-color: #f8fafc;
 
   /* Bordes */
   --border-color: rgba(255, 255, 255, 0.1);
@@ -119,6 +127,7 @@
   --text-secondary: #334155; /* slate-700            (ratio >7:1)  ✅ */
   --text-muted: #64748b; /* slate-500            (ratio >4.5:1)✅ */
   --text-inverse: #f8faff;
+  --hero-typewriter-color: #475569;
 
   /* Bordes — índigo pastel, coherente con la paleta */
   --border-color: #c7d2fe; /* indigo-200                          */
@@ -201,6 +210,190 @@
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  scroll-padding-top: 80px;
+}
+
+body.home-scroll-snap {
+  overflow-x: hidden;
+}
+
+body.home-scroll-snap #main-content {
+  height: auto;
+  overflow: visible;
+}
+
+/* ── Snap Root ─────────────────────────────── */
+.snap-root {
+  height: 100vh;
+  width: 100%;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.snap-root::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Sección estándar (cabe en 100vh) ─────── */
+.snap-page {
+  height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: var(--nav-height);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Sección con scroll interno ────────────── */
+.snap-page--scroll {
+  height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: var(--nav-height);
+  position: relative;
+  overflow: hidden;
+}
+
+.section-viewport {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding-inline: var(--section-gutter-x);
+  padding-block: var(--section-gutter-y);
+}
+
+.section-viewport__scroll {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.section-viewport__scroll--scroll {
+  overflow-y: auto;
+  overscroll-behavior-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.section-viewport__scroll--scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.section-viewport__content {
+  width: min(100%, var(--section-content-max, 1040px));
+  min-height: 100%;
+  margin-inline: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Wrapper interno estándar ──────────────── */
+.section-inner {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* ── Wrapper interno con scroll ─────────────── */
+.section-inner--scroll {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  max-height: 88vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(6, 182, 212, 0.3) transparent;
+}
+
+.profile-story-shell {
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .profile-story-shell {
+    width: min(90vw, 760px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .profile-story-shell {
+    width: min(72vw, 1000px);
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .snap-root {
+    scroll-snap-type: y proximity;
+  }
+
+  .snap-page,
+  .snap-page--scroll {
+    height: auto;
+    min-height: 100vh;
+    padding-top: var(--nav-height);
+    padding-bottom: 0.5rem;
+  }
+
+  .section-inner,
+  .section-inner--scroll {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding: 1rem;
+  }
+
+  .section-inner--scroll {
+    max-height: none;
+    overflow-y: visible;
+  }
+
+  .section-viewport {
+    padding-inline: 1.25rem;
+    padding-block: 0.5rem;
+  }
+
+  .section-viewport__content {
+    min-height: auto;
+  }
+}
+
+/* ─── Typewriter cursor blink ─── */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.animate-blink {
+  animation: blink 0.8s ease-in-out infinite;
 }
 
 /* ─── Scrollbar personalizada ─── */
@@ -481,4 +674,41 @@ a[data-content-button][data-align="right"]  { display: block; margin: 16px 0 16p
   .gradient-border {
     animation: none;
   }
+}
+
+/* ============================================================
+   Landing Redesign — Typewriter & Avatar
+   ============================================================ */
+
+/* Typewriter cursor animation */
+.typewriter-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: var(--accent-primary);
+  margin-left: 4px;
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  from, to { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .typewriter-cursor {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* Avatar layers for interactive avatar */
+.avatar-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
 }

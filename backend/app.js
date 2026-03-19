@@ -16,6 +16,7 @@ import authRoutes from './routes/auth.js';
 import chatRoutes from './routes/chat.js';
 import contactRoutes from './routes/contact.js';
 import imagesRoutes from './routes/images.js';
+import ogMetaRoutes from './routes/ogMeta.js';
 import postsRoutes from './routes/posts.js';
 import projectsRoutes from './routes/projects.js';
 import publicContentRoutes from './routes/publicContent.js';
@@ -62,6 +63,7 @@ export async function createApp() {
     app.use('/api/bitacora/posts', postsRoutes);
     app.use('/api/bitacora/projects', projectsRoutes);
     app.use('/api/bitacora', imagesRoutes);
+    app.use('/api/og', ogMetaRoutes);
     app.use('/api', publicContentRoutes);
     app.use('/api/contact', contactRoutes);
     app.use('/api/chat', chatRoutes);

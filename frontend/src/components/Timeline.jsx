@@ -1,100 +1,138 @@
 import { motion as Motion } from "framer-motion";
-import {
-  FaLaptopCode,
-  FaGraduationCap,
-  FaServer,
-  FaNetworkWired,
-  FaCode,
-  FaRobot,
-  FaShieldAlt,
-} from "react-icons/fa";
 import { useTranslation } from "react-i18next";
+import { Bot, Cpu, Globe, GraduationCap, ShieldCheck } from "lucide-react";
 
-const lineGradient = "from-fuchsia-500 via-violet-500 to-cyan-400";
+const TIMELINE_ICONS = [Cpu, GraduationCap, Globe, Bot, ShieldCheck];
+const TIMELINE_LINE =
+  "linear-gradient(180deg, transparent 0%, rgba(34,211,238,0.28) 10%, rgba(232,121,249,0.24) 50%, rgba(34,211,238,0.28) 90%, transparent 100%)";
+const timelineListVariants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.16,
+      delayChildren: 0.1,
+    },
+  },
+};
+const timelineItemVariants = {
+  hidden: { opacity: 0, y: 22 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.48,
+      ease: "easeOut",
+    },
+  },
+};
+const timelineDotVariants = {
+  hidden: { opacity: 0, scale: 0.72 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: {
+      duration: 0.34,
+      ease: "easeOut",
+    },
+  },
+};
 
 export default function Timeline() {
   const { t } = useTranslation();
 
-  const eventos = [
-    { year: "2003",      title: t('timeline.e1_title'), icon: <FaLaptopCode size={28} />,   desc: t('timeline.e1_desc') },
-    { year: "2014",      title: t('timeline.e2_title'), icon: <FaGraduationCap size={28} />, desc: t('timeline.e2_desc') },
-    { year: "2019",      title: t('timeline.e3_title'), icon: <FaServer size={28} />,        desc: t('timeline.e3_desc') },
-    { year: "2021",      title: t('timeline.e4_title'), icon: <FaNetworkWired size={28} />,  desc: t('timeline.e4_desc') },
-    { year: "2024–2026", title: t('timeline.e5_title'), icon: <FaCode size={28} />,          desc: t('timeline.e5_desc') },
-    { year: "2025",      title: t('timeline.e6_title'), icon: <FaRobot size={28} />,         desc: t('timeline.e6_desc') },
-    { year: "2026",      title: t('timeline.e7_title'), icon: <FaShieldAlt size={28} />,     desc: t('timeline.e7_desc') },
+  const events = [
+    { year: "2005", title: t("timeline.e1_title"), desc: t("timeline.e1_desc") },
+    { year: "2014", title: t("timeline.e2_title"), desc: t("timeline.e2_desc") },
+    { year: "2026", title: t("timeline.e3_title"), desc: t("timeline.e3_desc") },
+    { year: "2026", title: t("timeline.e4_title"), desc: t("timeline.e4_desc") },
+    { year: "2026", title: t("timeline.e5_title"), desc: t("timeline.e5_desc") },
   ];
 
   return (
-    <div className="w-full flex flex-col items-center py-14 relative">
+    <div className="relative z-10 mx-auto flex w-full max-w-[1040px] flex-col justify-center">
       <Motion.h2
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="text-3xl md:text-4xl font-bold mb-16 text-center bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 to-cyan-400 z-10"
+        className="mb-6 text-center text-2xl font-bold bg-gradient-to-r from-fuchsia-400 to-cyan-400 bg-clip-text text-transparent md:mb-8 md:text-3xl lg:text-[2rem]"
       >
-        {t('timeline.title_main')}
+        {t("timeline.title_main")}
       </Motion.h2>
 
-      <div className="relative w-full max-w-3xl z-10">
-        {/* Línea vertical animada */}
+      <div className="relative">
         <div
-          className={`absolute left-[38px] md:left-1/2 top-4 bottom-8 md:-translate-x-1/2 w-1 z-0
-            bg-gradient-to-b ${lineGradient} animate-pulse blur-[1.5px] rounded-full`}
-          style={{ boxShadow: "0 0 48px #d946ef55, 0 0 38px #22d3ee88" }}
+          className="pointer-events-none absolute bottom-2 left-5 top-2 w-px md:left-1/2 md:-translate-x-1/2"
+          style={{ background: TIMELINE_LINE }}
         />
-        {eventos.map((e, i) => (
-          <TimelineItem key={i} {...e} index={i} />
-        ))}
+
+        <Motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.55 }}
+          variants={timelineListVariants}
+          className="flex flex-col gap-3 md:gap-2.5"
+        >
+          {events.map((event, index) => {
+            const Icon = TIMELINE_ICONS[index];
+            const isLeft = index % 2 === 0;
+
+            return (
+              <Motion.div
+                key={`${event.year}-${event.title}`}
+                variants={timelineItemVariants}
+                className="relative grid grid-cols-[2.5rem_minmax(0,1fr)] items-center gap-3 md:grid-cols-[minmax(0,1fr)_3.5rem_minmax(0,1fr)] md:gap-4"
+              >
+                <Motion.div
+                  variants={timelineDotVariants}
+                  className="relative z-10 col-start-1 row-start-1 flex h-10 w-10 items-center justify-center rounded-full border border-[var(--accent-secondary)]/30 bg-[color-mix(in_srgb,var(--bg-elevated)_88%,transparent)] text-[var(--accent-secondary)] shadow-[0_0_18px_rgba(34,211,238,0.14)] md:col-start-2 md:h-11 md:w-11 md:justify-self-center"
+                >
+                  <div className="absolute inset-1 rounded-full bg-[var(--accent-secondary-dim)]" />
+                  <Icon size={18} strokeWidth={2} className="relative z-10 md:h-5 md:w-5" />
+                </Motion.div>
+
+                <Motion.article
+                  variants={{
+                    hidden: { opacity: 0, x: isLeft ? -30 : 30, y: 12 },
+                    visible: {
+                      opacity: 1,
+                      x: 0,
+                      y: 0,
+                      transition: {
+                        duration: 0.5,
+                        ease: "easeOut",
+                      },
+                    },
+                  }}
+                  whileHover={{
+                    scale: 1.018,
+                    boxShadow: "0 0 24px 4px rgba(34,211,238,0.18), 0 0 8px 1px rgba(139,92,246,0.14)",
+                    borderColor: "rgba(34,211,238,0.38)",
+                    transition: { duration: 0.22, ease: "easeOut" },
+                  }}
+                  className={`col-start-2 row-start-1 flex flex-col rounded-[1.25rem] border border-[var(--border-color)] bg-[color-mix(in_srgb,var(--bg-surface)_92%,transparent)] p-3 shadow-[var(--shadow-sm)] backdrop-blur-md md:max-w-[420px] md:p-3.5 ${
+                    isLeft
+                      ? "md:col-start-1 md:justify-self-end md:text-right"
+                      : "md:col-start-3 md:justify-self-start"
+                  }`}
+                >
+                  <div className={`mb-2 flex items-center gap-2 ${isLeft ? "md:flex-row-reverse" : ""}`}>
+                    <span className="inline-flex rounded-full border border-[var(--accent-secondary)]/25 bg-[var(--accent-secondary-dim)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--accent-secondary)]">
+                      {event.year}
+                    </span>
+                    <h3 className="text-[13px] font-semibold leading-snug text-[var(--text-primary)] md:text-sm">
+                      {event.title}
+                    </h3>
+                  </div>
+
+                  <p className="text-[12px] leading-[1.42] text-[var(--text-secondary)] md:text-[12.5px]">
+                    {event.desc}
+                  </p>
+                </Motion.article>
+              </Motion.div>
+            );
+          })}
+        </Motion.div>
       </div>
     </div>
-  );
-}
-
-function TimelineItem({ year, title, icon, desc, index }) {
-  const isLeft = index % 2 === 0;
-  return (
-    <Motion.div
-      initial={{ opacity: 0, x: isLeft ? -80 : 80 }}
-      whileInView={{ opacity: 1, x: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.6, ease: "easeOut", delay: index * 0.1 }}
-      className={`relative mb-16 group flex md:items-center
-        ${isLeft ? "flex-row md:flex-row" : "flex-row md:flex-row-reverse"}`}
-    >
-      {/* Punto + icono */}
-      <div className="shrink-0 flex flex-col items-center z-20 ml-2 md:ml-0">
-        <span
-          className={`flex items-center justify-center w-16 h-16 rounded-full
-            border-4 border-fuchsia-400 bg-[var(--bg-primary)] shadow-lg shadow-fuchsia-500/20
-            group-hover:shadow-cyan-300/40 transition-all duration-300
-            ring-2 ring-cyan-300/30 text-[var(--text-primary)]`}
-          style={{ boxShadow: "0 0 28px #d946ef77, 0 0 11px #22d3ee66" }}
-        >
-          {icon}
-        </span>
-        <span className={`h-full w-2 bg-gradient-to-b ${lineGradient} my-1 rounded-full hidden md:block`} />
-      </div>
-
-      {/* Card */}
-      <Motion.div
-        whileHover={{
-          scale: 1.03,
-          boxShadow: "0 0 16px #d946ef88, 0 0 18px #22d3ee55",
-        }}
-        className={`flex-1 ml-4 mr-0 md:mx-10 bg-[var(--bg-surface)] border border-[var(--accent-primary)]/40
-          shadow-[var(--shadow-sm)] rounded-2xl px-5 py-5 md:px-8 md:py-6 backdrop-blur-xl
-          hover:border-[var(--accent-secondary)]/50 transition-all
-          ${isLeft ? "md:ml-0 md:mr-10" : "md:mr-0 md:ml-10"}`}
-      >
-        <div className="flex flex-col md:flex-row md:items-center mb-2 gap-2">
-          <div className="font-mono text-xs text-[var(--accent-secondary)]">{year}</div>
-          <div className="font-bold text-xl md:ml-3 bg-gradient-to-r from-fuchsia-400 to-cyan-300 bg-clip-text text-transparent">
-            {title}
-          </div>
-        </div>
-        <div className="text-[var(--text-secondary)]">{desc}</div>
-      </Motion.div>
-    </Motion.div>
   );
 }

@@ -1,6 +1,6 @@
 import { motion as Motion } from "framer-motion";
 import { FaYoutube } from "react-icons/fa";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 
 export default function PortfolioDocumentacion() {
   const { t } = useTranslation();
@@ -28,11 +28,11 @@ export default function PortfolioDocumentacion() {
 
           <h3 className="text-xl font-bold text-[var(--accent-secondary)] mb-4 mt-8">{t('portfolio.docs_examples_title')}</h3>
           <ul className="list-disc list-inside space-y-3 mb-8 text-[var(--text-muted)] marker:text-fuchsia-400">
-            <li dangerouslySetInnerHTML={{ __html: t('portfolio.docs_ex1') }} />
-            <li dangerouslySetInnerHTML={{ __html: t('portfolio.docs_ex2') }} />
-            <li dangerouslySetInnerHTML={{ __html: t('portfolio.docs_ex3') }} />
-            <li dangerouslySetInnerHTML={{ __html: t('portfolio.docs_ex4') }} />
-            <li dangerouslySetInnerHTML={{ __html: t('portfolio.docs_ex5') }} />
+            <li><Trans i18nKey="portfolio.docs_ex1" components={{ highlight: <span className="text-gray-200 font-medium" /> }} /></li>
+            <li><Trans i18nKey="portfolio.docs_ex2" components={{ highlight: <span className="text-gray-200 font-medium" /> }} /></li>
+            <li><Trans i18nKey="portfolio.docs_ex3" components={{ highlight: <span className="text-gray-200 font-medium" /> }} /></li>
+            <li><Trans i18nKey="portfolio.docs_ex4" components={{ highlight: <span className="text-gray-200 font-medium" /> }} /></li>
+            <li><Trans i18nKey="portfolio.docs_ex5" components={{ highlight: <span className="text-gray-200 font-medium" /> }} /></li>
           </ul>
 
           <div className="p-4 bg-[var(--bg-elevated)] rounded-lg border-l-4 border-fuchsia-500 border border-[var(--border-subtle)]">

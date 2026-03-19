@@ -99,30 +99,30 @@ function SkillCard({ titleKey, descKey, icon: Icon, iconColor, skills, index, is
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
-      className="group relative max-w-sm bg-white/80 dark:bg-[var(--bg-elevated)] backdrop-blur-md rounded-2xl shadow-lg p-6 border border-[var(--border-color)] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+      className="group relative w-full max-w-sm overflow-hidden rounded-2xl border border-[var(--border-color)] bg-[color-mix(in_srgb,var(--bg-elevated)_86%,transparent)] px-4 py-3 shadow-lg backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
     >
       {/* Glow decorativo */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-current/10 via-transparent to-transparent rounded-full blur-2xl pointer-events-none group-hover:scale-110 transition-transform" />
 
       {/* Contenido */}
-      <div className="relative z-10 space-y-5">
+      <div className="relative z-10 space-y-3">
         {/* Header con ícono y título */}
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start justify-between gap-2.5">
           <div className="flex-1">
-            <h3 className="text-lg md:text-xl font-bold text-[var(--text-primary)] mb-1">
+            <h3 className="mb-1 text-base font-semibold text-[var(--text-primary)]">
               {title}
             </h3>
-            <p className="text-xs md:text-sm text-[var(--text-muted)]">
+            <p className="text-xs leading-relaxed text-[var(--text-muted)]">
               {desc}
             </p>
           </div>
-          <div className={`p-3 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] ${iconColor}`}>
-            <Icon size={24} />
+          <div className={`rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-2 ${iconColor}`}>
+            <Icon size={20} />
           </div>
         </div>
 
         {/* Skills list con barras de progreso */}
-        <div className="space-y-3">
+        <div className="space-y-2">
           {skills.map((skill, idx) => (
             <Motion.div
               key={skill.name}
@@ -130,15 +130,20 @@ function SkillCard({ titleKey, descKey, icon: Icon, iconColor, skills, index, is
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: index * 0.1 + idx * 0.05 }}
-              className="space-y-1.5"
+              className="space-y-0.5"
             >
               {/* Nombre */}
-              <span className="text-sm font-medium text-[var(--text-primary)]">
-                {skill.name}
-              </span>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-medium text-[var(--text-primary)]">
+                  {skill.name}
+                </span>
+                <span className="text-xs text-[var(--text-muted)]">
+                  {skill.years}
+                </span>
+              </div>
 
               {/* Barra de progreso */}
-              <div className="relative h-2 bg-[var(--bg-surface)] rounded-full overflow-hidden">
+              <div className="relative h-1 overflow-hidden rounded-full bg-[var(--bg-surface)]">
                 <Motion.div
                   initial={{ width: 0 }}
                   whileInView={{ width: `${skill.level}%` }}
@@ -156,34 +161,35 @@ function SkillCard({ titleKey, descKey, icon: Icon, iconColor, skills, index, is
 }
 
 /* ─── MAIN COMPONENT ─── */
-export default function TechSkills() {
+export default function TechSkills({ id, className = "" }) {
   const { t } = useTranslation();
 
   return (
-    <Motion.section
+    <Motion.div
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6 }}
-      className="relative w-full mx-auto py-16"
+      id={id}
+      className={`flex w-full flex-col items-center gap-4 ${className}`.trim()}
       aria-label={t("skills.title")}
     >
       {/* Header */}
-      <div className="text-center mb-12">
-        <h2 className="text-3xl md:text-4xl font-extrabold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 to-cyan-400">
+      <div className="mb-1 w-full text-center">
+        <h2 className="bg-gradient-to-r from-fuchsia-400 to-cyan-400 bg-clip-text text-3xl font-extrabold text-transparent md:text-4xl">
           {t("skills.title")}
         </h2>
-        <p className="text-[var(--text-muted)] text-base md:text-lg max-w-2xl mx-auto">
+        <p className="mx-auto max-w-2xl text-sm text-[var(--text-muted)] md:text-base">
           {t("skills.description")}
         </p>
       </div>
 
       {/* Grid - 3x3 perfectamente equilibrado */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto justify-items-center">
+      <div className="grid w-full grid-cols-1 justify-items-center gap-4 md:grid-cols-2 lg:grid-cols-3">
         {SKILLS_DATA.map((skillGroup, index) => (
           <SkillCard key={skillGroup.titleKey} {...skillGroup} index={index} />
         ))}
       </div>
-    </Motion.section>
+    </Motion.div>
   );
 }

@@ -1,11 +1,10 @@
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AnimatePresence, motion as Motion } from "framer-motion";
 import { lazy, Suspense } from "react";
 import ProtectedRoute from "../components/cms/ProtectedRoute";
 
 // ─── Páginas del portfolio (lazy) ────────────────────────────────────────────
 const Home                   = lazy(() => import("../pages/Home"));
-const About                  = lazy(() => import("../pages/About"));
 const Portfolio              = lazy(() => import("../pages/Portfolio"));
 const PortfolioDesarrolloWeb = lazy(() => import("../pages/portfolio/desarrollo-web"));
 const PortfolioDocumentacion = lazy(() => import("../pages/portfolio/documentacion-tecnica"));
@@ -55,7 +54,7 @@ export default function AppRoutes() {
 
           {/* ─── Portfolio ─── */}
           <Route path="/" element={<Motion.div {...pageTransition}><Home /></Motion.div>} />
-          <Route path="/sobre-mi" element={<Motion.div {...pageTransition}><About /></Motion.div>} />
+          <Route path="/sobre-mi" element={<Navigate to="/#about" replace />} />
           <Route path="/portfolio" element={<Motion.div {...pageTransition}><Portfolio /></Motion.div>} />
           <Route path="/portfolio/desarrollo-web"        element={<Motion.div {...pageTransition}><PortfolioDesarrolloWeb /></Motion.div>} />
           <Route path="/portfolio/documentacion-tecnica" element={<Motion.div {...pageTransition}><PortfolioDocumentacion /></Motion.div>} />

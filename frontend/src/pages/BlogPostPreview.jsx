@@ -137,7 +137,7 @@ export default function BlogPostPreview() {
                         <div
                             ref={contentRef}
                             className="
-                                prose prose-invert max-w-none
+                                prose prose-invert prose-sm md:prose-base max-w-none
                                 prose-headings:font-bold
                                 prose-h1:text-3xl prose-h1:text-transparent prose-h1:bg-clip-text prose-h1:bg-gradient-to-r prose-h1:from-violet-300 prose-h1:to-fuchsia-200 prose-h1:border-b prose-h1:border-[var(--border-color)] prose-h1:pb-4 prose-h1:mt-8 prose-h1:mb-6
                                 prose-h2:text-2xl prose-h2:text-transparent prose-h2:bg-clip-text prose-h2:bg-gradient-to-r prose-h2:from-cyan-300 prose-h2:to-violet-300 prose-h2:border-b prose-h2:border-[var(--border-color)] prose-h2:pb-2 prose-h2:mt-10 prose-h2:mb-4

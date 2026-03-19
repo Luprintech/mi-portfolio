@@ -1,10 +1,30 @@
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { motion as Motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "./LanguageSwitcher";
 import LuprinCat from "./Luprincat";
 import { useTheme } from "../hooks/useTheme";
+import useScrollSpy from "../hooks/useScrollSpy";
+import { scrollToSection } from "./ScrollSnapContainer";
+
+const HOME_SECTIONS = ["hero", "contact"];
+
+function getSectionLinkClass(isActive) {
+  return `px-3 py-2 rounded transition ${
+    isActive
+      ? "text-[var(--accent-secondary)] bg-[var(--accent-secondary-dim)]"
+      : "hover:text-fuchsia-300"
+  }`;
+}
+
+function getMobileSectionLinkClass(isActive) {
+  return `block py-2 border-b border-[var(--border-default)] transition ${
+    isActive
+      ? "text-[var(--accent-secondary)] font-semibold"
+      : "text-[var(--text-primary)]"
+  }`;
+}
 
 /* ─── Íconos inline sol / luna ─── */
 function SunIcon() {
@@ -91,9 +111,12 @@ function ThemeToggleButton({ className = "" }) {
 /* ─── Navbar principal ─── */
 export default function Navbar() {
   const { t } = useTranslation();
+  const location = useLocation();
   const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const activeSection = useScrollSpy(HOME_SECTIONS);
+  const isHome = location.pathname === "/";
 
   // Gato y logo
   const [catVisible, setCatVisible] = useState(false);
@@ -112,13 +135,57 @@ export default function Navbar() {
     }
   };
   const handleCloseCat = () => setCatVisible(false);
-  const goHome = () => navigate("/");
+  const goHome = useCallback(() => {
+    if (isHome) {
+      scrollToSection(document.getElementById("snap-root"), "hero");
+      window.history.replaceState(null, "", window.location.pathname || "/");
+      return;
+    }
+
+    navigate("/");
+  }, [isHome, navigate]);
+
+  const navigateToSection = useCallback(
+    (sectionId) => {
+      setMenuOpen(false);
+
+      if (!isHome) {
+        navigate(sectionId === "hero" ? "/" : `/#${sectionId}`);
+        return;
+      }
+
+      if (!scrollToSection(document.getElementById("snap-root"), sectionId)) {
+        return;
+      }
+
+      const basePath = window.location.pathname || "/";
+      window.history.replaceState(null, "", sectionId === "hero" ? basePath : `${basePath}#${sectionId}`);
+    },
+    [isHome, navigate]
+  );
+
+  const isSectionActive = useCallback(
+    (sectionId) => isHome && activeSection === sectionId,
+    [activeSection, isHome]
+  );
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 10);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    const snapRoot = isHome ? document.getElementById("snap-root") : null;
+    const scrollTarget = snapRoot || window;
+    const handleScroll = () => {
+      const offset = snapRoot ? snapRoot.scrollTop : window.scrollY;
+      setIsScrolled(offset > 10);
+    };
+
+    scrollTarget.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+
+    return () => scrollTarget.removeEventListener("scroll", handleScroll);
+  }, [isHome]);
+
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname, location.hash]);
 
 
   return (
@@ -133,40 +200,24 @@ export default function Navbar() {
           }
         `}
       >
-        <div className="max-w-7xl mx-auto flex items-center justify-between px-3 xs:px-5 md:px-7 h-20">
-          {/* Logo */}
-          <div className="flex items-center gap-2">
-            <span
-              className="font-extrabold text-2xl tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 to-cyan-400 select-none cursor-pointer transition-transform duration-300 hover:scale-[1.02]"
-              onClick={(e) => { e.stopPropagation(); handleLogoClick(); goHome(); }}
-            >
-              Guadalupe <span className="text-cyan-300 font-extrabold">Cano</span>
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 px-3 xs:px-5 md:px-7 h-20">
+            {/* Logo */}
+          <div className="flex min-w-0 items-center gap-2">
+             <span
+               className="max-w-[160px] truncate font-extrabold text-lg tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 to-cyan-400 select-none cursor-pointer transition-transform duration-300 hover:scale-[1.02] sm:max-w-none sm:text-xl md:text-2xl"
+               onClick={(e) => { e.stopPropagation(); handleLogoClick(); goHome(); }}
+             >
+               Guadalupe <span className="text-cyan-300 font-extrabold">Cano</span>
             </span>
           </div>
 
           {/* Navegación desktop */}
           <div className="hidden md:flex gap-2 items-center text-base font-medium">
-            <NavLink to="/"          className="px-3 py-2 rounded hover:text-fuchsia-300 transition">{t("nav.home")}</NavLink>
-            <NavLink to="/sobre-mi"  className="px-3 py-2 rounded hover:text-fuchsia-300 transition">{t("nav.about")}</NavLink>
+            <button type="button" onClick={() => navigateToSection("hero")} className={getSectionLinkClass(isSectionActive("hero"))}>{t("nav.home")}</button>
+            <NavLink to="/portfolio/desarrollo-web" className={({ isActive }) => getSectionLinkClass(isActive)}>{t("nav.projects")}</NavLink>
 
-            <NavLink to="/portfolio/desarrollo-web" className="px-3 py-2 rounded hover:text-fuchsia-300 transition">{t("nav.projects")}</NavLink>
-
-            <NavLink to="/blog"     className="px-3 py-2 rounded hover:text-cyan-300 transition">Blog</NavLink>
-            <NavLink to="/contacto" className="px-3 py-2 rounded hover:text-cyan-300 transition">{t("nav.contact")}</NavLink>
-
-            {/* Botón CV */}
-            <a
-              href="/CV_Guadalupe_Cano.pdf"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="ml-2 px-4 py-1.5 rounded-full font-medium text-sm text-cyan-300 border border-cyan-500/50 hover:bg-cyan-500/10 transition-colors flex items-center gap-1"
-            >
-              <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
-                <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
-                <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z" />
-              </svg>
-              {t("nav.cv")}
-            </a>
+            <NavLink to="/blog" className={({ isActive }) => getSectionLinkClass(isActive && !isHome)}>Blog</NavLink>
+            <button type="button" onClick={() => navigateToSection("contact")} className={getSectionLinkClass(isSectionActive("contact"))}>{t("nav.contact")}</button>
 
             {/* Separador */}
             <div className="h-5 w-px bg-[var(--border-default)] mx-2 hidden lg:block" />
@@ -205,28 +256,17 @@ export default function Navbar() {
               exit={{ opacity: 0, y: -30 }}
               className="md:hidden bg-[var(--nav-bg-mobile)] shadow-xl rounded-b-2xl border-t border-[var(--nav-border)] px-4 py-3"
             >
-              <NavLink to="/"         className="block py-2 border-b border-[var(--border-default)] text-[var(--text-primary)]" onClick={() => setMenuOpen(false)}>{t("nav.home")}</NavLink>
-              <NavLink to="/sobre-mi" className="block py-2 border-b border-[var(--border-default)] text-[var(--text-primary)]" onClick={() => setMenuOpen(false)}>{t("nav.about")}</NavLink>
-
-              <NavLink to="/portfolio/desarrollo-web" className="block py-2 border-b border-[var(--border-default)] text-[var(--accent-primary)] font-semibold" onClick={() => setMenuOpen(false)}>{t("nav.projects")}</NavLink>
-
-              <NavLink to="/blog"     className="block py-2 border-b border-[var(--border-default)] text-[var(--text-primary)]" onClick={() => setMenuOpen(false)}>Blog</NavLink>
-              <NavLink to="/contacto" className="block py-2 border-b border-[var(--border-default)] text-[var(--text-primary)]" onClick={() => setMenuOpen(false)}>{t("nav.contact")}</NavLink>
-
-              {/* Botón CV mobile */}
-              <a
-                href="/CV_Guadalupe_Cano.pdf"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block py-2 border-b border-[var(--border-default)] text-cyan-400 font-semibold flex items-center gap-2"
+              <button type="button" className={getMobileSectionLinkClass(isSectionActive("hero"))} onClick={() => navigateToSection("hero")}>{t("nav.home")}</button>
+              <NavLink
+                to="/portfolio/desarrollo-web"
+                className={({ isActive }) => getMobileSectionLinkClass(isActive)}
                 onClick={() => setMenuOpen(false)}
               >
-                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
-                  <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
-                  <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z" />
-                </svg>
-                {t("nav.cv")}
-              </a>
+                {t("nav.projects")}
+              </NavLink>
+
+              <NavLink to="/blog"     className="block py-2 border-b border-[var(--border-default)] text-[var(--text-primary)]" onClick={() => setMenuOpen(false)}>Blog</NavLink>
+              <button type="button" className={getMobileSectionLinkClass(isSectionActive("contact"))} onClick={() => navigateToSection("contact")}>{t("nav.contact")}</button>
 
               {/* Selector de idioma — dentro del drawer */}
               <div className="pt-3 pb-1 flex items-center justify-between">

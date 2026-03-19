@@ -661,7 +661,7 @@ const BlogPost = () => {
           </aside>
 
           <div className="order-1 min-w-0">
-            <div className="rounded-[2rem] border border-[var(--border-default)] bg-[var(--bg-elevated)]/78 px-6 py-8 text-justify shadow-[0_20px_80px_rgba(15,23,42,0.06)] md:px-10 md:py-12">
+            <div className="prose prose-blog prose-invert prose-sm md:prose-base lg:prose-lg max-w-none rounded-[2rem] border border-[var(--border-default)] bg-[var(--bg-elevated)]/78 px-6 py-8 text-justify shadow-[0_20px_80px_rgba(15,23,42,0.06)] md:px-10 md:py-12">
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 rehypePlugins={[rehypeRaw, rehypeHighlight]}

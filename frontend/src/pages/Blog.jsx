@@ -198,7 +198,7 @@ function RecentArticleCard({ post, index }) {
           {getPrimaryTag(post)}
         </p>
 
-        <h3 className="mt-3 font-serif text-[2rem] leading-[1.04] text-[var(--text-primary)] transition-colors group-hover:text-[var(--accent-secondary)]">
+        <h3 className="mt-3 font-serif text-xl leading-[1.04] text-[var(--text-primary)] transition-colors group-hover:text-[var(--accent-secondary)] sm:text-2xl md:text-[2rem]">
           {post.title}
         </h3>
 
@@ -345,7 +345,7 @@ const Blog = () => {
           <p className="text-[0.72rem] font-semibold uppercase tracking-[0.36em] text-[var(--text-muted)]">
             Blog técnico
           </p>
-          <h1 className="mt-5 max-w-4xl font-serif text-[clamp(3.2rem,6vw,5.8rem)] leading-[0.94] text-[var(--text-primary)]">
+          <h1 className="mt-5 max-w-4xl font-serif text-[clamp(2.6rem,8vw,5.8rem)] leading-[0.94] text-[var(--text-primary)] sm:text-[clamp(3rem,6.4vw,5.8rem)]">
             Blog de desarrollo, IA y automatización
           </h1>
           <p className="mt-5 max-w-3xl text-lg leading-relaxed text-justify text-[var(--text-secondary)] md:text-xl">

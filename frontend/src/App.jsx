@@ -15,6 +15,7 @@ const ChatBot = lazy(() => import('./components/ChatBot'))
 function AppContent() {
   const location = useLocation();
   const isCms = location.pathname.startsWith('/bitacora');
+  const isHome = location.pathname === '/';
   const [shouldLoadChatBot, setShouldLoadChatBot] = useState(false);
 
   useEffect(() => {
@@ -58,12 +59,12 @@ function AppContent() {
     <>
       <div className="min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-300">
         <Navbar />
-        <main id="main-content" className="flex-1" role="main" aria-label="Contenido principal">
+        <main id="main-content" className={`flex-1 ${isHome ? 'min-h-0' : ''}`} role="main" aria-label="Contenido principal">
           <ErrorBoundary>
             <AppRoutes />
           </ErrorBoundary>
         </main>
-        <Footer />
+        {!isHome && <Footer />}
       </div>
       {shouldLoadChatBot && (
         <Suspense fallback={null}>

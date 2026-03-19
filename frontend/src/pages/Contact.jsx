@@ -41,6 +41,7 @@ export default function Contact() {
 
   /* Clases compartidas para inputs/selects/textarea */
   const inputClass = "w-full bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-lg px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-secondary)] focus:ring-1 focus:ring-[var(--accent-secondary)] transition-all duration-300";
+  const selectOptionClass = "bg-[var(--bg-elevated)] text-[var(--text-primary)]";
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] pt-32 pb-20 px-4 md:px-8 relative overflow-hidden selection:bg-cyan-500/30">
@@ -88,7 +89,7 @@ export default function Contact() {
                     <div className="p-2 bg-[var(--bg-elevated)] rounded-lg group-hover:bg-[var(--accent-secondary-dim)] transition-colors border border-[var(--border-subtle)]">
                       <FaEnvelope />
                     </div>
-                    <span>{"con" + "tacto@" + "guada" + "lupe" + "cano" + ".es"}</span>
+                    <span className="break-all">{"con" + "tacto@" + "guada" + "lupe" + "cano" + ".es"}</span>
                   </button>
                 </div>
 
@@ -107,19 +108,19 @@ export default function Contact() {
             {/* Perfiles sociales */}
             <div className="bg-[var(--bg-surface)] backdrop-blur-md p-6 md:p-8 rounded-2xl border border-[var(--border-color)] hover:border-[var(--accent-secondary)]/30 transition-all duration-300 shadow-[var(--card-shadow)]">
               <h3 className="text-xl font-bold text-[var(--text-primary)] mb-6">{t('contact.profiles_title')}</h3>
-              <div className="flex gap-4">
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                 <a href="https://www.linkedin.com/in/guadalupe-cano-moyano/" target="_blank" rel="noopener noreferrer"
-                  className="flex-1 flex flex-col items-center justify-center p-4 bg-[var(--bg-elevated)] rounded-xl hover:bg-[#0077b5] hover:text-white transition-all duration-300 group border border-[var(--border-color)] hover:border-transparent">
+                  className="flex flex-col items-center justify-center p-4 bg-[var(--bg-elevated)] rounded-xl hover:bg-[#0077b5] hover:text-white transition-all duration-300 group border border-[var(--border-color)] hover:border-transparent">
                   <FaLinkedin className="text-3xl mb-2 text-[var(--text-muted)] group-hover:text-white transition-colors" />
                   <span className="text-sm font-medium text-[var(--text-secondary)] group-hover:text-white">LinkedIn</span>
                 </a>
                 <a href="https://github.com/Luprintech" target="_blank" rel="noopener noreferrer"
-                  className="flex-1 flex flex-col items-center justify-center p-4 bg-[var(--bg-elevated)] rounded-xl hover:bg-[#333] hover:text-white transition-all duration-300 group border border-[var(--border-color)] hover:border-transparent">
+                  className="flex flex-col items-center justify-center p-4 bg-[var(--bg-elevated)] rounded-xl hover:bg-[#333] hover:text-white transition-all duration-300 group border border-[var(--border-color)] hover:border-transparent">
                   <FaGithub className="text-3xl mb-2 text-[var(--text-muted)] group-hover:text-white transition-colors" />
                   <span className="text-sm font-medium text-[var(--text-secondary)] group-hover:text-white">GitHub</span>
                 </a>
                 <a href="https://www.youtube.com/@Luprintech" target="_blank" rel="noopener noreferrer"
-                  className="flex-1 flex flex-col items-center justify-center p-4 bg-[var(--bg-elevated)] rounded-xl hover:bg-[#FF0000] hover:text-white transition-all duration-300 group border border-[var(--border-color)] hover:border-transparent">
+                  className="flex flex-col items-center justify-center p-4 bg-[var(--bg-elevated)] rounded-xl hover:bg-[#FF0000] hover:text-white transition-all duration-300 group border border-[var(--border-color)] hover:border-transparent">
                   <FaYoutube className="text-3xl mb-2 text-[var(--text-muted)] group-hover:text-white transition-colors" />
                   <span className="text-sm font-medium text-[var(--text-secondary)] group-hover:text-white">YouTube</span>
                 </a>
@@ -160,11 +161,11 @@ export default function Contact() {
                   <label htmlFor="subject" className="text-sm font-medium text-[var(--text-muted)]">{t('contact.form_subject')}</label>
                   <select id="subject" name="subject" required value={formData.subject} onChange={handleChange}
                     className={`${inputClass} appearance-none`}>
-                    <option value="" disabled className="bg-[#1e293b] text-gray-400">{t('contact.form_subject_default')}</option>
-                    <option value="job_opportunity" className="bg-[#1e293b] text-white">{t('contact.form_subject_job')}</option>
-                    <option value="collaboration"   className="bg-[#1e293b] text-white">{t('contact.form_subject_collab')}</option>
-                    <option value="networking"      className="bg-[#1e293b] text-white">{t('contact.form_subject_net')}</option>
-                    <option value="other"           className="bg-[#1e293b] text-white">{t('contact.form_subject_other')}</option>
+                    <option value="" disabled className={selectOptionClass}>{t('contact.form_subject_default')}</option>
+                    <option value="job_opportunity" className={selectOptionClass}>{t('contact.form_subject_job')}</option>
+                    <option value="collaboration"   className={selectOptionClass}>{t('contact.form_subject_collab')}</option>
+                    <option value="networking"      className={selectOptionClass}>{t('contact.form_subject_net')}</option>
+                    <option value="other"           className={selectOptionClass}>{t('contact.form_subject_other')}</option>
                   </select>
                 </div>
 
