@@ -89,7 +89,7 @@ export default function BlogPostPreview() {
         : '';
 
     return (
-        <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] py-28 px-6 md:px-16 relative overflow-x-hidden">
+        <div className="relative min-h-screen overflow-x-hidden bg-[var(--bg-primary)] px-6 py-28 text-[var(--text-primary)] md:px-16">
 
             {/* Banner de vista previa */}
             <div className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-6 py-2.5
@@ -105,7 +105,7 @@ export default function BlogPostPreview() {
                 </button>
             </div>
 
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-violet-900/10 via-[var(--bg-primary)] to-[var(--bg-primary)] pointer-events-none z-0" />
+            <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_top,rgba(6,182,212,0.06),transparent_30%)]" />
 
             <motion.article
                 initial={{ opacity: 0, y: 30 }}
@@ -115,10 +115,10 @@ export default function BlogPostPreview() {
             >
                 {/* Cabecera */}
                 <div className="mb-10">
-                    <h1 className="text-3xl md:text-5xl font-extrabold mb-6 leading-tight text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 to-cyan-300">
+                    <h1 className="mb-6 text-3xl font-extrabold leading-tight text-white md:text-5xl">
                         {post.title || 'Sin título'}
                     </h1>
-                    <div className="flex flex-wrap items-center gap-4 text-sm font-mono text-[var(--text-muted)] border-b border-[var(--border-color)] pb-8">
+                    <div className="flex flex-wrap items-center gap-4 border-b border-[var(--border-color)] pb-8 text-sm font-mono text-[var(--text-muted)]">
                         {dateStr && (
                             <time className="text-[var(--accent-secondary)]/80">{dateStr}</time>
                         )}
@@ -137,14 +137,14 @@ export default function BlogPostPreview() {
                         <div
                             ref={contentRef}
                             className="
-                                prose prose-invert prose-sm md:prose-base max-w-none
+                                prose prose-invert prose-sm md:prose-base lg:prose-lg max-w-none
                                 prose-headings:font-bold
-                                prose-h1:text-3xl prose-h1:text-transparent prose-h1:bg-clip-text prose-h1:bg-gradient-to-r prose-h1:from-violet-300 prose-h1:to-fuchsia-200 prose-h1:border-b prose-h1:border-[var(--border-color)] prose-h1:pb-4 prose-h1:mt-8 prose-h1:mb-6
-                                prose-h2:text-2xl prose-h2:text-transparent prose-h2:bg-clip-text prose-h2:bg-gradient-to-r prose-h2:from-cyan-300 prose-h2:to-violet-300 prose-h2:border-b prose-h2:border-[var(--border-color)] prose-h2:pb-2 prose-h2:mt-10 prose-h2:mb-4
-                                prose-h3:text-xl prose-h3:text-fuchsia-400 prose-h3:mt-8 prose-h3:mb-3
+                                prose-h1:text-3xl prose-h1:text-white prose-h1:border-b prose-h1:border-[var(--border-color)] prose-h1:pb-4 prose-h1:mt-8 prose-h1:mb-6
+                                prose-h2:text-2xl prose-h2:text-white prose-h2:border-b prose-h2:border-[var(--border-color)] prose-h2:pb-2 prose-h2:mt-10 prose-h2:mb-4
+                                prose-h3:text-xl prose-h3:text-cyan-400 prose-h3:mt-8 prose-h3:mb-3
                                 prose-p:text-[var(--text-secondary)] prose-p:leading-relaxed prose-p:mb-5
-                                prose-a:text-fuchsia-400 prose-a:underline-offset-4 hover:prose-a:text-fuchsia-300
-                                prose-blockquote:border-l-4 prose-blockquote:border-fuchsia-500 prose-blockquote:italic prose-blockquote:text-[var(--text-muted)] prose-blockquote:bg-[var(--bg-elevated)] prose-blockquote:py-3 prose-blockquote:pr-4 prose-blockquote:rounded-r-lg
+                                prose-a:text-cyan-400 prose-a:underline-offset-4 hover:prose-a:text-cyan-300
+                                prose-blockquote:border-l-4 prose-blockquote:border-cyan-500 prose-blockquote:italic prose-blockquote:text-[var(--text-muted)] prose-blockquote:bg-[var(--bg-elevated)] prose-blockquote:py-3 prose-blockquote:pr-4 prose-blockquote:rounded-r-lg
                                 prose-code:text-cyan-300 prose-code:bg-white/5 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
                                 prose-pre:bg-[#0a0a12] prose-pre:border prose-pre:border-white/10 prose-pre:rounded-xl
                                 prose-img:rounded-2xl prose-img:shadow-2xl prose-img:mx-auto

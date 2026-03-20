@@ -2,6 +2,7 @@ import { lazy, Suspense, useState, useEffect, useCallback, useMemo, useRef } fro
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { cmsApi } from '../../lib/cmsApi';
+import { IMAGE_INPUT_ACCEPT, IMAGE_UPLOAD_LABEL, validateImageFile } from '../../lib/mediaUploadPolicy';
 import { X } from 'lucide-react';
 
 const RichEditor = lazy(() => import('../../components/cms/RichEditor'));
@@ -122,8 +123,12 @@ export default function BitacoraPostEditor() {
     const [toast,      setToast]      = useState(null); // { message, type: 'success'|'error' }
     const [fullscreen, setFullscreen] = useState(false);
     const [availableDraft, setAvailableDraft] = useState(null);
+    const [coverUploading, setCoverUploading] = useState(false);
+    const [coverUploadError, setCoverUploadError] = useState('');
+    const [coverUploadSuccess, setCoverUploadSuccess] = useState('');
     const autosaveTimer = useRef(null);
     const toastTimer = useRef(null);
+    const coverFileInputRef = useRef(null);
 
     // Dirty state: form differs from initial
     const isDirty = useMemo(() => {
@@ -227,6 +232,44 @@ export default function BitacoraPostEditor() {
 
     function handleTagsChange(newTagsString) {
         setForm(f => ({ ...f, tags: newTagsString }));
+    }
+
+    function handleOgImageChange(e) {
+        setCoverUploadError('');
+        setCoverUploadSuccess('');
+        setForm(f => ({ ...f, ogImage: e.target.value }));
+    }
+
+    function clearCoverSelection() {
+        setForm(f => ({ ...f, ogImage: '' }));
+        setCoverUploadSuccess('');
+        setCoverUploadError('');
+    }
+
+    async function handleOgImageUpload(e) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setCoverUploadError('');
+        setCoverUploadSuccess('');
+        setCoverUploading(true);
+
+        try {
+            const validationError = validateImageFile(file);
+            if (validationError) throw new Error(validationError);
+
+            const { url } = await cmsApi.uploadImage(token, file);
+            if (!url) throw new Error('La API no devolvio una URL de imagen valida.');
+
+            setForm(f => ({ ...f, ogImage: url }));
+            setCoverUploadSuccess('Imagen subida y asignada como portada del post.');
+            showToast('Portada subida correctamente');
+        } catch (err) {
+            setCoverUploadError(err.message || 'No se pudo subir la imagen de portada.');
+        } finally {
+            setCoverUploading(false);
+            e.target.value = '';
+        }
     }
 
     // ── Vista previa en nueva pestaña
@@ -473,6 +516,79 @@ export default function BitacoraPostEditor() {
                         </p>
                     </div>
 
+                    <div className="lg:col-span-2 rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-4">
+                        <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">Portada</p>
+                        <p className="mt-1 text-xs leading-relaxed text-[var(--text-muted)]">
+                            Elige aqui de forma explicita la portada del post. Aunque el contenido incluya imagenes, la portada del blog se toma de este campo y se guarda en <code>ogImage</code>.
+                        </p>
+
+                        <label className="mt-3 block text-xs font-medium text-[var(--text-secondary)]">URL de portada</label>
+                        <input
+                            type="text"
+                            value={form.ogImage}
+                            onChange={handleOgImageChange}
+                            placeholder="/images/tu-portada.webp o URL completa"
+                            className="mt-1.5 w-full px-4 py-2.5 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)] focus:outline-none focus:border-fuchsia-500/60 focus:ring-1 focus:ring-fuchsia-500/40 text-sm shadow-sm"
+                        />
+
+                        <input
+                            ref={coverFileInputRef}
+                            type="file"
+                            accept={IMAGE_INPUT_ACCEPT}
+                            onChange={handleOgImageUpload}
+                            className="sr-only"
+                        />
+
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={() => coverFileInputRef.current?.click()}
+                                disabled={coverUploading}
+                                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--border-default)] text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-fuchsia-500/40 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                                {coverUploading ? (
+                                    <>
+                                        <div className="w-3.5 h-3.5 border-2 border-fuchsia-500/30 border-t-fuchsia-500 rounded-full animate-spin" />
+                                        Subiendo portada...
+                                    </>
+                                ) : (
+                                    'Subir portada desde mi ordenador'
+                                )}
+                            </button>
+
+                            {form.ogImage && (
+                                <button
+                                    type="button"
+                                    onClick={clearCoverSelection}
+                                    className="inline-flex items-center px-3 py-1.5 rounded-lg border border-red-500/30 text-xs font-medium text-red-400 hover:bg-red-500/10 transition-all"
+                                >
+                                    Quitar portada
+                                </button>
+                            )}
+                        </div>
+
+                        <p className="mt-1 text-[10px] text-[var(--text-muted)]">{IMAGE_UPLOAD_LABEL}</p>
+
+                        {coverUploadError && (
+                            <p className="mt-1.5 text-xs text-red-400">{coverUploadError}</p>
+                        )}
+
+                        {coverUploadSuccess && (
+                            <p className="mt-1.5 text-xs text-emerald-400">{coverUploadSuccess}</p>
+                        )}
+
+                        {form.ogImage && (
+                            <div className="mt-2 rounded-xl border border-[var(--border-default)] bg-[var(--bg-primary)] p-2">
+                                <p className="mb-1 text-[10px] uppercase tracking-wide text-[var(--text-muted)]">Vista previa de portada seleccionada</p>
+                                <img
+                                    src={form.ogImage}
+                                    alt="Vista previa de portada del post"
+                                    className="h-24 w-full rounded-lg object-cover"
+                                />
+                            </div>
+                        )}
+                    </div>
+
                     <div className="lg:col-span-2 mt-1">
                         <label className="flex items-center gap-3 cursor-pointer group w-fit">
                             <div className={`relative h-5 w-10 rounded-full transition-colors ${form.featured ? 'bg-fuchsia-500' : 'bg-[var(--text-secondary)] opacity-50'}`}>
@@ -571,17 +687,6 @@ export default function BitacoraPostEditor() {
                                 className={`w-full px-4 py-2.5 rounded-xl bg-[var(--bg-elevated)] border ${
                                     (form.seoDescription || form.excerpt).length > 160 ? 'border-red-500/50 focus:border-red-500/80' : 'border-[var(--border-default)] focus:border-fuchsia-500/60'
                                 } text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-fuchsia-500/40 text-sm shadow-sm`}
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Imagen Social (Open Graph / Twitter Card)</label>
-                            <input
-                                type="text"
-                                value={form.ogImage}
-                                onChange={handleChange('ogImage')}
-                                placeholder="URL de la imagen destacada (/images/...)"
-                                className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-default)] text-[var(--text-primary)] focus:outline-none focus:border-fuchsia-500/60 focus:ring-1 focus:ring-fuchsia-500/40 text-sm shadow-sm"
                             />
                         </div>
 

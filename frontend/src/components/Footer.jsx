@@ -7,7 +7,7 @@ export default function Footer() {
   return (
     <footer className="bg-[var(--footer-bg)] border-t border-[var(--footer-border)] text-[var(--text-secondary)]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="text-sm flex flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-2">
+        <div className="typo-body text-sm flex flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-2">
           <span>© {new Date().getFullYear()} Guadalupe Cano — {t('footer.rights')}</span>
           <span className="hidden md:inline text-[var(--border-color)]">|</span>
           <Link to="/politica-privacidad" className="hover:text-[var(--accent-primary)] transition-colors underline underline-offset-2">Política de Privacidad</Link>

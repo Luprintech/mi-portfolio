@@ -10,28 +10,28 @@ const ProjectCard = ({ project, index = 0, compact = false }) => {
     : "relative z-10 flex flex-grow flex-col p-5 sm:p-6";
 
   const titleClassName = compact
-    ? "mb-2 text-lg font-bold tracking-tight text-[var(--text-primary)] sm:text-xl"
-    : "mb-2 text-xl font-bold tracking-tight text-[var(--text-primary)] sm:text-[1.35rem]";
+    ? "typo-title mb-2 text-lg font-bold tracking-tight text-[var(--text-primary)] sm:text-xl"
+    : "typo-title mb-2 text-xl font-bold tracking-tight text-[var(--text-primary)] sm:text-[1.35rem]";
 
   const descriptionClassName = compact
-    ? "mb-4 flex-grow text-left text-sm leading-relaxed text-[var(--text-secondary)]"
-    : "mb-5 flex-grow text-left text-sm leading-relaxed text-[var(--text-secondary)]";
+    ? "typo-body mb-4 flex-grow text-left text-sm leading-relaxed text-[var(--text-secondary)]"
+    : "typo-body mb-5 flex-grow text-left text-sm leading-relaxed text-[var(--text-secondary)]";
 
   const tagsWrapperClassName = compact ? "mb-5 flex flex-wrap gap-1.5" : "mb-6 flex flex-wrap gap-2";
 
   const tagClassName = compact
-    ? "rounded-full border border-[var(--accent-secondary)]/20 bg-[var(--accent-secondary-dim)] px-2 py-0.5 text-[10px] font-medium text-[var(--accent-secondary)] sm:px-2.5"
-    : "rounded-full border border-[var(--accent-secondary)]/20 bg-[var(--accent-secondary-dim)] px-2.5 py-1 text-[11px] font-medium text-[var(--accent-secondary)] sm:px-3";
+    ? "typo-label rounded-full border border-[var(--accent-secondary)]/20 bg-[var(--accent-secondary-dim)] px-2 py-0.5 text-[10px] font-medium text-[var(--accent-secondary)] sm:px-2.5"
+    : "typo-label rounded-full border border-[var(--accent-secondary)]/20 bg-[var(--accent-secondary-dim)] px-2.5 py-1 text-[11px] font-medium text-[var(--accent-secondary)] sm:px-3";
 
   const buttonGroupClassName = compact ? "mt-auto flex flex-wrap gap-2" : "mt-auto flex flex-wrap gap-2.5";
 
   const secondaryButtonClassName = compact
-    ? "flex flex-1 items-center justify-center gap-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] px-3.5 py-2 text-xs font-medium text-[var(--text-primary)] transition-colors duration-300 hover:bg-[var(--bg-secondary)] sm:text-sm"
-    : "flex flex-1 items-center justify-center gap-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] transition-colors duration-300 hover:bg-[var(--bg-secondary)]";
+    ? "typo-label flex flex-1 items-center justify-center gap-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] px-3.5 py-2 text-xs font-medium text-[var(--text-primary)] transition-colors duration-300 hover:bg-[var(--bg-secondary)] sm:text-sm"
+    : "typo-label flex flex-1 items-center justify-center gap-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] transition-colors duration-300 hover:bg-[var(--bg-secondary)]";
 
   const primaryButtonClassName = compact
-    ? "flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-600 px-3.5 py-2 text-xs font-medium text-white shadow-[0_0_15px_rgba(124,58,237,0.3)] transition-all duration-300 hover:from-violet-500 hover:to-cyan-500 hover:shadow-[0_0_20px_rgba(6,182,212,0.4)] sm:text-sm"
-    : "flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-600 px-4 py-2.5 text-sm font-medium text-white shadow-[0_0_15px_rgba(124,58,237,0.3)] transition-all duration-300 hover:from-violet-500 hover:to-cyan-500 hover:shadow-[0_0_20px_rgba(6,182,212,0.4)]";
+    ? "typo-label flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-600 px-3.5 py-2 text-xs font-medium text-white shadow-[0_0_15px_rgba(124,58,237,0.3)] transition-all duration-300 hover:from-violet-500 hover:to-cyan-500 hover:shadow-[0_0_20px_rgba(6,182,212,0.4)] sm:text-sm"
+    : "typo-label flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-600 px-4 py-2.5 text-sm font-medium text-white shadow-[0_0_15px_rgba(124,58,237,0.3)] transition-all duration-300 hover:from-violet-500 hover:to-cyan-500 hover:shadow-[0_0_20px_rgba(6,182,212,0.4)]";
 
   return (
     <motion.div

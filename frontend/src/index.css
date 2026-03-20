@@ -2,6 +2,28 @@
 
 @theme {
   --breakpoint-xs: 475px;
+  --font-sans: 'Manrope', sans-serif;
+  --font-headline: 'Plus Jakarta Sans', sans-serif;
+  --font-body: 'Manrope', sans-serif;
+  --font-label: 'Space Grotesk', sans-serif;
+}
+
+:root {
+  --type-title-family: var(--font-headline, 'Plus Jakarta Sans', sans-serif);
+  --type-body-family: var(--font-body, 'Manrope', sans-serif);
+  --type-label-family: var(--font-label, 'Space Grotesk', sans-serif);
+}
+
+.typo-title {
+  font-family: var(--type-title-family);
+}
+
+.typo-body {
+  font-family: var(--type-body-family);
+}
+
+.typo-label {
+  font-family: var(--type-label-family);
 }
 
 /* ============================================================
@@ -102,6 +124,7 @@
   --toggle-hover: rgba(255, 255, 255, 0.14);
   --toggle-border: rgba(255, 255, 255, 0.12);
   --toggle-icon: #22d3ee;
+
 }
 
 /* ─── TEMA CLARO  (por defecto)─── */
@@ -184,6 +207,7 @@
   --toggle-hover: rgba(99, 102, 241, 0.14);
   --toggle-border: rgba(199, 210, 254, 0.8);
   --toggle-icon: #d946ef;
+
 }
 
 /* ============================================================
@@ -210,6 +234,14 @@
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
+  font-family: var(--type-body-family);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
 }
 
 html {

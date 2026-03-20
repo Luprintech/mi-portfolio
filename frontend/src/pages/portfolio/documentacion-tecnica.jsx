@@ -17,17 +17,17 @@ export default function PortfolioDocumentacion() {
         transition={{ duration: 0.8 }}
         className="relative z-10 max-w-4xl mx-auto text-center mb-12"
       >
-        <h1 className="text-4xl md:text-5xl font-extrabold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 to-cyan-400 drop-shadow-[0_0_15px_rgba(236,72,153,0.3)]">
+        <h1 className="typo-title text-4xl md:text-5xl font-extrabold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 to-cyan-400 drop-shadow-[0_0_15px_rgba(236,72,153,0.3)]">
           {t('portfolio.docs_title')}
         </h1>
       </Motion.div>
 
       <div className="relative z-10 max-w-4xl mx-auto mb-16">
         <div className="bg-[var(--bg-surface)] border border-[var(--border-color)] p-6 sm:p-8 md:p-12 rounded-2xl shadow-[var(--card-shadow)] text-[var(--text-secondary)] text-lg leading-relaxed backdrop-blur-sm">
-          <p className="mb-6 text-justify">{t('portfolio.docs_desc')}</p>
+          <p className="typo-body mb-6 text-justify">{t('portfolio.docs_desc')}</p>
 
-          <h3 className="text-xl font-bold text-[var(--accent-secondary)] mb-4 mt-8">{t('portfolio.docs_examples_title')}</h3>
-          <ul className="list-disc list-inside space-y-3 mb-8 text-[var(--text-muted)] marker:text-fuchsia-400">
+          <h3 className="typo-title text-xl font-bold text-[var(--accent-secondary)] mb-4 mt-8">{t('portfolio.docs_examples_title')}</h3>
+          <ul className="typo-body list-disc list-inside space-y-3 mb-8 text-[var(--text-muted)] marker:text-fuchsia-400">
             <li><Trans i18nKey="portfolio.docs_ex1" components={{ highlight: <span className="text-gray-200 font-medium" /> }} /></li>
             <li><Trans i18nKey="portfolio.docs_ex2" components={{ highlight: <span className="text-gray-200 font-medium" /> }} /></li>
             <li><Trans i18nKey="portfolio.docs_ex3" components={{ highlight: <span className="text-gray-200 font-medium" /> }} /></li>
@@ -36,7 +36,7 @@ export default function PortfolioDocumentacion() {
           </ul>
 
           <div className="p-4 bg-[var(--bg-elevated)] rounded-lg border-l-4 border-fuchsia-500 border border-[var(--border-subtle)]">
-            <p className="text-[var(--accent-secondary)] font-medium italic">
+            <p className="typo-body text-[var(--accent-secondary)] font-medium italic">
               {t('portfolio.docs_quote')}
             </p>
           </div>
@@ -51,7 +51,7 @@ export default function PortfolioDocumentacion() {
         className="relative z-10 max-w-4xl mx-auto bg-[var(--bg-surface)] border border-[var(--accent-primary)]/30 rounded-2xl p-6 sm:p-10 text-center shadow-[var(--card-shadow)] hover:shadow-[0_0_50px_rgba(34,211,238,0.15)] transition-all backdrop-blur-md"
       >
         <FaYoutube className="text-6xl text-red-500 mx-auto mb-6" />
-        <h2 className="text-2xl font-bold mb-8 text-[var(--text-primary)]">{t('portfolio.docs_yt_title')}</h2>
+        <h2 className="typo-title text-2xl font-bold mb-8 text-[var(--text-primary)]">{t('portfolio.docs_yt_title')}</h2>
         <a
           href="https://www.youtube.com/@Luprintech"
           target="_blank"

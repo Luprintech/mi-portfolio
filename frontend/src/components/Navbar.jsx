@@ -8,10 +8,10 @@ import { useTheme } from "../hooks/useTheme";
 import useScrollSpy from "../hooks/useScrollSpy";
 import { scrollToSection } from "./ScrollSnapContainer";
 
-const HOME_SECTIONS = ["hero", "contact"];
+const HOME_SECTIONS = ["hero"];
 
 function getSectionLinkClass(isActive) {
-  return `px-3 py-2 rounded transition ${
+  return `typo-label px-3 py-2 rounded transition ${
     isActive
       ? "text-[var(--accent-secondary)] bg-[var(--accent-secondary-dim)]"
       : "hover:text-fuchsia-300"
@@ -19,7 +19,7 @@ function getSectionLinkClass(isActive) {
 }
 
 function getMobileSectionLinkClass(isActive) {
-  return `block py-2 border-b border-[var(--border-default)] transition ${
+  return `typo-label block py-2 border-b border-[var(--border-default)] transition ${
     isActive
       ? "text-[var(--accent-secondary)] font-semibold"
       : "text-[var(--text-primary)]"
@@ -203,10 +203,10 @@ export default function Navbar() {
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 px-3 xs:px-5 md:px-7 h-20">
             {/* Logo */}
           <div className="flex min-w-0 items-center gap-2">
-             <span
-               className="max-w-[160px] truncate font-extrabold text-lg tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 to-cyan-400 select-none cursor-pointer transition-transform duration-300 hover:scale-[1.02] sm:max-w-none sm:text-xl md:text-2xl"
+              <span
+               className="typo-title max-w-[160px] truncate font-extrabold text-lg tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 to-cyan-400 select-none cursor-pointer transition-transform duration-300 hover:scale-[1.02] sm:max-w-none sm:text-xl md:text-2xl"
                onClick={(e) => { e.stopPropagation(); handleLogoClick(); goHome(); }}
-             >
+              >
                Guadalupe <span className="text-cyan-300 font-extrabold">Cano</span>
             </span>
           </div>
@@ -214,10 +214,10 @@ export default function Navbar() {
           {/* Navegación desktop */}
           <div className="hidden md:flex gap-2 items-center text-base font-medium">
             <button type="button" onClick={() => navigateToSection("hero")} className={getSectionLinkClass(isSectionActive("hero"))}>{t("nav.home")}</button>
-            <NavLink to="/portfolio/desarrollo-web" className={({ isActive }) => getSectionLinkClass(isActive)}>{t("nav.projects")}</NavLink>
+            <NavLink to="/proyectos" className={({ isActive }) => getSectionLinkClass(isActive)}>{t("nav.projects")}</NavLink>
 
             <NavLink to="/blog" className={({ isActive }) => getSectionLinkClass(isActive && !isHome)}>Blog</NavLink>
-            <button type="button" onClick={() => navigateToSection("contact")} className={getSectionLinkClass(isSectionActive("contact"))}>{t("nav.contact")}</button>
+            <NavLink to="/contacto" className={({ isActive }) => getSectionLinkClass(isActive)}>{t("nav.contact")}</NavLink>
 
             {/* Separador */}
             <div className="h-5 w-px bg-[var(--border-default)] mx-2 hidden lg:block" />
@@ -258,19 +258,25 @@ export default function Navbar() {
             >
               <button type="button" className={getMobileSectionLinkClass(isSectionActive("hero"))} onClick={() => navigateToSection("hero")}>{t("nav.home")}</button>
               <NavLink
-                to="/portfolio/desarrollo-web"
+                to="/proyectos"
                 className={({ isActive }) => getMobileSectionLinkClass(isActive)}
                 onClick={() => setMenuOpen(false)}
               >
                 {t("nav.projects")}
               </NavLink>
 
-              <NavLink to="/blog"     className="block py-2 border-b border-[var(--border-default)] text-[var(--text-primary)]" onClick={() => setMenuOpen(false)}>Blog</NavLink>
-              <button type="button" className={getMobileSectionLinkClass(isSectionActive("contact"))} onClick={() => navigateToSection("contact")}>{t("nav.contact")}</button>
+              <NavLink to="/blog"     className="typo-label block py-2 border-b border-[var(--border-default)] text-[var(--text-primary)]" onClick={() => setMenuOpen(false)}>Blog</NavLink>
+              <NavLink
+                to="/contacto"
+                className={({ isActive }) => getMobileSectionLinkClass(isActive)}
+                onClick={() => setMenuOpen(false)}
+              >
+                {t("nav.contact")}
+              </NavLink>
 
               {/* Selector de idioma — dentro del drawer */}
               <div className="pt-3 pb-1 flex items-center justify-between">
-                <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+                <span className="typo-label text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
                   Idioma
                 </span>
                 <LanguageSwitcher />

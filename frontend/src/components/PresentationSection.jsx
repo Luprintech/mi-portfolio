@@ -63,11 +63,11 @@ export default function PresentationSection({ id, className = "" }) {
           </div>
 
           <div className="flex-1 space-y-5 text-left">
-            <h2 className="bg-gradient-to-r from-fuchsia-400 to-cyan-400 bg-clip-text text-3xl font-extrabold leading-tight tracking-tight text-transparent md:text-4xl">
+            <h2 className="typo-title bg-gradient-to-r from-fuchsia-400 to-cyan-400 bg-clip-text text-3xl font-extrabold leading-tight tracking-tight text-transparent md:text-4xl">
               {t("about.tagline")}
             </h2>
 
-            <p className="text-base leading-relaxed text-[var(--text-secondary)] md:text-lg md:text-justify">
+            <p className="typo-body text-base leading-relaxed text-[var(--text-secondary)] md:text-lg text-justify">
               {t("about.summary")}
             </p>
 
@@ -76,7 +76,7 @@ export default function PresentationSection({ id, className = "" }) {
                 <span
                   key={key}
                   role="listitem"
-                  className={`rounded-full border px-3 py-1 text-sm font-medium ${BADGE_STYLES[color]}`}
+                  className={`typo-label rounded-full border px-3 py-1 text-sm font-medium ${BADGE_STYLES[color]}`}
                 >
                   {t(`about.${key}`)}
                 </span>
@@ -103,10 +103,10 @@ export default function PresentationSection({ id, className = "" }) {
               className="flex flex-col items-center gap-2 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-5 text-center shadow-[var(--card-shadow)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[var(--card-hover-shadow)]"
             >
               <Icon size={36} className={iconColor} aria-hidden="true" />
-              <span className="bg-gradient-to-r from-cyan-400 to-fuchsia-400 bg-clip-text text-3xl font-extrabold leading-none text-transparent">
+              <span className="typo-title bg-gradient-to-r from-cyan-400 to-fuchsia-400 bg-clip-text text-3xl font-extrabold leading-none text-transparent">
                 {t(`about.${valKey}`)}
               </span>
-              <span className="text-xs font-medium leading-tight text-[var(--text-muted)]">
+              <span className="typo-label text-xs font-medium leading-tight text-[var(--text-muted)]">
                 {t(`about.${labelKey}`)}
               </span>
             </Motion.div>

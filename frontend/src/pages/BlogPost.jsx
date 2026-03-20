@@ -180,7 +180,7 @@ function buildMarkdownComponents() {
       return (
         <h1
           id={id}
-          className="mt-0 mb-6 scroll-mt-24 font-serif text-[clamp(1.9rem,3.5vw,2.8rem)] leading-tight text-[var(--text-primary)]"
+          className="typo-title mt-0 mb-6 scroll-mt-24 text-[clamp(1.9rem,3.5vw,2.8rem)] leading-tight text-[var(--text-primary)]"
           {...props}
         >
           {children}
@@ -192,7 +192,7 @@ function buildMarkdownComponents() {
       return (
         <h2
           id={id}
-          className="mt-14 mb-5 scroll-mt-24 border-b border-[var(--border-default)] pb-3 font-serif text-3xl leading-tight text-[var(--text-primary)]"
+          className="typo-title mt-14 mb-5 scroll-mt-24 border-b border-[var(--border-default)] pb-3 text-3xl leading-tight text-[var(--text-primary)]"
           {...props}
         >
           {children}
@@ -661,18 +661,19 @@ const BlogPost = () => {
           </aside>
 
           <div className="order-1 min-w-0">
-            <div className="prose prose-blog prose-invert prose-sm md:prose-base lg:prose-lg max-w-none rounded-[2rem] border border-[var(--border-default)] bg-[var(--bg-elevated)]/78 px-6 py-8 text-justify shadow-[0_20px_80px_rgba(15,23,42,0.06)] md:px-10 md:py-12">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeRaw, rehypeHighlight]}
-                components={markdownComponents}
-              >
-                {sanitizedContent}
-              </ReactMarkdown>
-            </div>
+            <div className="mx-auto max-w-3xl">
+              <div className="prose prose-blog prose-invert prose-sm md:prose-base lg:prose-lg max-w-none rounded-[2rem] border border-[var(--border-default)] bg-[var(--bg-elevated)]/78 px-6 py-8 text-justify shadow-[0_20px_80px_rgba(15,23,42,0.06)] md:px-10 md:py-12">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeRaw, rehypeHighlight]}
+                  components={markdownComponents}
+                >
+                  {sanitizedContent}
+                </ReactMarkdown>
+              </div>
 
-            {/* ── Share buttons ────────────────────────────────────────────── */}
-            <div className="mt-8 rounded-[1.8rem] border border-[var(--border-default)] bg-[var(--bg-elevated)]/72 px-6 py-5">
+              {/* ── Share buttons ────────────────────────────────────────────── */}
+              <div className="mt-8 rounded-[1.8rem] border border-[var(--border-default)] bg-[var(--bg-elevated)]/72 px-6 py-5">
               <p className="text-[0.72rem] font-semibold uppercase tracking-[0.3em] text-[var(--text-muted)]">
                 Compartir artículo
               </p>
@@ -727,6 +728,7 @@ const BlogPost = () => {
                 </button>
               </div>
             </div>
+          </div>
 
             {/* ── End CTA ─────────────────────────────────────────────────── */}
             <div className="mt-6 overflow-hidden rounded-[1.8rem] border border-[var(--border-default)] bg-[var(--bg-elevated)]/72">
@@ -734,7 +736,7 @@ const BlogPost = () => {
                 <p className="text-[0.72rem] font-semibold uppercase tracking-[0.3em] text-[var(--text-muted)]">
                   Seguir leyendo
                 </p>
-                <h2 className="mt-3 font-serif text-2xl leading-snug text-[var(--text-primary)]">
+                <h2 className="typo-title mt-3 text-2xl leading-snug text-[var(--text-primary)]">
                   Explorar más artículos
                 </h2>
                 <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">

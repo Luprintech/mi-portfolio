@@ -56,7 +56,7 @@ function StoryPanel({ t }) {
     >
       <motion.div
         variants={panelVariants}
-        className="relative flex flex-1 flex-col justify-center overflow-hidden rounded-[24px] border border-[var(--border-color)] bg-[linear-gradient(135deg,rgba(232,121,249,0.08),rgba(34,211,238,0.05))] p-4 shadow-[var(--shadow-sm)] md:p-5"
+        className="relative flex flex-1 flex-col justify-center overflow-hidden rounded-[24px] border border-[var(--border-color)] bg-[linear-gradient(135deg,rgba(232,121,249,0.08),rgba(34,211,238,0.05))] p-2 md:p-5 shadow-[var(--shadow-sm)]"
       >
         <div className="pointer-events-none absolute inset-y-0 right-0 w-24 bg-[radial-gradient(circle_at_center,rgba(34,211,238,0.16),transparent_70%)] blur-2xl" />
         <span className="inline-flex self-center rounded-full border border-[var(--accent-primary)]/25 bg-[var(--accent-primary-dim)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--accent-primary)]">

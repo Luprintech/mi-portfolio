@@ -19,7 +19,7 @@ export default function ExpertiseSection({ area, index = 0 }) {
       {/* Header (siempre visible) */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-[var(--bg-elevated)] transition-colors duration-200"
+        className="w-full px-3 md:px-6 py-3 md:py-5 flex items-center justify-between text-left hover:bg-[var(--bg-elevated)] transition-colors duration-200"
       >
         <div className="flex items-center gap-4">
           {Icon && (

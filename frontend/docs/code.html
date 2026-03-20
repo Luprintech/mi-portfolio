@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Manrope:wght@400;500;600&amp;family=Space_Grotesk:wght@300;400;500;600;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "tertiary-fixed-dim": "#ff769e",
+              "primary-dim": "#bb00fc",
+              "surface-bright": "#262c36",
+              "secondary": "#00eefc",
+              "on-tertiary-fixed": "#380015",
+              "on-error-container": "#ffa8a3",
+              "tertiary-dim": "#e4006c",
+              "inverse-primary": "#9a00d0",
+              "secondary-dim": "#00deec",
+              "on-secondary-fixed-variant": "#005e64",
+              "on-tertiary-container": "#000000",
+              "error": "#ff716c",
+              "on-surface": "#f1f3fc",
+              "error-container": "#9f0519",
+              "inverse-on-surface": "#51555c",
+              "on-error": "#490006",
+              "on-tertiary-fixed-variant": "#760035",
+              "on-primary-fixed": "#000000",
+              "on-tertiary": "#47001d",
+              "outline-variant": "#44484f",
+              "surface-dim": "#0a0e14",
+              "primary-fixed-dim": "#d061ff",
+              "surface-container-low": "#0f141a",
+              "primary-container": "#d878ff",
+              "on-secondary-container": "#e3fdff",
+              "on-primary": "#4f006d",
+              "error-dim": "#d7383b",
+              "inverse-surface": "#f8f9ff",
+              "surface-container": "#151a21",
+              "surface-container-highest": "#20262f",
+              "secondary-container": "#006970",
+              "surface-container-high": "#1b2028",
+              "surface": "#0a0e14",
+              "on-background": "#f1f3fc",
+              "on-surface-variant": "#a8abb3",
+              "on-secondary": "#005359",
+              "tertiary": "#ff6b98",
+              "tertiary-fixed": "#ff8eac",
+              "tertiary-container": "#fc0078",
+              "surface-tint": "#df8eff",
+              "on-primary-container": "#3d0055",
+              "outline": "#72757d",
+              "surface-variant": "#20262f",
+              "on-secondary-fixed": "#003f43",
+              "secondary-fixed": "#00eefc",
+              "primary": "#df8eff",
+              "surface-container-lowest": "#000000",
+              "background": "#0a0e14",
+              "on-primary-fixed-variant": "#4b0068",
+              "secondary-fixed-dim": "#00deec",
+              "primary-fixed": "#d878ff"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Manrope"],
+              "label": ["Space Grotesk"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      body {
+        background-color: #0a0e14;
+        color: #f1f3fc;
+        font-family: 'Manrope', sans-serif;
+        overflow-x: hidden;
+      }
+      .cosmic-grid {
+        background-image: 
+          radial-gradient(circle at 2px 2px, rgba(223, 142, 255, 0.05) 1px, transparent 0);
+        background-size: 40px 40px;
+      }
+      .glow-pulse-on-hover:hover {
+        box-shadow: 0 0 20px rgba(0, 238, 252, 0.3);
+      }
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .glass-search {
+        background: rgba(15, 20, 26, 0.6);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+    </style>
+</head>
+<body class="cosmic-grid">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-[#0a0e14]/80 backdrop-blur-xl shadow-[0_8px_32px_rgba(223,142,255,0.05)]">
+<div class="flex justify-between items-center px-8 h-20 max-w-7xl mx-auto">
+<div class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#df8eff] to-[#00eefc] font-['Plus_Jakarta_Sans'] tracking-tight">
+            Cosmic Portfolio
+        </div>
+<div class="hidden md:flex items-center space-gap-8 gap-8 font-['Plus_Jakarta_Sans'] font-bold tracking-tight">
+<a class="text-gray-400 hover:text-white transition-colors hover:scale-105 hover:text-[#df8eff] transition-all duration-300" href="#">Portfolio</a>
+<a class="text-[#00eefc] drop-shadow-[0_0_8px_rgba(0,238,252,0.8)] border-b-2 border-[#00eefc] pb-1 hover:scale-105 transition-all duration-300" href="#">Blog</a>
+<a class="text-gray-400 hover:text-white transition-colors hover:scale-105 hover:text-[#df8eff] transition-all duration-300" href="#">About</a>
+<a class="text-gray-400 hover:text-white transition-colors hover:scale-105 hover:text-[#df8eff] transition-all duration-300" href="#">Contact</a>
+</div>
+<div class="flex items-center gap-6">
+<button class="bg-gradient-to-r from-primary to-secondary text-on-primary-fixed px-6 py-2 rounded-lg font-bold hover:scale-105 transition-transform">
+                Hire Me
+            </button>
+</div>
+</div>
+</nav>
+<main class="pt-32 pb-20 px-6 max-w-7xl mx-auto">
+<!-- Hero Section -->
+<header class="mb-12">
+<div class="relative inline-block mb-4">
+<span class="font-label text-secondary tracking-[0.3em] text-sm uppercase px-1">Deep Space Insights</span>
+<div class="absolute -inset-1 bg-secondary/20 blur-md rounded-full"></div>
+</div>
+<h1 class="font-headline text-6xl md:text-8xl font-extrabold text-on-surface mb-6 tracking-tighter">
+            Blog <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary via-tertiary to-secondary">técnico</span>
+</h1>
+<p class="max-w-2xl text-on-surface-variant text-lg leading-relaxed font-body">
+            Explorando las fronteras del desarrollo moderno, arquitectura de sistemas y la estética digital en el vacío del ciberespacio.
+        </p>
+</header>
+<!-- Search and Filter Section -->
+<section class="mb-16 space-y-8 w-full">
+<div class="relative group w-full">
+<div class="absolute -inset-0.5 bg-gradient-to-r from-primary to-secondary rounded-xl blur opacity-20 group-focus-within:opacity-50 transition duration-500"></div>
+<div class="relative glass-search border border-white/10 rounded-xl overflow-hidden flex items-center px-4 py-2 focus-within:border-secondary/50 transition-all duration-300">
+<span class="material-symbols-outlined text-secondary mr-3">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-on-surface placeholder:text-outline w-full font-body py-3" placeholder="Buscar artículos por tema, tecnología..." type="text"/>
+</div>
+</div>
+<div class="flex flex-wrap gap-3 items-center w-full">
+<button class="px-6 py-2.5 rounded-full font-label text-sm font-bold border border-secondary bg-secondary/10 text-secondary shadow-[0_0_20px_rgba(0,238,252,0.3)] hover:shadow-[0_0_25px_rgba(0,238,252,0.5)] transition-all transform hover:scale-105">
+                Todos
+            </button>
+<button class="px-6 py-2.5 rounded-full font-label text-sm border border-outline-variant bg-surface-container/50 text-on-surface-variant hover:border-primary/50 hover:text-primary hover:bg-primary/5 transition-all">
+                React
+            </button>
+<button class="px-6 py-2.5 rounded-full font-label text-sm border border-outline-variant bg-surface-container/50 text-on-surface-variant hover:border-primary-dim/50 hover:text-primary-dim hover:bg-primary-dim/5 transition-all">
+                Docker
+            </button>
+<button class="px-6 py-2.5 rounded-full font-label text-sm border border-outline-variant bg-surface-container/50 text-on-surface-variant hover:border-secondary/50 hover:text-secondary hover:bg-secondary/5 transition-all">
+                DevOps
+            </button>
+<button class="px-6 py-2.5 rounded-full font-label text-sm border border-outline-variant bg-surface-container/50 text-on-surface-variant hover:border-tertiary/50 hover:text-tertiary hover:bg-tertiary/5 transition-all">
+                Frontend
+            </button>
+<button class="px-6 py-2.5 rounded-full font-label text-sm border border-outline-variant bg-surface-container/50 text-on-surface-variant hover:border-primary/50 hover:text-primary hover:bg-primary/5 transition-all">
+                Backend
+            </button>
+<button class="px-6 py-2.5 rounded-full font-label text-sm border border-outline-variant bg-surface-container/50 text-on-surface-variant hover:border-secondary/50 hover:text-secondary hover:bg-secondary/5 transition-all">
+                IA
+            </button>
+</div>
+</section>
+<!-- Featured Post (Bento Large) -->
+<section class="mb-24">
+<div class="group relative overflow-hidden rounded-xl bg-surface-container-low border border-outline-variant/20 hover:border-secondary/30 transition-all duration-500">
+<div class="grid md:grid-cols-2 gap-0">
+<div class="h-64 md:h-full relative overflow-hidden">
+<img alt="Docker en Synology" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Digital server infrastructure with neon blue lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCef_egYl6l8PcAgwL5F8T8syCGBlVSgv27jZHH9G-im9UpPt-kRZxGf-1hbNpsS5v9kG6c9RmXw1bFTo4Dsz_4p2MLdV02vQJMZLAIK6qLlJIrLLT3v6aBD3Q9yvaHG8PbhBwnYUj0nIqeTVYztUWM2N8lTeszpLHI07JlPbjBvtrZSRjX4P-lyGXdDHDM6IGQdfAYgj2IBDaHjR0OLUjEm9XjEwnx4fv51yV8F66-sJQ1DcVewjtLPrOJ2_e0tox7KwDNCulH5TOs"/>
+<div class="absolute inset-0 bg-gradient-to-r from-surface-container-low via-transparent to-transparent hidden md:block"></div>
+</div>
+<div class="p-8 md:p-12 flex flex-col justify-center backdrop-blur-sm bg-surface-container/40">
+<div class="flex items-center gap-4 mb-6">
+<span class="px-3 py-1 rounded bg-secondary/10 border border-secondary/30 text-secondary font-label text-xs uppercase tracking-widest shadow-[0_0_8px_rgba(0,238,252,0.1)]">Featured</span>
+<span class="text-outline text-xs font-label uppercase tracking-widest">15 Min Read</span>
+</div>
+<h2 class="font-headline text-3xl md:text-5xl font-bold mb-6 text-on-surface group-hover:text-secondary transition-colors leading-tight">
+                        Desplegando React &amp; Docker en Synology NAS
+                    </h2>
+<p class="text-on-surface-variant text-lg mb-8 font-body leading-relaxed line-clamp-3">
+                        Una guía técnica profunda sobre cómo optimizar tu flujo de trabajo de CI/CD utilizando contenedores ligeros en hardware dedicado para auto-alojamiento profesional.
+                    </p>
+<div class="flex items-center gap-4">
+<img class="w-10 h-10 rounded-full border border-primary/30" data-alt="Avatar of the technical blog author" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDfr_8M246eSFOyaLvy1Bsv3-dwkLSNDRMfVA3V9ZnVtm5i89XgEr7OUWYUYKdYvMNLOf8P91vVl071dJuFwVj397okceY1wF1q2Rp4aiSIZZgjH62eW1rhbHb_aUPCQO_zyqpFZ_VTZTLtA-RyXOdAETDUuv44kbhBTHuiXghCM927Dv3j5elRW3ySTo7KLlVyvflDnKWaQ7743VnBkJm1MKPV5NSmwjjo6VXhTYwpl4njtlZz8xeNvSSicDsvD3myxHOZ_gtlW982"/>
+<div>
+<p class="text-sm font-bold font-headline">Alex Cosmic</p>
+<p class="text-xs text-outline font-label">Oct 24, 2024</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Grid of Posts -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<!-- Post 1 -->
+<article class="group relative bg-surface-container-low rounded-xl overflow-hidden border border-outline-variant/10 hover:border-primary/40 transition-all duration-500 hover:-translate-y-2 flex flex-col">
+<div class="h-48 relative overflow-hidden">
+<img alt="Cybersecurity" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Futuristic cyber security interface with glowing circuits" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAcDS1Dx0I46EvmBDKDQrvy-BQtYPvOzaiLU9UQ95t9y8TvUulyhdB_p3TKcEJY6Uk_zQxGsAP5fbFxc9g1aGd5CeAtNST26py3XFB30pPByZGkLM32_CEZQidaQjtda4yA_Q8v2RXYH_Ft4PA3aJWdQf_-5bSF-tXrRdmYrWHzkmrQCcvHkcQyIWhPAlbAON9oA5D3AVXAUFhs1fxyAyJo6OiN85-RGRcODfsC3XPkhAxR_zbDfGEdgdRSsVl77svhtLuROkgMssmu"/>
+<div class="absolute top-4 right-4 bg-surface-dim/80 backdrop-blur-md px-3 py-1 rounded text-[10px] font-label text-primary border border-primary/30">SECURITY</div>
+</div>
+<div class="p-6 flex flex-col flex-grow">
+<h3 class="font-headline text-xl font-bold mb-3 text-on-surface group-hover:text-primary transition-colors">Asegurando APIs Modernas con mTLS</h3>
+<p class="text-on-surface-variant text-sm mb-6 line-clamp-2">Protocolos de seguridad avanzados para la comunicación entre microservicios en nubes híbridas.</p>
+<div class="mt-auto flex justify-between items-center">
+<span class="text-xs text-outline font-label uppercase">Oct 12, 2024</span>
+<div class="flex gap-2">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+</div>
+</div>
+</div>
+<div class="absolute inset-0 pointer-events-none border border-primary/0 group-hover:border-primary/20 transition-all duration-500 rounded-xl"></div>
+</article>
+<!-- Post 2 -->
+<article class="group relative bg-surface-container-low rounded-xl overflow-hidden border border-outline-variant/10 hover:border-tertiary/40 transition-all duration-500 hover:-translate-y-2 flex flex-col">
+<div class="h-48 relative overflow-hidden">
+<img alt="React Patterns" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Abstract React JS logo with magenta glow" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMVu7RU_50X6T2LN9PjzsLXOwRvVzkECzYwmDb_cbpehPkKKnhkVjoPAzjj8_EM0Baj21EUkM19sGqJBf-GjR8WbjOj5E0J1wUvm2TkK6SobhCN_ymOpXzhIDhwUzL9YQaT3_eqNu1KRI9PodoJhmzCFCBg4G1JwyPUsRXxHy74ud61nly5I42dfekKL7E5vXi7CDmWusPXOOJ9BvNLyY4EHw4SXPm88NVxY6wosJx4UxWEqG1dAtBxpFSmYBwaUu-0fjmKspokzr_"/>
+<div class="absolute top-4 right-4 bg-surface-dim/80 backdrop-blur-md px-3 py-1 rounded text-[10px] font-label text-tertiary border border-tertiary/30">FRONTEND</div>
+</div>
+<div class="p-6 flex flex-col flex-grow">
+<h3 class="font-headline text-xl font-bold mb-3 text-on-surface group-hover:text-tertiary transition-colors">Patrones de Composición en React 19</h3>
+<p class="text-on-surface-variant text-sm mb-6 line-clamp-2">Aprovechando las nuevas capacidades de Server Components para una arquitectura más limpia.</p>
+<div class="mt-auto flex justify-between items-center">
+<span class="text-xs text-outline font-label uppercase">Oct 08, 2024</span>
+</div>
+</div>
+<div class="absolute inset-0 pointer-events-none border border-tertiary/0 group-hover:border-tertiary/20 transition-all duration-500 rounded-xl"></div>
+</article>
+<!-- Post 3 -->
+<article class="group relative bg-surface-container-low rounded-xl overflow-hidden border border-outline-variant/10 hover:border-secondary/40 transition-all duration-500 hover:-translate-y-2 flex flex-col">
+<div class="h-48 relative overflow-hidden">
+<img alt="Networking" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Server data center with neon blue lights" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBAhOZ4w6WI-25jpNO7kV8Gf33grJ3lIFOFEP8MM_tz6iBhIxXkuPAOXqvOYLeYIAhBWVClWdrsUJurw1cRNlqBsNVi7MRNP7t1u_uxDdyjf-4IYRGa_s5ZC_OogmWWftttXAJfaHutdzGx_uLNMsTc-zGPno8xhZI6Y_THuzI-elXwMyl11wsU4rVc-HcVJH6MITIPiZAgZ-85b8eSofvjv0WhpkWswHDZVS00TUD_7QYGTtMEMNW7HszOPcEmz7E_HZ3NJbMmhSMB"/>
+<div class="absolute top-4 right-4 bg-surface-dim/80 backdrop-blur-md px-3 py-1 rounded text-[10px] font-label text-secondary border border-secondary/30">DEVOPS</div>
+</div>
+<div class="p-6 flex flex-col flex-grow">
+<h3 class="font-headline text-xl font-bold mb-3 text-on-surface group-hover:text-secondary transition-colors">Kubernetes en el Edge Computing</h3>
+<p class="text-on-surface-variant text-sm mb-6 line-clamp-2">Cómo gestionar clusters de K3s en dispositivos de bajos recursos geográficamente distribuidos.</p>
+<div class="mt-auto flex justify-between items-center">
+<span class="text-xs text-outline font-label uppercase">Sep 29, 2024</span>
+</div>
+</div>
+<div class="absolute inset-0 pointer-events-none border border-secondary/0 group-hover:border-secondary/20 transition-all duration-500 rounded-xl"></div>
+</article>
+<!-- Post 4 -->
+<article class="group relative bg-surface-container-low rounded-xl overflow-hidden border border-outline-variant/10 hover:border-primary-dim/40 transition-all duration-500 hover:-translate-y-2 flex flex-col">
+<div class="h-48 relative overflow-hidden">
+<img alt="AI Tech" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Abstract artificial intelligence brain nodes glowing" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDj65LCYItUl4rD9md6KgRbj8wnsFpKFbazHgwX3-qfIjUGE65Qu8tF4Pg1r1eWQYswbB2UoP7_1cLwpeHQwoU2ShLiDSR6xz2XNaVliHEcJWxisF9eTwXBn_sbWHfE5egnl3lPY7dvz-VIgrEwr78tf0hwk4lFXDDqkhW_OXqrW2wZVqEaCTqREH8YQkuSSbZA0YhEztCZgrV7lGT_CWCEeNy1TVjVR3L6UCvfQ_uGRsyPZaZl40yTVnhlAffaM0gUHYevQ61ld10a"/>
+<div class="absolute top-4 right-4 bg-surface-dim/80 backdrop-blur-md px-3 py-1 rounded text-[10px] font-label text-primary-dim border border-primary-dim/30">AI / ML</div>
+</div>
+<div class="p-6 flex flex-col flex-grow">
+<h3 class="font-headline text-xl font-bold mb-3 text-on-surface group-hover:text-primary-dim transition-colors">Integración Local de LLMs</h3>
+<p class="text-on-surface-variant text-sm mb-6 line-clamp-2">Utilizando Ollama para automatizar tareas de codificación sin depender de la nube externa.</p>
+<div class="mt-auto flex justify-between items-center">
+<span class="text-xs text-outline font-label uppercase">Sep 15, 2024</span>
+</div>
+</div>
+<div class="absolute inset-0 pointer-events-none border border-primary-dim/0 group-hover:border-primary-dim/20 transition-all duration-500 rounded-xl"></div>
+</article>
+<!-- Post 5 -->
+<article class="group relative bg-surface-container-low rounded-xl overflow-hidden border border-outline-variant/10 hover:border-tertiary-fixed-dim/40 transition-all duration-500 hover:-translate-y-2 flex flex-col">
+<div class="h-48 relative overflow-hidden">
+<img alt="Rust Lang" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Abstract code on a dark screen with pink highlights" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbes_PKF1lqGLYdXbOA8uiFWg0mq4AYWQOdC5jYSL0vdBUT7Q9Dt5IIYa5YmkbS_toOqcTk9cpJIZhJ2JxpXFaDfNYZqbnHOmjaoJlJ54GCfdbQbnRxMVUmNngXPzrViJjZW-uIsphJmAeXWjKrVNILcwUXzEYtAiS4mF06UUVGpEQyKwAxfJBl_V9A64xgrN0yHwRWeniDisqxhvn0fM6eL6SVYfoiO9t1svDu31AnO4bd2cIFy0sw0ZgRhVQY3WE1lOsF4M0-fuA"/>
+<div class="absolute top-4 right-4 bg-surface-dim/80 backdrop-blur-md px-3 py-1 rounded text-[10px] font-label text-tertiary-fixed-dim border border-tertiary-fixed-dim/30">SYSTEMS</div>
+</div>
+<div class="p-6 flex flex-col flex-grow">
+<h3 class="font-headline text-xl font-bold mb-3 text-on-surface group-hover:text-tertiary-fixed-dim transition-colors">Rust para Desarrolladores TS</h3>
+<p class="text-on-surface-variant text-sm mb-6 line-clamp-2">Una guía comparativa para transicionar hacia lenguajes de bajo nivel manteniendo la productividad.</p>
+<div class="mt-auto flex justify-between items-center">
+<span class="text-xs text-outline font-label uppercase">Sep 04, 2024</span>
+</div>
+</div>
+<div class="absolute inset-0 pointer-events-none border border-tertiary-fixed-dim/0 group-hover:border-tertiary-fixed-dim/20 transition-all duration-500 rounded-xl"></div>
+</article>
+<!-- Post 6 -->
+<article class="group relative bg-surface-container-low rounded-xl overflow-hidden border border-outline-variant/10 hover:border-secondary-dim/40 transition-all duration-500 hover:-translate-y-2 flex flex-col">
+<div class="h-48 relative overflow-hidden">
+<img alt="Microchips" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Close up of high-tech motherboard circuits" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7gCGSNlubAO258kHaobxWYqsXEZqglgSXe8MCzNs3uZlXheGz2MAeQK4dlEB7PwDzdlfTEM5-aoK5U-XAYD4nH2oUNzUJg26jeVel34Ux84n0OW3qMKeBTI32cvwOJ_gjgk8xSd4_8HtEMMOAXgNdWsqjj7MoDcLrd4NPlWqVyCSqBv8aEEeBMyjuIdSYy_jiH9U8ZfeGTxVDtfP1VOKGdbwsPUpCGxgK8KBxebaq4H1lbMofUcuVUSAF5_OK0OX9dIsoNUDUCacA"/>
+<div class="absolute top-4 right-4 bg-surface-dim/80 backdrop-blur-md px-3 py-1 rounded text-[10px] font-label text-secondary-dim border border-secondary-dim/30">HARDWARE</div>
+</div>
+<div class="p-6 flex flex-col flex-grow">
+<h3 class="font-headline text-xl font-bold mb-3 text-on-surface group-hover:text-secondary-dim transition-colors">La Era de RISC-V</h3>
+<p class="text-on-surface-variant text-sm mb-6 line-clamp-2">¿Por qué la arquitectura de hardware abierta está cambiando las reglas del juego en 2024?</p>
+<div class="mt-auto flex justify-between items-center">
+<span class="text-xs text-outline font-label uppercase">Aug 28, 2024</span>
+</div>
+</div>
+<div class="absolute inset-0 pointer-events-none border border-secondary-dim/0 group-hover:border-secondary-dim/20 transition-all duration-500 rounded-xl"></div>
+</article>
+</section>
+<!-- Load More Button -->
+<div class="mt-24 flex justify-center">
+<button class="group relative px-10 py-4 font-headline font-bold text-on-primary-fixed overflow-hidden rounded-lg">
+<span class="absolute inset-0 bg-gradient-to-r from-primary via-tertiary to-secondary group-hover:scale-110 transition-transform duration-500"></span>
+<span class="relative flex items-center gap-2">
+                Cargar más artículos
+                <span class="material-symbols-outlined text-sm">expand_more</span>
+</span>
+</button>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-[#0a0e14] w-full py-12 border-t border-[#df8eff]/10">
+<div class="flex flex-col md:flex-row justify-between items-center px-12 gap-6 max-w-7xl mx-auto">
+<div class="font-['Space_Grotesk'] text-xs uppercase tracking-widest text-gray-500">
+            © 2024 Cosmic Cyberpunk. Built in the void.
+        </div>
+<div class="flex gap-8 font-['Space_Grotesk'] text-xs uppercase tracking-widest">
+<a class="text-gray-500 hover:text-[#00eefc] hover:drop-shadow-[0_0_12px_rgba(0,238,252,1)] transition-all duration-500" href="#">Twitter</a>
+<a class="text-gray-500 hover:text-[#00eefc] hover:drop-shadow-[0_0_12px_rgba(0,238,252,1)] transition-all duration-500" href="#">GitHub</a>
+<a class="text-gray-500 hover:text-[#00eefc] hover:drop-shadow-[0_0_12px_rgba(0,238,252,1)] transition-all duration-500" href="#">LinkedIn</a>
+<a class="text-gray-500 hover:text-[#00eefc] hover:drop-shadow-[0_0_12px_rgba(0,238,252,1)] transition-all duration-500" href="#">Discord</a>
+</div>
+</div>
+</footer>
+</body></html>

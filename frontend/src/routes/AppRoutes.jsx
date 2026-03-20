@@ -56,7 +56,8 @@ export default function AppRoutes() {
           <Route path="/" element={<Motion.div {...pageTransition}><Home /></Motion.div>} />
           <Route path="/sobre-mi" element={<Navigate to="/#about" replace />} />
           <Route path="/portfolio" element={<Motion.div {...pageTransition}><Portfolio /></Motion.div>} />
-          <Route path="/portfolio/desarrollo-web"        element={<Motion.div {...pageTransition}><PortfolioDesarrolloWeb /></Motion.div>} />
+          <Route path="/proyectos"                       element={<Motion.div {...pageTransition}><PortfolioDesarrolloWeb /></Motion.div>} />
+          <Route path="/portfolio/desarrollo-web"        element={<Navigate to="/proyectos" replace />} />
           <Route path="/portfolio/documentacion-tecnica" element={<Motion.div {...pageTransition}><PortfolioDocumentacion /></Motion.div>} />
           <Route path="/blog"           element={<Motion.div {...pageTransition}><Blog /></Motion.div>} />
           <Route path="/blog/preview"   element={<BlogPostPreview />} />

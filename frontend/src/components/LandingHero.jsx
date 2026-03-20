@@ -27,7 +27,7 @@ export default function LandingHero({ id, className = "" }) {
           transition={{ duration: 0.7, ease: "easeOut" }}
           className="relative flex flex-col items-start text-left"
         >
-          <div className="mb-5 min-h-[2.8rem] text-xl font-bold text-[var(--hero-typewriter-color)] drop-shadow-[0_4px_18px_rgba(255,255,255,0.12)] xs:text-2xl md:min-h-[3.6rem] md:text-3xl">
+          <div className="typo-label mb-5 min-h-[2.8rem] text-xl font-bold text-[var(--hero-typewriter-color)] drop-shadow-[0_4px_18px_rgba(255,255,255,0.12)] xs:text-2xl md:min-h-[3.6rem] md:text-3xl">
             <Typewriter
               words={roles}
               loop={true}
@@ -39,11 +39,11 @@ export default function LandingHero({ id, className = "" }) {
             />
           </div>
 
-          <h1 className="max-w-lg bg-gradient-to-r from-fuchsia-400 via-violet-300 to-cyan-300 bg-clip-text text-4xl font-black leading-[0.98] text-transparent xs:text-5xl md:text-6xl lg:text-[4.5rem]">
+          <h1 className="typo-title max-w-lg bg-gradient-to-r from-fuchsia-400 via-violet-300 to-cyan-300 bg-clip-text text-4xl font-black leading-[0.98] text-transparent xs:text-5xl md:text-6xl lg:text-[4.5rem]">
             {t("hero.greeting")}
           </h1>
 
-          <p className="mt-7 text-[0.98rem] leading-8 text-[var(--text-secondary)] md:text-[1.06rem]">
+          <p className="typo-body mt-7 text-[0.98rem] leading-8 text-[var(--text-secondary)] md:text-[1.06rem] text-justify">
             {t("hero.description")}
           </p>
 
@@ -52,7 +52,7 @@ export default function LandingHero({ id, className = "" }) {
               href="/CV_Guadalupe_Cano.pdf"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-500 px-5 py-2.5 font-semibold text-white shadow-[0_18px_45px_rgba(168,85,247,0.24)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_55px_rgba(34,211,238,0.24)]"
+              className="typo-label inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-500 px-5 py-2.5 font-semibold text-white shadow-[0_18px_45px_rgba(168,85,247,0.24)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_55px_rgba(34,211,238,0.24)]"
             >
               <Download className="h-4 w-4" />
               {t("hero.cv")}
@@ -130,10 +130,10 @@ export default function LandingHero({ id, className = "" }) {
                   }}
                 />
                 <div className="absolute inset-x-4 bottom-4 rounded-[1.15rem] border border-[var(--border-color)] bg-[color-mix(in_srgb,var(--bg-elevated)_74%,transparent)] px-3.5 py-3 shadow-[var(--shadow-md)] backdrop-blur-xl">
-                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-cyan-300">
+                  <p className="typo-label text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-cyan-300">
                     {t("hero.photo_badge")}
                   </p>
-                  <p className="mt-1.5 text-xs leading-5 text-[var(--text-primary)] opacity-90 sm:text-sm">
+                  <p className="typo-body mt-1.5 text-xs leading-5 text-[var(--text-primary)] opacity-90 sm:text-sm text-justify">
                     {t("hero.subtitle")}
                   </p>
                 </div>

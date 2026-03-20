@@ -200,16 +200,16 @@ export default function Home() {
           <div className="w-full">
           <div className="mb-8 flex flex-col items-start justify-between gap-4 md:mb-12 md:flex-row md:items-end">
             <div>
-              <h2 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[var(--text-primary)] to-[var(--text-secondary)]">
+              <h2 className="typo-title text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[var(--text-primary)] to-[var(--text-secondary)]">
                 {t("home.projects_title")}
               </h2>
-              <p className="text-[var(--text-muted)] mt-2 max-w-xl">
+              <p className="typo-body text-[var(--text-muted)] mt-2 max-w-xl">
                 {t("home.projects_subtitle")}
               </p>
             </div>
             <Link
-              to="/portfolio/desarrollo-web"
-              className="text-[var(--accent-secondary)] hover:text-[var(--accent-primary)] font-medium flex items-center gap-2 transition-colors"
+              to="/proyectos"
+              className="typo-label text-[var(--accent-secondary)] hover:text-[var(--accent-primary)] font-medium flex items-center gap-2 transition-colors"
             >
               {t("home.view_all_projects")}
             </Link>
@@ -217,7 +217,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5 lg:gap-6">
             {loading ? (
-              <p className="text-[var(--text-muted)]">Cargando proyectos...</p>
+              <p className="typo-body text-[var(--text-muted)]">Cargando proyectos...</p>
             ) : (
               featuredProjects.map((proyecto, i) => (
                 <ProjectCard key={proyecto.id} project={proyecto} index={i} compact />
@@ -281,7 +281,7 @@ export default function Home() {
                   {/* Badge "YouTube" esquina inferior izquierda */}
                   <div className="absolute bottom-3 left-3 flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1 backdrop-blur-sm">
                     <Youtube className="h-3.5 w-3.5 text-red-400" />
-                    <span className="text-[11px] font-semibold tracking-wide text-white/90">Luprintech</span>
+                    <span className="typo-label text-[11px] font-semibold tracking-wide text-white/90">Luprintech</span>
                   </div>
                 </div>
               </a>
@@ -289,17 +289,17 @@ export default function Home() {
               {/* ── Contenido ── */}
               <div className="flex flex-col items-center gap-5 text-center">
                 {/* Eyebrow */}
-                <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-red-400/80">
+                <span className="typo-label text-[11px] font-semibold uppercase tracking-[0.18em] text-red-400/80">
                   Canal de YouTube
                 </span>
 
                 {/* Título */}
-                <h2 className="text-3xl font-bold tracking-tight text-[var(--text-primary)] md:text-4xl">
+                <h2 className="typo-title text-3xl font-bold tracking-tight text-[var(--text-primary)] md:text-4xl">
                   {t("about.yt_title")}
                 </h2>
 
                 {/* Descripción */}
-                <p className="max-w-sm text-base leading-relaxed text-[var(--text-secondary)]">
+                <p className="typo-body max-w-sm text-base leading-relaxed text-[var(--text-secondary)]">
                   {t("about.yt_desc")}
                 </p>
 
@@ -364,10 +364,10 @@ export default function Home() {
               {/* Línea decorativa superior */}
               <div className="mx-auto mb-8 h-px w-24 bg-gradient-to-r from-transparent via-violet-400/60 to-transparent" />
 
-              <h2 className="mb-4 text-3xl font-extrabold tracking-tight text-[var(--text-primary)] xs:text-4xl md:mb-5 md:text-5xl">
+              <h2 className="typo-title mb-4 text-3xl font-extrabold tracking-tight text-[var(--text-primary)] xs:text-4xl md:mb-5 md:text-5xl">
                 {t("home.cta_title")}
               </h2>
-              <p className="mx-auto mb-8 max-w-xl text-base leading-relaxed text-[var(--text-secondary)] md:mb-10 md:text-lg">
+              <p className="typo-body mx-auto mb-8 max-w-xl text-base leading-relaxed text-[var(--text-secondary)] md:mb-10 md:text-lg">
                 {t("home.cta_desc")}
               </p>
 
