@@ -309,6 +309,9 @@ async function ensureSchema() {
         ALTER TABLE posts
             ADD COLUMN IF NOT EXISTS featured BOOLEAN NOT NULL DEFAULT FALSE;
 
+        ALTER TABLE posts
+            ADD COLUMN IF NOT EXISTS toc_titles JSONB NOT NULL DEFAULT '[]'::jsonb;
+
         CREATE INDEX IF NOT EXISTS idx_posts_publication_date
             ON posts (publication_date DESC, created_at DESC);
 

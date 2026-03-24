@@ -77,8 +77,8 @@ function DocumentEmbed({ src, filename, fileType, displayMode, embedHeight }) {
 
 function PostSkeleton() {
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[var(--bg-primary)] px-6 py-24 text-[var(--text-primary)] md:px-10 lg:px-14">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(6,182,212,0.06),transparent_30%),linear-gradient(180deg,var(--bg-primary)_0%,var(--bg-secondary)_100%)]" />
+    <div className="relative min-h-screen overflow-x-hidden blog-cosmic-grid px-6 py-24 text-[var(--text-primary)] md:px-10 lg:px-14">
+      <div className="pointer-events-none absolute inset-0" style={{ background: 'var(--blog-bg)' }} />
       <div className="relative z-10 mx-auto w-full max-w-6xl animate-pulse">
         {/* Back link */}
         <div className="h-4 w-28 rounded-full bg-[var(--bg-elevated)]" />
@@ -214,9 +214,13 @@ function buildMarkdownComponents() {
     h4: ({ node, ...props }) => (
       <h4 className="mt-8 mb-3 text-lg font-semibold leading-snug text-[var(--text-primary)]" {...props} />
     ),
-    p: ({ node, ...props }) => (
-      <p className="mb-6 text-[1.02rem] leading-8 text-justify text-[var(--text-secondary)]" {...props} />
-    ),
+    p: ({ node, ...props }) => {
+      if (isImageOnlyParagraph(node)) {
+        return <>{props.children}</>;
+      }
+
+      return <p className="mb-6 text-[1.02rem] leading-8 text-justify text-[var(--text-secondary)]" {...props} />;
+    },
     ul: ({ node, ...props }) => (
       <ul className="mb-8 ml-6 list-disc space-y-3 text-justify text-[1.02rem] leading-8 text-[var(--text-secondary)]" {...props} />
     ),
@@ -324,6 +328,25 @@ function getChildrenText(children) {
   if (Array.isArray(children)) return children.map(getChildrenText).join('');
   if (children?.props?.children) return getChildrenText(children.props.children);
   return '';
+}
+
+function isImageOnlyParagraph(node) {
+  if (!node?.children?.length) return false;
+
+  const meaningfulChildren = node.children.filter(
+    (child) => !(child.type === 'text' && typeof child.value === 'string' && child.value.trim() === '')
+  );
+
+  if (meaningfulChildren.length !== 1) return false;
+
+  const [child] = meaningfulChildren;
+  if (child.type === 'image') return true;
+
+  if (child.type === 'link' && child.children?.length === 1) {
+    return child.children[0].type === 'image';
+  }
+
+  return false;
 }
 
 function extractHeadings(content) {
@@ -492,7 +515,8 @@ const BlogPost = () => {
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[var(--bg-primary)] px-4 text-[var(--text-primary)]">
+      <div className="relative flex min-h-screen items-center justify-center blog-cosmic-grid px-4 text-[var(--text-primary)]">
+        <div className="pointer-events-none absolute inset-0" style={{ background: 'var(--blog-bg)' }} />
         <div className="max-w-md rounded-[1.4rem] border border-red-500/20 bg-red-500/10 p-8 text-center text-red-400">
           <p className="mb-4">{error}</p>
           <Link to="/blog" className="font-medium text-[var(--text-primary)] transition-colors hover:text-[var(--accent-secondary)]">
@@ -511,7 +535,7 @@ const BlogPost = () => {
 
   */
   return (
-    <div className="relative min-h-screen bg-[var(--bg-primary)] px-6 py-24 text-[var(--text-primary)] selection:bg-violet-500/30 md:px-10 lg:px-14">
+    <div className="relative min-h-screen blog-cosmic-grid px-6 py-24 text-[var(--text-primary)] selection:bg-violet-500/30 md:px-10 lg:px-14">
       <Helmet>
         <title>{postMeta.seoTitle || postMeta.title} | Guadalupe Cano</title>
         <meta name="description" content={postMeta.seoDescription || postMeta.excerpt} />
@@ -553,7 +577,7 @@ const BlogPost = () => {
         aria-label="Progreso de lectura"
       />
 
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(6,182,212,0.08),transparent_30%),radial-gradient(circle_at_80%_0%,rgba(232,121,249,0.08),transparent_20%),linear-gradient(180deg,var(--bg-primary)_0%,var(--bg-secondary)_100%)]" />
+      <div className="pointer-events-none absolute inset-0" style={{ background: 'var(--blog-bg)' }} />
       <div className="pointer-events-none absolute inset-0 bg-noise opacity-[0.02] mix-blend-overlay" />
 
       <article className="relative z-10 mx-auto w-full max-w-6xl">

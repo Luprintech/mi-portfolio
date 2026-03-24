@@ -36,6 +36,23 @@ function normalizeList(value, { maxItems, maxLengthPerItem }) {
     return [...new Set(items)];
 }
 
+function normalizeTocTitles(value, { maxItems = 12, maxLengthPerTitle = 120 } = {}) {
+    if (!Array.isArray(value)) return [];
+
+    const titles = value
+        .map(item => {
+            if (typeof item === 'string') {
+                const trimmed = item.trim();
+                return trimmed.length > 0 && trimmed.length <= maxLengthPerTitle ? trimmed : null;
+            }
+            return null;
+        })
+        .filter(item => item !== null)
+        .slice(0, maxItems);
+
+    return titles;
+}
+
 function normalizeUrl(value, { allowRelative = true } = {}) {
     const normalized = normalizeText(value);
     if (!normalized) return '';
@@ -149,6 +166,11 @@ export function sanitizePostInput(input, { partial = false } = {}) {
 
     if (input.featured !== undefined) {
         data.featured = normalizeBoolean(input.featured, false);
+    }
+
+    if (input.tocTitles !== undefined) {
+        const tocTitles = normalizeTocTitles(input.tocTitles, { maxItems: 12, maxLengthPerTitle: 120 });
+        data.tocTitles = tocTitles;
     }
 
     if (!partial || input.status !== undefined) {

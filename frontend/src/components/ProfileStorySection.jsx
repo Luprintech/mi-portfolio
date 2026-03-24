@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, Zap, BookOpen } from "lucide-react";
@@ -54,6 +54,12 @@ function StoryPanel({ t }) {
       }}
       className="flex h-full flex-col gap-3.5"
     >
+      <style>{`
+        @keyframes shimmerText {
+          0% { background-position: 200% center; }
+          100% { background-position: -200% center; }
+        }
+      `}</style>
       <motion.div
         variants={panelVariants}
         className="relative flex flex-1 flex-col justify-center overflow-hidden rounded-[24px] border border-[var(--border-color)] bg-[linear-gradient(135deg,rgba(232,121,249,0.08),rgba(34,211,238,0.05))] p-2 md:p-5 shadow-[var(--shadow-sm)]"
@@ -93,7 +99,14 @@ function StoryPanel({ t }) {
         variants={panelVariants}
         className="rounded-[24px] border border-[var(--accent-secondary)]/20 bg-[color-mix(in_srgb,var(--bg-elevated)_84%,transparent)] px-5 py-2.5 text-center text-[15px] font-medium leading-[1.4] text-[var(--text-primary)] shadow-[var(--shadow-md)] md:px-6 md:py-3 md:text-base"
       >
-        <span className="bg-gradient-to-r from-fuchsia-400 to-cyan-400 bg-clip-text text-transparent">
+        <span 
+          className="inline-block bg-clip-text text-transparent"
+          style={{
+            backgroundImage: "linear-gradient(110deg, #e879f9 0%, #22d3ee 40%, rgba(255,255,255,0.8) 50%, #22d3ee 60%, #e879f9 100%)",
+            backgroundSize: "200% auto",
+            animation: "shimmerText 3s linear infinite"
+          }}
+        >
           {t("about.story_p7")}
         </span>
       </motion.blockquote>
@@ -102,8 +115,29 @@ function StoryPanel({ t }) {
 }
 
 function DiffPanel({ t }) {
+  const [hasRevealed, setHasRevealed] = useState(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setHasRevealed(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+    
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div>
+    <div ref={containerRef}>
       <div className="mb-5 text-center md:mb-6">
         <h3 className="text-xl font-bold text-[var(--text-primary)] md:text-2xl md:text-[var(--accent-secondary)]">
           {t("about.diff_panel_title")}
@@ -114,20 +148,27 @@ function DiffPanel({ t }) {
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
-        {DIFF_POINTS.map(({ titleKey, bodyKey, fallback, Icon, color }) => (
+        {DIFF_POINTS.map(({ titleKey, bodyKey, fallback, Icon, color }, index) => (
           <div
             key={bodyKey}
-            className="flex flex-col items-center rounded-2xl border border-[var(--accent-secondary)]/20 bg-[var(--bg-surface)] p-5 text-center transition-all duration-300 hover:-translate-y-1 hover:border-[var(--accent-secondary)]/45 hover:shadow-lg hover:shadow-cyan-500/10 md:p-6"
+            className={`transition-all duration-700 ease-out ${
+              hasRevealed ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+            }`}
+            style={{ transitionDelay: `${index * 150}ms` }}
           >
-            <div className={`mb-3 flex items-center justify-center ${color}`}>
-              <Icon className="h-8 w-8" strokeWidth={1.8} />
+            <div
+              className={`flex h-full flex-col items-center rounded-2xl border border-[var(--accent-secondary)]/20 bg-[var(--bg-surface)] p-5 text-center transition-all duration-300 ease-out hover:-translate-y-[6px] hover:scale-[1.02] hover:border-cyan-400/50 hover:shadow-[0_0_15px_rgba(34,211,238,0.3),0_0_15px_rgba(232,121,249,0.3)] md:p-6`}
+            >
+              <div className={`mb-3 flex items-center justify-center ${color}`}>
+                <Icon className="h-8 w-8" strokeWidth={1.8} />
+              </div>
+              <h3 className="mb-2 text-lg font-bold text-[var(--text-primary)]">
+                {t(`about.${titleKey}`, fallback)}
+              </h3>
+              <p className="text-sm leading-snug text-[var(--text-secondary)] md:text-[15px] md:leading-relaxed">
+                {t(`about.${bodyKey}`)}
+              </p>
             </div>
-            <h3 className="mb-2 text-lg font-bold text-[var(--text-primary)]">
-              {t(`about.${titleKey}`, fallback)}
-            </h3>
-            <p className="text-sm leading-snug text-[var(--text-secondary)] md:text-[15px] md:leading-relaxed">
-              {t(`about.${bodyKey}`)}
-            </p>
           </div>
         ))}
       </div>

@@ -47,6 +47,7 @@ function mapPostRow(row, { includeContent = false, includePresentation = false }
         date: toDateString(row.publication_date),
         excerpt: row.excerpt || '',
         tags: getStringArray(row.tags),
+        tocTitles: getStringArray(row.toc_titles),
         seoTitle: row.seo_title || '',
         seoDescription: row.seo_description || '',
         ogImage: row.og_image || '',
@@ -148,9 +149,10 @@ export async function createPost(data) {
                 canonical_url,
                 noindex,
                 featured,
+                toc_titles,
                 status
             ) VALUES (
-                $1, $2, $3, $4, $5::jsonb, $6, $7, $8, $9, $10, $11, $12, $13
+                $1, $2, $3, $4, $5::jsonb, $6, $7, $8, $9, $10, $11, $12, $13::jsonb, $14
             )
             RETURNING *`,
             [
@@ -166,6 +168,7 @@ export async function createPost(data) {
                 data.canonicalUrl || '',
                 Boolean(data.noindex),
                 Boolean(data.featured),
+                JSON.stringify(data.tocTitles || []),
                 data.status,
             ]
         );
@@ -191,6 +194,7 @@ export async function updatePost(slug, patch) {
         canonicalUrl: patch.canonicalUrl ?? currentRow.canonical_url,
         noindex: patch.noindex ?? Boolean(currentRow.noindex),
         featured: patch.featured ?? Boolean(currentRow.featured),
+        tocTitles: patch.tocTitles ?? getStringArray(currentRow.toc_titles),
         status: patch.status ?? currentRow.status,
     };
 
@@ -215,7 +219,8 @@ export async function updatePost(slug, patch) {
                  canonical_url = $10,
                  noindex = $11,
                  featured = $12,
-                 status = $13,
+                 toc_titles = $13::jsonb,
+                 status = $14,
                  updated_at = NOW()
              WHERE slug = $1
              RETURNING *`,
@@ -232,6 +237,7 @@ export async function updatePost(slug, patch) {
                 merged.canonicalUrl,
                 Boolean(merged.noindex),
                 Boolean(merged.featured),
+                JSON.stringify(merged.tocTitles || []),
                 merged.status,
             ]
         );

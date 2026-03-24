@@ -106,7 +106,11 @@ export default function Home() {
 
   return (
     <>
-      <div ref={snapRef} id="snap-root" className="snap-root relative bg-[var(--bg-primary)] font-sans text-[var(--text-primary)] selection:bg-violet-500/30">
+      <div
+        ref={snapRef}
+        id="snap-root"
+        className="snap-root relative bg-[var(--bg-primary)] font-sans text-[var(--text-primary)] selection:bg-violet-500/30"
+      >
       <Helmet>
         <title>Guadalupe Cano | Desarrolladora Full Stack · React · Node.js · IA</title>
         <meta name="description" content="Portfolio de Guadalupe Cano, desarrolladora Full Stack especializada en React, Node.js, integración de IA y automatización con n8n. Proyectos reales desplegados en producción." />
@@ -189,12 +193,8 @@ export default function Home() {
 
       {/* ========== SECTION 7: FEATURED PROJECTS ========== */}
       <section id="projects" className="snap-page bg-[var(--bg-secondary)]">
-        {/* Glow circles — grandes, suaves, morado y azul */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute -left-[20%] top-[10%] h-[70vh] w-[70vh] rounded-full bg-violet-600/10 blur-[120px]" />
-          <div className="absolute -right-[15%] bottom-[5%] h-[65vh] w-[65vh] rounded-full bg-indigo-500/10 blur-[110px]" />
-          <div className="absolute left-[30%] top-[30%] h-[45vh] w-[45vh] rounded-full bg-blue-700/7 blur-[100px]" />
-        </div>
+        <div className="ambient-grid-halos pointer-events-none absolute inset-0 overflow-hidden" />
+        <div className="pointer-events-none absolute inset-0 bg-noise opacity-[0.015] mix-blend-overlay" />
 
         <SectionViewport width="wide" scroll contentClassName="relative z-10">
           <div className="w-full">

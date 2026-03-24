@@ -125,6 +125,18 @@
   --toggle-border: rgba(255, 255, 255, 0.12);
   --toggle-icon: #22d3ee;
 
+  /* Blog surfaces */
+  --blog-bg: linear-gradient(165deg, #0b1120 0%, #0d1529 55%, #10192f 100%);
+  --blog-surface: rgba(15, 23, 42, 0.68);
+  --blog-surface-low: rgba(15, 23, 42, 0.54);
+  --blog-surface-high: rgba(30, 41, 59, 0.66);
+  --blog-text-primary: #e2e8f0;
+  --blog-text-secondary: #cbd5e1;
+  --blog-text-muted: #94a3b8;
+  --blog-outline-variant: rgba(148, 163, 184, 0.28);
+  --blog-glow-primary: rgba(139, 92, 246, 0.22);
+  --blog-glow-secondary: rgba(34, 211, 238, 0.2);
+
 }
 
 /* ─── TEMA CLARO  (por defecto)─── */
@@ -208,6 +220,18 @@
   --toggle-border: rgba(199, 210, 254, 0.8);
   --toggle-icon: #d946ef;
 
+  /* Blog surfaces */
+  --blog-bg: linear-gradient(165deg, #f4f7ff 0%, #eef2ff 56%, #f7f4ff 100%);
+  --blog-surface: rgba(255, 255, 255, 0.84);
+  --blog-surface-low: rgba(255, 255, 255, 0.76);
+  --blog-surface-high: rgba(236, 242, 255, 0.94);
+  --blog-text-primary: #0f172a;
+  --blog-text-secondary: #334155;
+  --blog-text-muted: #64748b;
+  --blog-outline-variant: rgba(99, 102, 241, 0.18);
+  --blog-glow-primary: rgba(139, 92, 246, 0.16);
+  --blog-glow-secondary: rgba(6, 182, 212, 0.16);
+
 }
 
 /* ============================================================
@@ -276,6 +300,8 @@ body.home-scroll-snap #main-content {
 .snap-root::-webkit-scrollbar {
   display: none;
 }
+
+
 
 /* ── Sección estándar (cabe en 100vh) ─────── */
 .snap-page {
@@ -529,6 +555,47 @@ body.home-scroll-snap #main-content {
 /* Textura noise */
 .bg-noise {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Ambient backgrounds for projects/blog */
+.ambient-grid-halos {
+  background-image:
+    radial-gradient(ellipse 60% 52% at 12% 18%, rgba(139, 92, 246, 0.14), transparent 72%),
+    radial-gradient(ellipse 58% 50% at 86% 82%, rgba(34, 211, 238, 0.12), transparent 72%),
+    repeating-linear-gradient(0deg, transparent, transparent 55px, rgba(148, 163, 184, 0.048) 55px, rgba(148, 163, 184, 0.048) 56px),
+    repeating-linear-gradient(90deg, transparent, transparent 79px, rgba(148, 163, 184, 0.04) 79px, rgba(148, 163, 184, 0.04) 80px),
+    var(--blog-bg);
+}
+
+.blog-cosmic-grid {
+  --blog-bg:
+    radial-gradient(ellipse 58% 46% at 14% 16%, color-mix(in srgb, var(--accent-primary) 14%, transparent), transparent 72%),
+    radial-gradient(ellipse 52% 44% at 84% 82%, color-mix(in srgb, var(--accent-secondary) 12%, transparent), transparent 72%),
+    linear-gradient(165deg, color-mix(in srgb, var(--bg-primary) 88%, transparent) 0%, color-mix(in srgb, var(--bg-secondary) 92%, transparent) 100%);
+  background-image: var(--blog-bg);
+}
+
+.blog-glass {
+  background: color-mix(in srgb, var(--blog-surface) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--blog-outline-variant) 36%, transparent);
+  box-shadow: 0 18px 40px color-mix(in srgb, var(--blog-glow-primary) 22%, transparent);
+  backdrop-filter: blur(16px);
+}
+
+:root[data-theme="light"] .ambient-grid-halos {
+  background-image:
+    radial-gradient(ellipse 60% 52% at 12% 18%, rgba(139, 92, 246, 0.09), transparent 72%),
+    radial-gradient(ellipse 58% 50% at 86% 82%, rgba(6, 182, 212, 0.08), transparent 72%),
+    repeating-linear-gradient(0deg, transparent, transparent 55px, rgba(99, 102, 241, 0.055) 55px, rgba(99, 102, 241, 0.055) 56px),
+    repeating-linear-gradient(90deg, transparent, transparent 79px, rgba(99, 102, 241, 0.045) 79px, rgba(99, 102, 241, 0.045) 80px),
+    linear-gradient(155deg, #f0f4ff 0%, #eaf0ff 45%, #f3f0ff 100%);
+}
+
+:root[data-theme="light"] .blog-cosmic-grid {
+  --blog-bg:
+    radial-gradient(ellipse 58% 46% at 14% 16%, rgba(139, 92, 246, 0.08), transparent 72%),
+    radial-gradient(ellipse 52% 44% at 84% 82%, rgba(6, 182, 212, 0.07), transparent 72%),
+    linear-gradient(165deg, #f4f7ff 0%, #eef2ff 56%, #f7f4ff 100%);
 }
 
 /* ============================================================

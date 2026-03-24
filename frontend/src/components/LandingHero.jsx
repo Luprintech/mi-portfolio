@@ -19,13 +19,15 @@ export default function LandingHero({ id, className = "" }) {
   const roles = t("landing.roles", { returnObjects: true });
 
   return (
-    <div id={id} className={`hero-section relative flex h-full w-full items-center justify-center overflow-hidden ${className}`.trim()}>
-      <div className="relative z-10 mx-auto grid h-full w-full max-w-5xl items-center gap-8 py-6 md:gap-10 md:py-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.82fr)] lg:gap-12">
+    <div id={id} className={`hero-section relative flex w-full items-center justify-center ${className}`.trim()}>
+      <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col items-center justify-center gap-8 py-6 md:gap-10 md:py-8 lg:flex-row lg:items-center lg:gap-12">
+
+        {/* Bloque izquierdo: texto */}
         <motion.div
           initial={shouldReduceMotion ? false : { opacity: 0, x: -24 }}
           animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, x: 0 }}
           transition={{ duration: 0.7, ease: "easeOut" }}
-          className="relative flex flex-col items-start text-left"
+          className="relative flex w-full min-w-0 flex-col items-start text-left lg:flex-1"
         >
           <div className="typo-label mb-5 min-h-[2.8rem] text-xl font-bold text-[var(--hero-typewriter-color)] drop-shadow-[0_4px_18px_rgba(255,255,255,0.12)] xs:text-2xl md:min-h-[3.6rem] md:text-3xl">
             <Typewriter
@@ -47,7 +49,8 @@ export default function LandingHero({ id, className = "" }) {
             {t("hero.description")}
           </p>
 
-          <div className="mt-8 flex flex-wrap items-center gap-3 md:mt-9">
+          {/* CV + social — visible only on desktop (lg+) */}
+          <div className="mt-8 hidden flex-wrap items-center gap-3 md:mt-9 lg:flex">
             <a
               href="/CV_Guadalupe_Cano.pdf"
               target="_blank"
@@ -77,23 +80,18 @@ export default function LandingHero({ id, className = "" }) {
           </div>
         </motion.div>
 
+        {/* Bloque derecho: foto */}
         <motion.div
           initial={shouldReduceMotion ? false : { opacity: 0, x: 24, scale: 0.96 }}
           animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, x: 0, scale: 1 }}
           transition={{ duration: 0.8, ease: "easeOut", delay: shouldReduceMotion ? 0 : 0.08 }}
-          className="relative mx-auto flex w-full max-w-[260px] justify-center sm:max-w-[300px] lg:max-w-[360px]"
+          className="flex-shrink-0"
         >
+          {/* Tarjeta foto con animación flotante */}
           <motion.div
-            animate={
-              shouldReduceMotion
-                ? undefined
-                : {
-                    y: [0, -10, 0],
-                    rotate: [0, 1.1, 0],
-                  }
-            }
+            animate={shouldReduceMotion ? undefined : { y: [0, -10, 0], rotate: [0, 1.1, 0] }}
             transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-            className="relative w-full"
+            className="relative w-[230px] flex-shrink-0 sm:w-[255px] lg:w-[265px]"
           >
             <div className="pointer-events-none absolute -inset-8 rounded-[3rem] bg-[radial-gradient(circle,_rgba(34,211,238,0.16),_transparent_58%)] blur-3xl" />
             <div className="pointer-events-none absolute -left-6 top-8 h-20 w-20 rounded-full border border-white/10 bg-fuchsia-400/18 blur-2xl" />
@@ -111,37 +109,69 @@ export default function LandingHero({ id, className = "" }) {
                   }}
                 />
                 <div className="relative overflow-hidden rounded-[1.45rem] border border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--bg-surface)_86%,transparent)]">
-                <div
-                  className="absolute inset-x-0 top-0 h-20"
-                  style={{ background: "linear-gradient(180deg, color-mix(in srgb, white 20%, transparent), transparent)" }}
-                />
-                <img
-                  src={portraitImage}
-                  alt="Retrato de Guadalupe Cano"
-                  className="h-[280px] w-full object-cover object-center sm:h-[330px] lg:h-[410px]"
-                  loading="eager"
-                  fetchPriority="high"
-                />
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    background:
-                      "linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--bg-overlay) 14%, transparent) 52%, color-mix(in srgb, var(--bg-overlay) 88%, transparent) 100%)",
-                  }}
-                />
-                <div className="absolute inset-x-4 bottom-4 rounded-[1.15rem] border border-[var(--border-color)] bg-[color-mix(in_srgb,var(--bg-elevated)_74%,transparent)] px-3.5 py-3 shadow-[var(--shadow-md)] backdrop-blur-xl">
-                  <p className="typo-label text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-cyan-300">
-                    {t("hero.photo_badge")}
-                  </p>
-                  <p className="typo-body mt-1.5 text-xs leading-5 text-[var(--text-primary)] opacity-90 sm:text-sm text-justify">
-                    {t("hero.subtitle")}
-                  </p>
-                </div>
+                  <div
+                    className="absolute inset-x-0 top-0 h-20"
+                    style={{ background: "linear-gradient(180deg, color-mix(in srgb, white 20%, transparent), transparent)" }}
+                  />
+                  <img
+                    src={portraitImage}
+                    alt="Retrato de Guadalupe Cano"
+                    className="h-[280px] w-full object-cover object-center sm:h-[310px] lg:h-[360px]"
+                    loading="eager"
+                    fetchPriority="high"
+                  />
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background:
+                        "linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--bg-overlay) 14%, transparent) 52%, color-mix(in srgb, var(--bg-overlay) 88%, transparent) 100%)",
+                    }}
+                  />
+                  <div className="absolute inset-x-4 bottom-4 rounded-[1.15rem] border border-[var(--border-color)] bg-[color-mix(in_srgb,var(--bg-elevated)_74%,transparent)] px-3.5 py-3 shadow-[var(--shadow-md)] backdrop-blur-xl">
+                    <p className="typo-label text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-cyan-300">
+                      {t("hero.photo_badge")}
+                    </p>
+                    <p className="typo-body mt-1.5 text-xs leading-5 text-[var(--text-primary)] opacity-90 sm:text-sm text-justify">
+                      {t("hero.subtitle")}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
           </motion.div>
+
         </motion.div>
+
+        {/* CV + social — visible only on mobile (below photo, hidden on lg+) */}
+        <div className="flex w-full flex-wrap items-center justify-center gap-3 lg:hidden">
+          <a
+            href="/CV_Guadalupe_Cano.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="typo-label inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-500 px-5 py-2.5 font-semibold text-white shadow-[0_18px_45px_rgba(168,85,247,0.24)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_55px_rgba(34,211,238,0.24)]"
+          >
+            <Download className="h-4 w-4" />
+            {t("hero.cv")}
+          </a>
+
+          {[
+            { href: "https://www.linkedin.com/in/guadalupe-cano-moyano/", label: "LinkedIn", Icon: Linkedin },
+            { href: "https://github.com/Luprintech", label: "GitHub", Icon: Github },
+            { href: "https://www.youtube.com/@Luprintech", label: "YouTube", Icon: Youtube },
+          ].map(({ href, label, Icon }) => (
+            <a
+              key={label}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={label}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border-color)] bg-[color-mix(in_srgb,var(--bg-elevated)_72%,transparent)] text-[var(--text-primary)] shadow-[var(--shadow-sm)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-[var(--accent-secondary)]/40 hover:bg-[var(--accent-secondary-dim)] hover:text-[var(--accent-secondary)]"
+            >
+              <Icon className="h-4.5 w-4.5" />
+            </a>
+          ))}
+        </div>
+
       </div>
     </div>
   );

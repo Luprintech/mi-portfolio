@@ -45,6 +45,64 @@ export function runContentValidationTests(runTest) {
         assert.ok(errors.length >= 3);
     });
 
+    runTest('sanitizePostInput validates tocTitles correctly', () => {
+        const { errors, data } = sanitizePostInput({
+            title: 'Mi post',
+            slug: 'mi-post',
+            content: 'Contenido valido',
+            tocTitles: ['Introducción', 'Desarrollo', 'Conclusión'],
+            status: 'published',
+            date: '2026-03-12',
+        });
+
+        assert.deepEqual(errors, []);
+        assert.deepEqual(data.tocTitles, ['Introducción', 'Desarrollo', 'Conclusión']);
+    });
+
+    runTest('sanitizePostInput rejects invalid tocTitles', () => {
+        const { data } = sanitizePostInput({
+            title: 'Mi post',
+            slug: 'mi-post',
+            content: 'Contenido valido',
+            tocTitles: [123, null, { invalid: true }, '   ', 'Título válido'],
+            status: 'published',
+            date: '2026-03-12',
+        });
+
+        assert.deepEqual(data.tocTitles, ['Título válido']);
+    });
+
+    runTest('sanitizePostInput limits tocTitles to 12 items and 120 chars', () => {
+        const longTitle = 'A'.repeat(150);
+        const titles = Array(15).fill('Título');
+        titles[0] = longTitle;
+
+        const { data } = sanitizePostInput({
+            title: 'Mi post',
+            slug: 'mi-post',
+            content: 'Contenido valido',
+            tocTitles: titles,
+            status: 'published',
+            date: '2026-03-12',
+        });
+
+        assert.equal(data.tocTitles.length, 12);
+        assert.ok(!data.tocTitles.includes(longTitle));
+    });
+
+    runTest('sanitizePostInput handles empty tocTitles', () => {
+        const { data } = sanitizePostInput({
+            title: 'Mi post',
+            slug: 'mi-post',
+            content: 'Contenido valido',
+            tocTitles: [],
+            status: 'published',
+            date: '2026-03-12',
+        });
+
+        assert.deepEqual(data.tocTitles, []);
+    });
+
     runTest('sanitizeProjectInput validates URLs and categories', () => {
         const { errors, data } = sanitizeProjectInput({
             id: 'cms-pro',

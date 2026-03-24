@@ -206,7 +206,7 @@ const Blog = () => {
       <BlogHero />
 
       {/* Search & Filter section */}
-      <section className="mb-16 space-y-8 w-full max-w-7xl mx-auto px-4">
+      <section className="mb-16 space-y-4 md:space-y-8 w-full max-w-7xl mx-auto px-4">
         <BlogSearchBar
           searchQuery={searchQuery}
           onSearchChange={(value) => {
@@ -214,16 +214,18 @@ const Blog = () => {
             setVisibleCount(POSTS_PER_PAGE);
           }}
         />
-        <BlogFilterChips
-          activeTag={activeTag}
-          onTagChange={(tag) => {
-            setActiveTag(tag);
-            setVisibleCount(POSTS_PER_PAGE);
-          }}
-          tagOptions={tagOptions}
-        />
+        <div className="hidden md:block">
+          <BlogFilterChips
+            activeTag={activeTag}
+            onTagChange={(tag) => {
+              setActiveTag(tag);
+              setVisibleCount(POSTS_PER_PAGE);
+            }}
+            tagOptions={tagOptions}
+          />
+        </div>
         {/* TODO: date filter near future selector insertion point. */}
-        <div data-date-filter-anchor />
+        <div className="hidden md:block" data-date-filter-anchor />
       </section>
 
       <main className="pb-20 max-w-7xl mx-auto px-4">
