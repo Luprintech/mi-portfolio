@@ -17,8 +17,13 @@ export default function Contact() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setStatus("submitting");
     setErrorMessage("");
+    if (formData.message.trim().length < 10) {
+      setErrorMessage("El mensaje debe tener al menos 10 caracteres.");
+      setStatus("error");
+      return;
+    }
+    setStatus("submitting");
     try {
       const res = await fetch("/api/contact", {
         method: "POST",
@@ -193,13 +198,13 @@ export default function Contact() {
                   )}
                 </button>
 
-                {status === "error" && (
+                {errorMessage && (
                   <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                     className="text-center text-red-400 text-sm mt-4 bg-red-500/10 py-2 rounded-lg border border-red-500/20">
-                    {t('contact.error')} {errorMessage || "No se pudo conectar con el backend."}
+                    {errorMessage}
                   </motion.p>
                 )}
-                {status === "success" && (
+                {status === "success" && !errorMessage && (
                   <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                     className="text-center text-green-400 text-sm mt-4 bg-green-500/10 py-2 rounded-lg border border-green-500/20">
                     {t('contact.success')}
