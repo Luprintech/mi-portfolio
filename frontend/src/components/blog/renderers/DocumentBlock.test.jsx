@@ -59,6 +59,9 @@ describe('DocumentBlock', () => {
     });
 
     expect(screen.getByText('Vista PDF')).toBeInTheDocument();
+    expect(screen.getByText('Zoom 100%')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ajustar ancho' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Pagina completa' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Siguiente' })).toBeInTheDocument();
     expect(container.querySelector('[data-rendered-pdf-preview="true"]')).not.toBeNull();
 
@@ -82,7 +85,7 @@ describe('DocumentBlock', () => {
       />
     );
 
-    expect(screen.getByText('Abrilo o descargalo en una pestaña aparte para verlo con comodidad.')).toBeInTheDocument();
+    expect(screen.getByText('Ábrelo o descargalo en una pestaña aparte para verlo con comodidad.')).toBeInTheDocument();
     expect(screen.queryByText('Vista PDF')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Abrir' })).toHaveAttribute('href', '/docs/guia.pdf');
   });

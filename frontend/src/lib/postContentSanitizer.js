@@ -13,6 +13,7 @@ const SANITIZER_OPTIONS = {
         'data-border-color',
         'data-block',
         'data-columns',
+        'data-colwidth',
         'data-callout',
         'data-callout-type',
         'data-cols',

@@ -159,6 +159,34 @@ describe('sanitizePostInput', () => {
         expect(errors).toContain('El bloque de documento requiere data-src y nombre de archivo.');
     });
 
+    it('acepta documentos embebidos con metadata de visor compartido', () => {
+        const { errors, data } = sanitizePostInput({
+            title: 'Mi post',
+            slug: 'mi-post',
+            format: 'html',
+            contentHtml: '<div data-block="document" data-src="/posts/documents/guia.pdf" data-title="Guia" data-file-type="pdf" data-display="embed" data-embed-height="640" data-embed-width="960"></div>',
+            status: 'draft',
+            date: '2026-03-12',
+        });
+
+        expect(errors).toEqual([]);
+        expect(data.contentHtml).toContain('data-embed-height="640"');
+        expect(data.contentHtml).toContain('data-embed-width="960"');
+    });
+
+    it('rechaza documentos con modo de visualizacion invalido', () => {
+        const { errors } = sanitizePostInput({
+            title: 'Mi post',
+            slug: 'mi-post',
+            format: 'html',
+            contentHtml: '<div data-block="document" data-src="/posts/documents/guia.pdf" data-title="Guia" data-file-type="pdf" data-display="fullscreen"></div>',
+            status: 'draft',
+            date: '2026-03-12',
+        });
+
+        expect(errors).toContain('El bloque de documento tiene un modo de visualizacion invalido.');
+    });
+
     it('sanea script tags y atributos peligrosos del html canonico', () => {
         const { errors, data } = sanitizePostInput({
             title: 'Mi post',

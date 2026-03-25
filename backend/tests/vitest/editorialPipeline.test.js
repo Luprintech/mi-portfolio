@@ -169,7 +169,7 @@ describe('editorial pipeline integration', () => {
 
     it('persiste un post html-first desde CMS y lo expone al render publico', async () => {
         const app = buildApp();
-        const richHtml = '<h2>Contrato editorial</h2><div data-block="image-grid" data-columns="2" data-images="[{&quot;src&quot;:&quot;/posts/images/uno.webp&quot;,&quot;alt&quot;:&quot;Uno&quot;}]"></div><div data-block="document" data-src="/posts/documents/guia.pdf" data-title="Guia PDF" data-filename="guia.pdf" data-file-type="pdf" data-display="embed"></div><pre data-block="code" data-language="bash" data-filename="deploy.sh"><code>npm run deploy</code></pre>';
+        const richHtml = '<h2>Contrato editorial</h2><table><colgroup><col data-colwidth="240,240"></colgroup><tbody><tr><td data-colwidth="240,240" style="background-color:#eff6ff;border-color:#60a5fa">Plan Pro</td></tr></tbody></table><div data-block="image-grid" data-columns="2" data-images="[{&quot;src&quot;:&quot;/posts/images/uno.webp&quot;,&quot;alt&quot;:&quot;Uno&quot;}]"></div><div data-block="document" data-src="/posts/documents/guia.pdf" data-title="Guia PDF" data-filename="guia.pdf" data-file-type="pdf" data-display="embed" data-embed-height="640" data-embed-width="960"></div><pre data-block="code" data-language="bash" data-filename="deploy.sh"><code>npm run deploy</code></pre>';
 
         const created = await request(app)
             .post('/api/bitacora/posts')
@@ -193,6 +193,8 @@ describe('editorial pipeline integration', () => {
         expect(publicPost.status).toBe(200);
         expect(publicPost.body.slug).toBe('pipeline-rico');
         expect(publicPost.body.contentHtml).toContain('data-block="document"');
+        expect(publicPost.body.contentHtml).toContain('data-embed-width="960"');
+        expect(publicPost.body.contentHtml).toContain('data-colwidth="240,240"');
         expect(publicPost.body.contentHtml).toContain('data-block="code"');
         expect(publicPost.body.tags).toEqual(['cms', 'render']);
     });

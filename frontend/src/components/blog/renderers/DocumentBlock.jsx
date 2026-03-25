@@ -48,7 +48,7 @@ export default function DocumentBlock({
   const resolvedHeight = clampEmbedHeight(embedHeight);
   const description = isPdf
     ? isMobile
-      ? 'Abrilo o descargalo en una pestaña aparte para verlo con comodidad.'
+      ? 'Ábrelo o descargalo en una pestaña aparte para verlo con comodidad.'
       : 'Vista previa paginada para escritorio y acceso directo al archivo completo.'
     : `Archivo ${label} disponible para descarga.`;
 

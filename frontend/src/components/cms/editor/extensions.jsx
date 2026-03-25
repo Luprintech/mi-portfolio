@@ -1,9 +1,10 @@
 // ─── Extensiones TipTap avanzadas para el editor del CMS ─────────────────────
 import { Node, Extension, mergeAttributes } from '@tiptap/core';
 import { ReactNodeViewRenderer, NodeViewContent } from '@tiptap/react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { normalizeContentLinkHref, resolveContentLinkAttributes } from '../../../lib/contentLinkUtils';
+import PdfPreview from '../../shared/PdfPreview';
 import RichBlockFrame from './RichBlockFrame';
 import {
     createRichBlockTextAlignAttribute,
@@ -660,129 +661,6 @@ function formatFileSize(bytes) {
     return `${(bytes / 1048576).toFixed(1)} MB`;
 }
 
-// ─── PdfCarousel — visor de PDF por páginas con navegación ────────────────────
-function PdfCarousel({ src, height }) {
-    const canvasRef = useRef(null);
-    const containerRef = useRef(null);
-    const [pdfDoc, setPdfDoc] = useState(null);
-    const [page, setPage] = useState(1);
-    const [numPages, setNumPages] = useState(0);
-    const [loading, setLoading] = useState(true);
-    const renderTaskRef = useRef(null);
-
-    useEffect(() => {
-        let cancelled = false;
-        (async () => {
-            try {
-                const pdfjsLib = await import('pdfjs-dist');
-                if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-                    pdfjsLib.GlobalWorkerOptions.workerSrc =
-                        `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
-                }
-                const doc = await pdfjsLib.getDocument(src).promise;
-                if (!cancelled) {
-                    setPdfDoc(doc);
-                    setNumPages(doc.numPages);
-                    setLoading(false);
-                }
-            } catch (err) {
-                console.error('Error loading PDF:', err);
-                if (!cancelled) setLoading(false);
-            }
-        })();
-        return () => { cancelled = true; };
-    }, [src]);
-
-    useEffect(() => {
-        if (!pdfDoc || !canvasRef.current || !containerRef.current) return;
-        let cancelled = false;
-        (async () => {
-            try {
-                if (renderTaskRef.current) {
-                    try { renderTaskRef.current.cancel(); } catch {
-                        renderTaskRef.current = null;
-                    }
-                }
-                const pdfPage = await pdfDoc.getPage(page);
-                if (cancelled) return;
-                const canvas = canvasRef.current;
-                const ctx = canvas.getContext('2d');
-                const containerWidth = containerRef.current.clientWidth || 600;
-                const navHeight = 48;
-                const availableHeight = height - navHeight;
-                const unscaledViewport = pdfPage.getViewport({ scale: 1 });
-                const scale = Math.min(
-                    containerWidth / unscaledViewport.width,
-                    availableHeight / unscaledViewport.height
-                );
-                const dpr = window.devicePixelRatio || 1;
-                const viewport = pdfPage.getViewport({ scale: scale * dpr });
-                canvas.width = viewport.width;
-                canvas.height = viewport.height;
-                canvas.style.width = `${viewport.width / dpr}px`;
-                canvas.style.height = `${viewport.height / dpr}px`;
-                const task = pdfPage.render({ canvasContext: ctx, viewport });
-                renderTaskRef.current = task;
-                await task.promise;
-            } catch (err) {
-                if (err?.name !== 'RenderingCancelledException') console.error(err);
-            }
-        })();
-        return () => { cancelled = true; };
-    }, [pdfDoc, page, height]);
-
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center bg-[var(--bg-primary)]" style={{ height: `${height}px` }}>
-                <div className="w-6 h-6 border-2 border-fuchsia-500/30 border-t-fuchsia-500 rounded-full animate-spin" />
-            </div>
-        );
-    }
-
-    if (!pdfDoc) {
-        return (
-            <div className="flex items-center justify-center bg-[var(--bg-primary)] text-[var(--text-muted)] text-sm" style={{ height: `${height}px` }}>
-                Error al cargar el PDF
-            </div>
-        );
-    }
-
-    return (
-        <div ref={containerRef} className="relative bg-[var(--bg-primary)] select-none" style={{ height: `${height}px` }}>
-            <div className="flex items-center justify-center overflow-hidden" style={{ height: `${height - 48}px` }}>
-                <canvas ref={canvasRef} />
-            </div>
-            {numPages > 1 && (
-                <>
-                    <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); setPage(p => Math.max(1, p - 1)); }}
-                        disabled={page <= 1}
-                        className="absolute left-3 top-[calc(50%-24px)] w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors disabled:opacity-20 disabled:cursor-not-allowed backdrop-blur-sm shadow-lg"
-                        contentEditable={false}
-                    >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M15 19l-7-7 7-7"/></svg>
-                    </button>
-                    <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); setPage(p => Math.min(numPages, p + 1)); }}
-                        disabled={page >= numPages}
-                        className="absolute right-3 top-[calc(50%-24px)] w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors disabled:opacity-20 disabled:cursor-not-allowed backdrop-blur-sm shadow-lg"
-                        contentEditable={false}
-                    >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M9 5l7 7-7 7"/></svg>
-                    </button>
-                </>
-            )}
-            <div className="absolute bottom-0 inset-x-0 h-12 flex items-center justify-center bg-gradient-to-t from-black/40 to-transparent">
-                <div className="px-4 py-1.5 rounded-full bg-black/60 backdrop-blur-sm text-white text-sm font-medium tabular-nums">
-                    {page} / {numPages}
-                </div>
-            </div>
-        </div>
-    );
-}
-
 function DocumentView({ node, updateAttributes, selected, deleteNode }) {
     const isPdf = node.attrs.fileType === 'pdf';
     const mode = node.attrs.displayMode || (isPdf ? 'embed' : 'link');
@@ -849,7 +727,13 @@ function DocumentView({ node, updateAttributes, selected, deleteNode }) {
                 )}
                 {/* PDF carousel viewer */}
                 {isPdf && mode === 'embed' && (
-                    <PdfCarousel src={node.attrs.src} height={node.attrs.embedHeight || 500} />
+                    <div className="bg-[var(--bg-primary)]/70 p-2">
+                        <PdfPreview
+                            src={node.attrs.src}
+                            title={node.attrs.filename || 'Documento PDF'}
+                            height={node.attrs.embedHeight || 500}
+                        />
+                    </div>
                 )}
 
                 {/* Bottom bar — always visible */}
@@ -968,8 +852,6 @@ export const DocumentAttachmentExtension = Node.create({
         const mode = node.attrs.displayMode || (isPdf ? 'embed' : 'link');
         const height = node.attrs.embedHeight || 500;
         const width = node.attrs.embedWidth;
-        const ICONS = { pdf: '📄', zip: '📦', docx: '📝' };
-        const icon = ICONS[node.attrs.fileType] || '📎';
 
         const containerStyle = [
             'border:1px solid var(--border-color,rgba(255,255,255,0.1))',
@@ -990,40 +872,11 @@ export const DocumentAttachmentExtension = Node.create({
             'data-display': mode,
             'data-display-mode': mode,
             'data-embed-height': String(height),
+            ...(width ? { 'data-embed-width': String(width) } : {}),
             style: containerStyle,
         }));
 
-        const barStyle = 'display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--bg-elevated,rgba(15,15,30,0.8))';
-        const nameStyle = 'font-size:14px;font-weight:500;color:var(--text-primary,#e2e8f0);margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
-
-        if (isPdf && mode === 'embed') {
-            return ['div', containerAttrs,
-                ['iframe', {
-                    src: node.attrs.src,
-                    style: `width:100%;height:${height}px;border:none;`,
-                    loading: 'lazy',
-                    title: node.attrs.filename,
-                    allowfullscreen: 'true',
-                }],
-                ['div', { style: barStyle },
-                    ['span', { style: 'font-size:1.25rem' }, icon],
-                    ['span', { style: nameStyle }, node.attrs.filename],
-                ],
-            ];
-        }
-
-        // Link mode or non-PDF
-        return ['div', containerAttrs,
-            ['div', { style: barStyle },
-                ['span', { style: 'font-size:1.5rem' }, icon],
-                ['span', { style: `flex:1;${nameStyle}` }, node.attrs.filename],
-                ['a', {
-                    href: node.attrs.src,
-                    download: node.attrs.filename,
-                    style: 'padding:8px 16px;background:#c026d3;color:white;border-radius:8px;font-size:14px;font-weight:500;text-decoration:none;white-space:nowrap',
-                }, 'Descargar'],
-            ],
-        ];
+        return ['div', containerAttrs];
     },
     addNodeView() { return ReactNodeViewRenderer(DocumentView); },
     addCommands() {

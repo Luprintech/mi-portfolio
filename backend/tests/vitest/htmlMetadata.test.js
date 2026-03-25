@@ -9,7 +9,7 @@ describe('deriveHtmlMetadata', () => {
             <img src="/posts/images/cover.webp" alt="cover" />
             <h2>Primer paso</h2>
             <p>Mas contenido relevante para superar el minimo de palabras.</p>
-            <div data-block="document" data-src="/posts/documents/guia.pdf" data-title="Guia" data-file-type="pdf"></div>
+            <div data-block="document" data-src="/posts/documents/guia.pdf" data-title="Guia" data-file-type="pdf" data-display="embed" data-embed-height="640"></div>
             <h3>Detalles</h3>
         `);
 
@@ -21,7 +21,7 @@ describe('deriveHtmlMetadata', () => {
                 src: '/posts/documents/guia.pdf',
                 title: 'Guia',
                 fileType: 'pdf',
-                display: 'download',
+                display: 'embed',
             },
         ]);
     });

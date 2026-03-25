@@ -43,9 +43,33 @@ function collectBlockValidationErrors(content, errors) {
         const tag = match[0];
         const src = tag.match(/data-src="([^"]*)"/i)?.[1] || '';
         const filename = tag.match(/data-filename="([^"]*)"/i)?.[1] || tag.match(/data-title="([^"]*)"/i)?.[1] || '';
+        const display = tag.match(/data-display="([^"]*)"/i)?.[1] || tag.match(/data-display-mode="([^"]*)"/i)?.[1] || 'embed';
+        const embedHeight = tag.match(/data-embed-height="([^"]*)"/i)?.[1] || '';
+        const embedWidth = tag.match(/data-embed-width="([^"]*)"/i)?.[1] || '';
         if (!src || !filename) {
             errors.push('El bloque de documento requiere data-src y nombre de archivo.');
             break;
+        }
+
+        if (!['embed', 'link', 'download'].includes(display)) {
+            errors.push('El bloque de documento tiene un modo de visualizacion invalido.');
+            break;
+        }
+
+        if (embedHeight) {
+            const heightValue = Number(embedHeight);
+            if (!Number.isInteger(heightValue) || heightValue < 240 || heightValue > 960) {
+                errors.push('El bloque de documento tiene una altura embebida invalida.');
+                break;
+            }
+        }
+
+        if (embedWidth) {
+            const widthValue = Number(embedWidth);
+            if (!Number.isInteger(widthValue) || widthValue < 280 || widthValue > 1600) {
+                errors.push('El bloque de documento tiene un ancho embebido invalido.');
+                break;
+            }
         }
     }
 }

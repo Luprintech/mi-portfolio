@@ -2,7 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 
 vi.mock('../../shared/PdfPreview', () => ({
-  default: ({ title }) => <div data-rendered-pdf-preview="true">{title}</div>,
+  default: ({ src, title, height }) => (
+    <div data-rendered-pdf-preview="true" data-src={src} data-height={String(height)}>{title}</div>
+  ),
 }));
 
 import HtmlContentRenderer from './HtmlContentRenderer';
@@ -51,6 +53,34 @@ describe('HtmlContentRenderer', () => {
     expect(container.querySelectorAll('[data-rendered-block="document"]')).toHaveLength(1);
     expect(container.querySelectorAll('[data-rendered-pdf-preview="true"]')).toHaveLength(1);
     expect(container.querySelectorAll('[data-rendered-block="code"]')).toHaveLength(1);
+  });
+
+  it('rehidrata el data-embed-width del documento publicado y conserva la vista previa', () => {
+    const { container } = render(
+      <HtmlContentRenderer
+        content={`
+          <div
+            data-block="document"
+            data-src="/posts/documents/guia.pdf"
+            data-title="Guia editorial"
+            data-filename="guia.pdf"
+            data-file-type="pdf"
+            data-display="embed"
+            data-embed-height="640"
+            data-embed-width="960"
+            style="width:960px;max-width:100%"
+          ></div>
+        `}
+      />
+    );
+
+    const renderedDocument = container.querySelector('[data-rendered-block="document"]');
+    const renderedPreview = container.querySelector('[data-rendered-pdf-preview="true"]');
+
+    expect(renderedDocument).toHaveStyle({ width: '960px', maxWidth: '100%' });
+    expect(renderedPreview).toHaveAttribute('data-src', '/posts/documents/guia.pdf');
+    expect(renderedPreview).toHaveAttribute('data-height', '640');
+    expect(screen.getAllByText('Guia editorial').length).toBeGreaterThan(0);
   });
 
   it('mantiene la paridad publica de alineacion para documentos, grillas e imagenes', () => {
@@ -132,16 +162,16 @@ describe('HtmlContentRenderer', () => {
         content={`
           <table style="min-width:720px">
             <colgroup>
-              <col style="width:240px;min-width:240px" />
+              <col data-colwidth="240,240" />
             </colgroup>
             <thead>
               <tr>
-                <th style="background-color:#dbeafe;border-color:#2563eb;width:240px">Plan</th>
+                <th data-colwidth="240,240" style="background-color:#dbeafe;border-color:#2563eb">Plan</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td style="background-color:#eff6ff;border-color:#60a5fa">Pro</td>
+                <td data-colwidth="240,240" style="background-color:#eff6ff;border-color:#60a5fa">Pro</td>
               </tr>
             </tbody>
           </table>
@@ -156,9 +186,11 @@ describe('HtmlContentRenderer', () => {
     expect(screen.getByRole('cell', { name: 'Pro' })).toHaveStyle({
       backgroundColor: 'rgb(239, 246, 255)',
       borderColor: '#60a5fa',
+      width: '240px',
     });
     expect(screen.getByRole('columnheader', { name: 'Plan' }).className).toContain('border');
     expect(container.querySelector('table')).toHaveStyle({ minWidth: '720px' });
     expect(container.querySelector('col')).toHaveStyle({ width: '240px', minWidth: '240px' });
+    expect(screen.getByRole('columnheader', { name: 'Plan' })).toHaveAttribute('data-colwidth', '240,240');
   });
 });

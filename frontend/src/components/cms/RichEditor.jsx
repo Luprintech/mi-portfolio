@@ -1541,6 +1541,11 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                         className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors" title="Combinar celdas">Combinar</button>
                     <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().splitCell().run(); }}
                         className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors" title="Dividir celda">Dividir</button>
+                    <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().setCellAttribute('backgroundColor', null).setCellAttribute('borderColor', null).run(); }}
+                        className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors" title="Limpiar estilos de celda">Limpiar celda</button>
+                    <span className="rounded-full border border-[var(--border-color)] bg-[var(--bg-primary)]/65 px-2 py-1 text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
+                        Arrastra bordes para ancho
+                    </span>
                     <div className="w-px h-4 bg-[var(--border-color)] mx-0.5 self-center" />
                     {/* Color picker */}
                     <div className="relative">

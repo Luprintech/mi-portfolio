@@ -50,6 +50,26 @@ function parseStyle(styleText = '') {
   }, {});
 }
 
+function parseColwidthValue(value = '') {
+  const firstToken = String(value || '').split(',').map(item => item.trim()).find(Boolean);
+  const numericValue = Number(firstToken);
+  return Number.isFinite(numericValue) && numericValue > 0 ? numericValue : null;
+}
+
+function getTableWidthProps(node) {
+  const dataColwidth = node.getAttribute('data-colwidth') || node.getAttribute('colwidth') || '';
+  const parsedWidth = parseColwidthValue(dataColwidth);
+  if (!parsedWidth) return {};
+
+  return {
+    'data-colwidth': dataColwidth,
+    style: {
+      width: `${parsedWidth}px`,
+      minWidth: `${parsedWidth}px`,
+    },
+  };
+}
+
 function getElementProps(node, extra = {}) {
   const props = { key: extra.key };
   for (const attr of Array.from(node.attributes || [])) {
@@ -58,6 +78,7 @@ function getElementProps(node, extra = {}) {
     else if (attr.name === 'download') props.download = attr.value || true;
     else if (attr.name === 'colspan') props.colSpan = Number(attr.value) || undefined;
     else if (attr.name === 'rowspan') props.rowSpan = Number(attr.value) || undefined;
+    else if (attr.name === 'data-colwidth') props['data-colwidth'] = attr.value;
     else if (!attr.name.startsWith('data-')) props[attr.name] = attr.value;
   }
   return props;
@@ -230,13 +251,20 @@ function renderNode(node, path) {
     const elementProps = getElementProps(node, { key: path });
     return <thead {...elementProps} className={joinClassNames('bg-[var(--bg-surface)]/85', elementProps.className)}>{renderChildren(node, path)}</thead>;
   }
+  if (tagName === 'col') {
+    const elementProps = getElementProps(node, { key: path });
+    const widthProps = getTableWidthProps(node);
+    return <col {...elementProps} {...widthProps} style={{ ...widthProps.style, ...elementProps.style }} />;
+  }
   if (tagName === 'th') {
     const elementProps = getElementProps(node, { key: path });
-    return <th {...elementProps} className={joinClassNames('border border-[var(--border-default)] px-4 py-3 text-sm font-semibold text-[var(--text-primary)] align-top', elementProps.className)}>{renderChildren(node, path)}</th>;
+    const widthProps = getTableWidthProps(node);
+    return <th {...elementProps} {...widthProps} style={{ ...widthProps.style, ...elementProps.style }} className={joinClassNames('border border-[var(--border-default)] px-4 py-3 text-sm font-semibold text-[var(--text-primary)] align-top', elementProps.className)}>{renderChildren(node, path)}</th>;
   }
   if (tagName === 'td') {
     const elementProps = getElementProps(node, { key: path });
-    return <td {...elementProps} className={joinClassNames('border border-[var(--border-default)] px-4 py-3 text-justify text-sm leading-7 text-[var(--text-secondary)] align-top', elementProps.className)}>{renderChildren(node, path)}</td>;
+    const widthProps = getTableWidthProps(node);
+    return <td {...elementProps} {...widthProps} style={{ ...widthProps.style, ...elementProps.style }} className={joinClassNames('border border-[var(--border-default)] px-4 py-3 text-justify text-sm leading-7 text-[var(--text-secondary)] align-top', elementProps.className)}>{renderChildren(node, path)}</td>;
   }
   if (tagName === 'pre') return <CodeBlock key={path} {...buildCodeBlockProps(node)} />;
   if (tagName === 'code') {
