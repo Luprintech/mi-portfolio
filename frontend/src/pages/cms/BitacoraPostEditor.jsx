@@ -3,6 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { cmsApi } from '../../lib/cmsApi';
 import { IMAGE_INPUT_ACCEPT, IMAGE_UPLOAD_LABEL, validateImageFile } from '../../lib/mediaUploadPolicy';
+import { inferPostContentFields, looksLikeHtmlContent } from '../../lib/postContentSource';
+import TemplatePicker from '../../components/cms/editor/TemplatePicker';
+import EditorialChecklist from '../../components/cms/editor/EditorialChecklist';
 import { X } from 'lucide-react';
 
 const RichEditor = lazy(() => import('../../components/cms/RichEditor'));
@@ -33,7 +36,7 @@ const EMPTY_FORM = {
     status: 'draft',
 };
 
-const DRAFT_KEY = 'cms_post_draft';
+const DRAFTS_STORAGE_KEY = 'cms_post_drafts_v2';
 const AUTOSAVE_MS = 30_000;
 const TITLE_MAX = 160;
 const EXCERPT_MAX = 320;
@@ -47,6 +50,59 @@ function countWords(text) {
     const clean = stripHtml(text);
     if (!clean) return 0;
     return clean.split(/\s+/).filter(Boolean).length;
+}
+
+function getDraftIdentity({ isEdit, editSlug, form }) {
+    if (isEdit && editSlug) return `edit:${editSlug}`;
+
+    const candidate = slugify(form.slug || form.title || 'untitled');
+    return `new:${candidate || 'untitled'}`;
+}
+
+function readDraftMap() {
+    try {
+        const parsed = JSON.parse(localStorage.getItem(DRAFTS_STORAGE_KEY) || '{}');
+        return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+        return {};
+    }
+}
+
+function writeDraftMap(nextDrafts) {
+    localStorage.setItem(DRAFTS_STORAGE_KEY, JSON.stringify(nextDrafts));
+}
+
+function saveDraftSnapshot(identity, form) {
+    const drafts = readDraftMap();
+    drafts[identity] = {
+        ...form,
+        savedAt: new Date().toISOString(),
+    };
+    writeDraftMap(drafts);
+}
+
+function removeDraftSnapshot(identity) {
+    const drafts = readDraftMap();
+    delete drafts[identity];
+    writeDraftMap(drafts);
+}
+
+function getDraftSnapshot(identity) {
+    return readDraftMap()[identity] || null;
+}
+
+function getLatestNewDraft() {
+    return Object.entries(readDraftMap())
+        .filter(([identity, draft]) => identity.startsWith('new:') && draft?.savedAt)
+        .map(([, draft]) => draft)
+        .sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt))[0] || null;
+}
+
+function formatRevisionLabel(revision) {
+    if (revision.source === 'autosave') return 'Autoguardado';
+    if (revision.source === 'publish') return 'Publicado';
+    if (revision.source === 'restore') return 'Restauracion';
+    return 'Guardado manual';
 }
 
 function EditorLoader() {
@@ -123,12 +179,24 @@ export default function BitacoraPostEditor() {
     const [toast,      setToast]      = useState(null); // { message, type: 'success'|'error' }
     const [fullscreen, setFullscreen] = useState(false);
     const [availableDraft, setAvailableDraft] = useState(null);
+    const [revision, setRevision] = useState(0);
+    const [revisions, setRevisions] = useState([]);
+    const [loadingRevisions, setLoadingRevisions] = useState(false);
+    const [autosaveState, setAutosaveState] = useState('idle');
     const [coverUploading, setCoverUploading] = useState(false);
     const [coverUploadError, setCoverUploadError] = useState('');
     const [coverUploadSuccess, setCoverUploadSuccess] = useState('');
+    const [contentFormat, setContentFormat] = useState('html');
+    const [activeTemplateKey, setActiveTemplateKey] = useState('');
     const autosaveTimer = useRef(null);
     const toastTimer = useRef(null);
     const coverFileInputRef = useRef(null);
+    const lastAutosavedPayload = useRef('');
+
+    const draftIdentity = useMemo(
+        () => getDraftIdentity({ isEdit, editSlug, form }),
+        [editSlug, form, isEdit]
+    );
 
     // Dirty state: form differs from initial
     const isDirty = useMemo(() => {
@@ -145,33 +213,42 @@ export default function BitacoraPostEditor() {
         toastTimer.current = setTimeout(() => setToast(null), 4000);
     }
 
+    const loadRevisions = useCallback(async (slug) => {
+        if (!token || !slug) return;
+
+        setLoadingRevisions(true);
+        try {
+            const items = await cmsApi.getPostRevisions(token, slug);
+            setRevisions(Array.isArray(items) ? items : []);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoadingRevisions(false);
+        }
+    }, [token]);
+
     // ── Cargar post si es edición ─────────────────────────────────────────────
     useEffect(() => {
         if (!isEdit) {
             setForm(EMPTY_FORM);
             setInitialForm(EMPTY_FORM);
-            try {
-                const draft = localStorage.getItem(DRAFT_KEY);
-                if (draft) {
-                    const parsed = JSON.parse(draft);
-                    if (parsed.title || parsed.content) {
-                        setAvailableDraft(parsed);
-                    }
-                }
-            } catch {
-                setAvailableDraft(null);
-            }
+            setContentFormat('html');
+            setActiveTemplateKey('');
+            setRevision(0);
+            setRevisions([]);
+            setAvailableDraft(getLatestNewDraft());
             return;
         }
         cmsApi.getPost(token, editSlug)
             .then(post => {
+                const resolved = inferPostContentFields(post);
                 const loaded = {
                     title:   post.title,
                     slug:    post.slug,
                     date:    post.date,
                     excerpt: post.excerpt || '',
                     tags:    Array.isArray(post.tags) ? post.tags.join(', ') : post.tags || '',
-                    content: post.content || '',
+                    content: resolved.sourceContent || '',
                     seoTitle: post.seoTitle || '',
                     seoDescription: post.seoDescription || '',
                     ogImage: post.ogImage || '',
@@ -180,29 +257,94 @@ export default function BitacoraPostEditor() {
                     featured: post.featured || false,
                     status: post.status || 'published',
                 };
+                const localDraft = getDraftSnapshot(`edit:${post.slug}`);
                 setForm(loaded);
                 setInitialForm(loaded);
+                setAvailableDraft(localDraft && (localDraft.title || localDraft.content) ? localDraft : null);
+                setContentFormat(resolved.format);
+                setActiveTemplateKey('');
+                setRevision(Number(post.revision) || 0);
+                lastAutosavedPayload.current = JSON.stringify(loaded);
                 setSlugManual(true);
+                loadRevisions(post.slug);
             })
             .catch(err => setError(err.message))
             .finally(() => setLoading(false));
-    }, [isEdit, editSlug, token]);
+    }, [isEdit, editSlug, token, loadRevisions]);
 
-    // ── Autoguardado en localStorage (solo posts nuevos) ─────────────────────
+    const buildContentPayload = useCallback(() => {
+        const normalizedContent = form.content || '';
+        const resolvedFormat = looksLikeHtmlContent(normalizedContent)
+            ? 'html'
+            : contentFormat === 'markdown'
+              ? 'markdown'
+              : 'html';
+
+        return resolvedFormat === 'html'
+            ? {
+                format: 'html',
+                contentHtml: normalizedContent,
+                legacyMarkdown: '',
+              }
+            : {
+                format: 'markdown',
+                contentHtml: '',
+                legacyMarkdown: normalizedContent,
+              };
+    }, [contentFormat, form.content]);
+
+    // ── Autoguardado por post (local + remoto si edita un post existente) ───
     useEffect(() => {
-        if (isEdit) return;
+        if (!token || !form.title.trim() || !isDirty) return;
+
         clearTimeout(autosaveTimer.current);
         autosaveTimer.current = setTimeout(() => {
             try {
-                localStorage.setItem(DRAFT_KEY, JSON.stringify(form));
+                saveDraftSnapshot(draftIdentity, form);
                 setDraftSaved(true);
                 setTimeout(() => setDraftSaved(false), 2500);
             } catch {
                 setDraftSaved(false);
             }
+
+            if (!isEdit || !editSlug) {
+                setAutosaveState('local');
+                return;
+            }
+
+            const contentPayload = buildContentPayload();
+            const payload = {
+                ...form,
+                ...contentPayload,
+                revision,
+                tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
+            };
+            delete payload.content;
+
+            const serializedPayload = JSON.stringify(payload);
+            if (serializedPayload === lastAutosavedPayload.current) {
+                setAutosaveState('synced');
+                return;
+            }
+
+            setAutosaveState('saving');
+            cmsApi.autosavePost(token, editSlug, payload)
+                .then(savedPost => {
+                    setRevision(Number(savedPost.revision) || revision);
+                    setInitialForm(form);
+                    lastAutosavedPayload.current = serializedPayload;
+                    setAutosaveState('synced');
+                    loadRevisions(editSlug);
+                })
+                .catch(err => {
+                    setAutosaveState('error');
+                    if (err.status === 409) {
+                        setError(err.message);
+                    }
+                });
         }, AUTOSAVE_MS);
         return () => clearTimeout(autosaveTimer.current);
-    }, [form, isEdit]);
+    }, [buildContentPayload, draftIdentity, editSlug, form, isDirty, isEdit, loadRevisions, revision, token]);
 
     // ── Auto-slug ─────────────────────────────────────────────────────────────
     const handleTitleChange = useCallback((e) => {
@@ -227,7 +369,28 @@ export default function BitacoraPostEditor() {
     }
 
     function handleContentChange(html) {
+        if (looksLikeHtmlContent(html)) {
+            setContentFormat('html');
+        }
         setForm(f => ({ ...f, content: html }));
+    }
+
+    function handleApplyTemplate(template) {
+        if (!template) return;
+
+        const hasExistingContent = Boolean(form.content.trim());
+        if (hasExistingContent) {
+            const confirmed = window.confirm('Este template va a reemplazar el contenido actual del editor.');
+            if (!confirmed) return;
+        }
+
+        setActiveTemplateKey(template.key);
+        setContentFormat('html');
+        setForm(current => ({
+            ...current,
+            content: template.content,
+        }));
+        showToast(`Template "${template.label}" cargado en el editor.`);
     }
 
     function handleTagsChange(newTagsString) {
@@ -275,8 +438,10 @@ export default function BitacoraPostEditor() {
     // ── Vista previa en nueva pestaña
     function handlePreview() {
         try {
+            const contentPayload = buildContentPayload();
             sessionStorage.setItem('cms_preview', JSON.stringify({
                 ...form,
+                ...contentPayload,
                 tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
             }));
         } catch {
@@ -293,16 +458,24 @@ export default function BitacoraPostEditor() {
 
         const payload = {
             ...form,
+            ...buildContentPayload(),
+            revision,
             tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
             status: statusOverride || form.status || 'draft',
         };
+        delete payload.content;
 
         try {
             if (isEdit) {
-                await cmsApi.updatePost(token, editSlug, payload);
+                const updated = await cmsApi.updatePost(token, editSlug, payload);
+                setRevision(Number(updated.revision) || revision);
+                setInitialForm({ ...form, status: payload.status });
+                lastAutosavedPayload.current = JSON.stringify(payload);
+                removeDraftSnapshot(draftIdentity);
+                await loadRevisions(editSlug);
             } else {
                 const created = await cmsApi.createPost(token, payload);
-                localStorage.removeItem(DRAFT_KEY);
+                removeDraftSnapshot(draftIdentity);
 
                 if (statusOverride === 'draft') {
                     showToast('Post guardado en borradores');
@@ -313,6 +486,7 @@ export default function BitacoraPostEditor() {
             if (statusOverride === 'draft') {
                 setForm(f => ({ ...f, status: 'draft' }));
                 setInitialForm(f => ({ ...f, status: 'draft' }));
+                setAutosaveState('synced');
                 showToast('Borrador guardado correctamente');
                 return;
             }
@@ -321,7 +495,11 @@ export default function BitacoraPostEditor() {
             }
             navigate('/bitacora/posts');
         } catch (err) {
-            setError(err.message);
+            if (err.status === 409) {
+                setError(err.message || 'Este post fue modificado en otra sesion. Recargalo antes de volver a guardar.');
+            } else {
+                setError(err.message);
+            }
         } finally {
             setSaving(false);
         }
@@ -333,6 +511,53 @@ export default function BitacoraPostEditor() {
 
     async function handlePublish(e) {
         await handleSubmit(e, 'published');
+    }
+
+    async function handleRestoreRevision(revisionItem) {
+        if (!isEdit || !editSlug || !revisionItem) return;
+
+        setSaving(true);
+        setError('');
+        try {
+            const restored = await cmsApi.restorePostRevision(token, editSlug, revisionItem.id, revision);
+            const resolved = inferPostContentFields(restored);
+            const restoredForm = {
+                title: restored.title,
+                slug: restored.slug,
+                date: restored.date,
+                excerpt: restored.excerpt || '',
+                tags: Array.isArray(restored.tags) ? restored.tags.join(', ') : restored.tags || '',
+                content: resolved.sourceContent || '',
+                seoTitle: restored.seoTitle || '',
+                seoDescription: restored.seoDescription || '',
+                ogImage: restored.ogImage || '',
+                canonicalUrl: restored.canonicalUrl || '',
+                noindex: restored.noindex || false,
+                featured: restored.featured || false,
+                status: restored.status || 'draft',
+            };
+
+            setForm(restoredForm);
+            setInitialForm(restoredForm);
+            setContentFormat(resolved.format);
+            const nextRevision = Number(restored.revision) || revision;
+            setRevision(nextRevision);
+            lastAutosavedPayload.current = JSON.stringify({
+                ...restoredForm,
+                format: resolved.format,
+                contentHtml: resolved.format === 'html' ? restoredForm.content : '',
+                legacyMarkdown: resolved.format === 'markdown' ? restoredForm.content : '',
+                revision: nextRevision,
+                tags: restoredForm.tags.split(',').map(t => t.trim()).filter(Boolean),
+            });
+            removeDraftSnapshot(`edit:${editSlug}`);
+            showToast('Revision restaurada correctamente');
+            await loadRevisions(editSlug);
+        } catch (err) {
+            setError(err.message || 'No se pudo restaurar la revision seleccionada.');
+        } finally {
+            setSaving(false);
+        }
     }
 
     if (loading) {
@@ -361,14 +586,36 @@ export default function BitacoraPostEditor() {
                         <button
                             type="button"
                             onClick={() => {
-                                setForm(availableDraft);
-                                setInitialForm(availableDraft);
+                                const draftForm = { ...availableDraft };
+                                delete draftForm.savedAt;
+                                setForm(draftForm);
+                                setInitialForm(draftForm);
                                 setAvailableDraft(null);
                             }}
                             className="text-xs text-fuchsia-400 mt-1 hover:text-fuchsia-300 underline"
                         >
                             Recuperar borrador anterior
                         </button>
+                    )}
+                    {isEdit && availableDraft && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                const draftForm = { ...availableDraft };
+                                delete draftForm.savedAt;
+                                setForm(draftForm);
+                                setAvailableDraft(null);
+                                showToast('Se recupero el borrador local de este post.');
+                            }}
+                            className="text-xs text-fuchsia-400 mt-1 hover:text-fuchsia-300 underline"
+                        >
+                            Recuperar borrador local de esta entrada
+                        </button>
+                    )}
+                    {isEdit && (
+                        <p className="text-xs text-[var(--text-muted)] mt-1">
+                            Revision {revision || 0} · {autosaveState === 'saving' ? 'autoguardando...' : autosaveState === 'synced' ? 'autoguardado sincronizado' : autosaveState === 'local' ? 'borrador local listo' : autosaveState === 'error' ? 'autoguardado con error' : 'sin cambios pendientes'}
+                        </p>
                     )}
                 </div>
                 <div className="flex items-center gap-2 flex-wrap justify-end">
@@ -440,8 +687,9 @@ export default function BitacoraPostEditor() {
 
                     {/* Título */}
                     <div className="lg:col-span-2">
-                        <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Título *</label>
+                        <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5" htmlFor="post-title">Título *</label>
                         <input
+                            id="post-title"
                             type="text"
                             value={form.title}
                             onChange={handleTitleChange}
@@ -458,10 +706,11 @@ export default function BitacoraPostEditor() {
 
                     {/* Slug */}
                     <div>
-                        <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">
+                        <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5" htmlFor="post-slug">
                             Slug * <span className="text-[var(--text-muted)] opacity-70">(URL)</span>
                         </label>
                         <input
+                            id="post-slug"
                             type="text"
                             value={form.slug}
                             onChange={handleSlugChange}
@@ -474,8 +723,9 @@ export default function BitacoraPostEditor() {
 
                     {/* Fecha */}
                     <div>
-                        <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Fecha de publicación</label>
+                        <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5" htmlFor="post-date">Fecha de publicación</label>
                         <input
+                            id="post-date"
                             type="date"
                             value={form.date}
                             onChange={handleChange('date')}
@@ -485,10 +735,11 @@ export default function BitacoraPostEditor() {
 
                     {/* Tags */}
                     <div className="lg:col-span-2">
-                        <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">
+                        <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5" htmlFor="post-tags">
                             Tags <span className="text-[var(--text-muted)] opacity-70">(separados por coma)</span>
                         </label>
                         <input
+                            id="post-tags"
                             type="text"
                             value={form.tags}
                             onChange={handleChange('tags')}
@@ -501,8 +752,9 @@ export default function BitacoraPostEditor() {
 
                     {/* Excerpt */}
                     <div className="lg:col-span-2">
-                        <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Resumen / excerpt</label>
+                        <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5" htmlFor="post-excerpt">Resumen / excerpt</label>
                         <textarea
+                            id="post-excerpt"
                             value={form.excerpt}
                             onChange={handleChange('excerpt')}
                             rows={2}
@@ -630,6 +882,53 @@ export default function BitacoraPostEditor() {
                         />
                     </Suspense>
                 </div>
+
+                <TemplatePicker activeTemplateKey={activeTemplateKey} onApplyTemplate={handleApplyTemplate} />
+
+                <EditorialChecklist form={form} wordCount={wordCount} />
+
+                {isEdit && (
+                    <div className="space-y-3 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-5">
+                        <div className="flex items-center justify-between gap-3">
+                            <div>
+                                <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">Revisiones</p>
+                                <p className="mt-1 text-xs text-[var(--text-muted)]">Cada guardado y autoguardado crea un snapshot por post para restaurar rapido si algo sale mal.</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => loadRevisions(editSlug)}
+                                className="rounded-lg border border-[var(--border-default)] px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                            >
+                                Recargar
+                            </button>
+                        </div>
+
+                        {loadingRevisions ? (
+                            <p className="text-xs text-[var(--text-muted)]">Cargando revisiones...</p>
+                        ) : revisions.length === 0 ? (
+                            <p className="text-xs text-[var(--text-muted)]">Todavia no hay revisiones persistidas para este post.</p>
+                        ) : (
+                            <div className="grid gap-2">
+                                {revisions.map(item => (
+                                    <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] px-4 py-3">
+                                        <div>
+                                            <p className="text-sm font-medium text-[var(--text-primary)]">Revision {item.revision} · {formatRevisionLabel(item)}</p>
+                                            <p className="mt-1 text-xs text-[var(--text-muted)]">{new Date(item.createdAt).toLocaleString('es-ES')}</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRestoreRevision(item)}
+                                            disabled={saving || item.revision === revision}
+                                            className="rounded-lg border border-fuchsia-500/30 px-3 py-1.5 text-xs font-semibold text-fuchsia-400 hover:bg-fuchsia-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            Restaurar
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* ── SEO Profesional ───────────────────────────────────────── */}
                 <div className="space-y-4 p-5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-default)]">

@@ -910,7 +910,7 @@ export const DocumentAttachmentExtension = Node.create({
             },
         };
     },
-    parseHTML() { return [{ tag: 'div[data-document]' }]; },
+    parseHTML() { return [{ tag: 'div[data-document]' }, { tag: 'div[data-block="document"]' }]; },
     renderHTML({ node, HTMLAttributes }) {
         const isPdf = node.attrs.fileType === 'pdf';
         const mode = node.attrs.displayMode || (isPdf ? 'embed' : 'link');
@@ -928,10 +928,14 @@ export const DocumentAttachmentExtension = Node.create({
         ].filter(Boolean).join(';');
 
         const containerAttrs = mergeAttributes(HTMLAttributes, {
+            'data-block': 'document',
+            'data-version': '1',
             'data-document': '',
             'data-src': node.attrs.src,
+            'data-title': node.attrs.filename,
             'data-filename': node.attrs.filename,
             'data-file-type': node.attrs.fileType,
+            'data-display': mode,
             'data-display-mode': mode,
             'data-embed-height': String(height),
             ...(node.attrs.textAlign && { 'data-align': node.attrs.textAlign }),
@@ -982,9 +986,30 @@ export const DocumentAttachmentExtension = Node.create({
 });
 
 // ─── ImageGrid — contenedor grid para imágenes ───────────────────────────────
+function normalizeImageGridItem(item) {
+    if (typeof item === 'string') {
+        return { src: item, alt: '', caption: '' };
+    }
+
+    if (item && typeof item === 'object') {
+        return {
+            src: typeof item.src === 'string' ? item.src : '',
+            alt: typeof item.alt === 'string' ? item.alt : '',
+            caption: typeof item.caption === 'string' ? item.caption : '',
+        };
+    }
+
+    return { src: '', alt: '', caption: '' };
+}
+
+function normalizeImageGridItems(items) {
+    if (!Array.isArray(items)) return [];
+    return items.map(normalizeImageGridItem).filter(item => item.src);
+}
+
 function ImageGridView({ node, updateAttributes, selected }) {
     const cols = node.attrs.cols || 2;
-    const images = node.attrs.images || [];
+    const images = normalizeImageGridItems(node.attrs.images);
     const { token } = useAuth();
     const fileRef = useRef(null);
     const [uploadIdx, setUploadIdx] = useState(null);
@@ -1011,9 +1036,9 @@ function ImageGridView({ node, updateAttributes, selected }) {
             const { url } = await res.json();
             const next = [...images];
             if (uploadIdx !== null && uploadIdx < next.length) {
-                next[uploadIdx] = url;
+                next[uploadIdx] = { ...next[uploadIdx], src: url };
             } else {
-                next.push(url);
+                next.push({ src: url, alt: '', caption: '' });
             }
             updateAttributes({ images: next });
         } catch (err) { console.error(err); }
@@ -1041,9 +1066,9 @@ function ImageGridView({ node, updateAttributes, selected }) {
                     </div>
                 )}
                 <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: '8px' }}>
-                    {images.map((src, i) => (
-                        <div key={i} className="relative group rounded-lg overflow-hidden bg-[var(--bg-elevated)] aspect-square">
-                            <img src={src} alt="" className="w-full h-full object-cover" />
+                    {images.map((image, i) => (
+                        <div key={`${image.src}-${i}`} className="relative group rounded-lg overflow-hidden bg-[var(--bg-elevated)] aspect-square">
+                            <img src={image.src} alt={image.alt || ''} className="w-full h-full object-cover" />
                             {selected && (
                                 <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button type="button" onClick={() => openPicker(i)}
@@ -1071,6 +1096,37 @@ function ImageGridView({ node, updateAttributes, selected }) {
                     </button>
                 </div>
                 <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+                {selected && images.length > 0 && (
+                    <div className="mt-3 space-y-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-elevated)]/60 p-3">
+                        <p className="text-[10px] uppercase tracking-[0.24em] text-[var(--text-muted)]">Metadata de imagen</p>
+                        {images.map((image, index) => (
+                            <div key={`${image.src}-meta-${index}`} className="grid gap-2 md:grid-cols-2">
+                                <input
+                                    type="text"
+                                    value={image.alt || ''}
+                                    onChange={(event) => {
+                                        const next = [...images];
+                                        next[index] = { ...next[index], alt: event.target.value };
+                                        updateAttributes({ images: next });
+                                    }}
+                                    placeholder={`Alt imagen ${index + 1}`}
+                                    className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)]/80 px-3 py-2 text-xs text-[var(--text-primary)] outline-none focus:border-fuchsia-500"
+                                />
+                                <input
+                                    type="text"
+                                    value={image.caption || ''}
+                                    onChange={(event) => {
+                                        const next = [...images];
+                                        next[index] = { ...next[index], caption: event.target.value };
+                                        updateAttributes({ images: next });
+                                    }}
+                                    placeholder={`Caption imagen ${index + 1}`}
+                                    className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)]/80 px-3 py-2 text-xs text-[var(--text-primary)] outline-none focus:border-fuchsia-500"
+                                />
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </NodeViewWrapper>
     );
@@ -1091,23 +1147,28 @@ export const ImageGridExtension = Node.create({
             images: {
                 default: [],
                 parseHTML: el => {
-                    try { return JSON.parse(el.getAttribute('data-images') || '[]'); }
+                    try { return normalizeImageGridItems(JSON.parse(el.getAttribute('data-images') || '[]')); }
                     catch { return []; }
                 },
-                renderHTML: attrs => ({ 'data-images': JSON.stringify(attrs.images || []) }),
+                renderHTML: attrs => ({ 'data-images': JSON.stringify(normalizeImageGridItems(attrs.images)) }),
             },
         };
     },
-    parseHTML() { return [{ tag: 'div[data-image-grid]' }]; },
+    parseHTML() { return [{ tag: 'div[data-image-grid]' }, { tag: 'div[data-block="image-grid"]' }]; },
     renderHTML({ node, HTMLAttributes }) {
         const cols = node.attrs.cols || 2;
-        const images = node.attrs.images || [];
+        const images = normalizeImageGridItems(node.attrs.images);
         const gridStyle = `display:grid;grid-template-columns:repeat(${cols},1fr);gap:8px;margin:1.5em 0`;
-        const children = images.map(src => ['div', { style: 'border-radius:8px;overflow:hidden;aspect-ratio:1' },
-            ['img', { src, alt: '', style: 'width:100%;height:100%;object-fit:cover', loading: 'lazy' }],
-        ]);
+        const children = images.map(image => ['figure', { style: 'border-radius:8px;overflow:hidden;aspect-ratio:1;background:rgba(15,23,42,0.08);margin:0' },
+            ['img', { src: image.src, alt: image.alt || '', style: 'width:100%;height:100%;object-fit:cover', loading: 'lazy' }],
+            image.caption || image.alt ? ['figcaption', { style: 'padding:8px 10px;font-size:12px;line-height:1.5;color:var(--text-muted,#94a3b8);border-top:1px solid rgba(148,163,184,0.18)' }, image.caption || image.alt] : null,
+        ].filter(Boolean));
         return ['div', mergeAttributes(HTMLAttributes, {
+            'data-block': 'image-grid',
+            'data-version': '1',
             'data-image-grid': '',
+            'data-columns': cols,
+            'data-images': JSON.stringify(images),
             style: gridStyle,
             ...(node.attrs.textAlign && { 'data-align': node.attrs.textAlign }),
         }), ...children];

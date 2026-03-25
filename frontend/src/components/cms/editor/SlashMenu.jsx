@@ -95,7 +95,7 @@ export default function SlashMenu({ editor, coords, query, onClose, onAction }) 
             hr:           () => editor.chain().focus().setHorizontalRule().run(),
             codeBlock:    () => editor.chain().focus().setCodeBlock().run(),
             code:         () => editor.chain().focus().toggleCode().run(),
-            terminal:     () => editor.chain().focus().setCodeBlock().updateAttributes('codeBlock', { language: 'bash' }).run(),
+            terminal:     () => editor.chain().focus().setCodeBlock().updateAttributes('codeBlock', { language: 'bash', variant: 'terminal', filename: 'terminal', title: 'Comandos' }).run(),
             table:        () => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
             'callout-tip':     () => editor.chain().focus().insertCallout('tip').run(),
             'callout-warning': () => editor.chain().focus().insertCallout('warning').run(),

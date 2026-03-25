@@ -4,6 +4,8 @@
  */
 
 import DocumentEmbed from './DocumentEmbed';
+import ImageGridBlock from './renderers/ImageGridBlock';
+import { parseImageGridPayload } from './renderers/imageGridPayload';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -139,6 +141,25 @@ function buildMarkdownComponents() {
         );
 
         return alignClass ? <div className={alignClass}>{embed}</div> : embed;
+      }
+
+      if (props['data-image-grid'] !== undefined || props['data-block'] === 'image-grid') {
+        const align = props['data-align'];
+        const alignClass =
+          align === 'center'
+            ? 'flex justify-center'
+            : align === 'right'
+              ? 'flex justify-end'
+              : '';
+
+        const grid = (
+          <ImageGridBlock
+            columns={Number(props['data-columns'] || props['data-cols']) || 2}
+            images={parseImageGridPayload(props['data-images'])}
+          />
+        );
+
+        return alignClass ? <div className={alignClass}>{grid}</div> : grid;
       }
 
       return <div {...props} />;

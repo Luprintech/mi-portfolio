@@ -1,5 +1,54 @@
+import { sanitizeHtml } from './sanitizeHtml.js';
+
 const SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const HTTP_URL_REGEX = /^https?:\/\//i;
+const HTML_TAG_REGEX = /<\/?[a-z][\s\S]*>/i;
+
+function looksLikeHtml(value) {
+    return HTML_TAG_REGEX.test(String(value || ''));
+}
+
+function normalizeFormat(value) {
+    if (value === undefined || value === null || value === '') return '';
+    const normalized = String(value).trim().toLowerCase();
+    return ['html', 'markdown'].includes(normalized) ? normalized : null;
+}
+
+function collectBlockValidationErrors(content, errors) {
+    const imageGridMatches = content.matchAll(/<div[^>]*(?:data-block="image-grid"|data-image-grid)[^>]*>/gi);
+    for (const match of imageGridMatches) {
+        const tag = match[0];
+        const imagesRaw = tag.match(/data-images="([^"]*)"/i)?.[1] || '[]';
+        const columnsRaw = tag.match(/data-columns="([^"]*)"/i)?.[1] || tag.match(/data-cols="([^"]*)"/i)?.[1] || '2';
+
+        try {
+            const parsed = JSON.parse(imagesRaw.replace(/&quot;/g, '"'));
+            if (!Array.isArray(parsed)) {
+                errors.push('El bloque imageGrid debe incluir una lista valida de imagenes.');
+                break;
+            }
+        } catch {
+            errors.push('El bloque imageGrid tiene un data-images invalido.');
+            break;
+        }
+
+        if (![2, 3, 4].includes(Number(columnsRaw) || 0)) {
+            errors.push('El bloque imageGrid tiene una configuracion de columnas invalida.');
+            break;
+        }
+    }
+
+    const documentMatches = content.matchAll(/<div[^>]*(?:data-block="document"|data-document)[^>]*>/gi);
+    for (const match of documentMatches) {
+        const tag = match[0];
+        const src = tag.match(/data-src="([^"]*)"/i)?.[1] || '';
+        const filename = tag.match(/data-filename="([^"]*)"/i)?.[1] || tag.match(/data-title="([^"]*)"/i)?.[1] || '';
+        if (!src || !filename) {
+            errors.push('El bloque de documento requiere data-src y nombre de archivo.');
+            break;
+        }
+    }
+}
 
 function isPlainObject(value) {
     return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -20,6 +69,13 @@ function normalizeBoolean(value, defaultValue = false) {
         if (value.toLowerCase() === 'false') return false;
     }
     return defaultValue;
+}
+
+function normalizeRevision(value) {
+    if (value === undefined) return undefined;
+    const parsed = Number(value);
+    if (!Number.isInteger(parsed) || parsed < 0) return null;
+    return parsed;
 }
 
 function normalizeList(value, { maxItems, maxLengthPerItem }) {
@@ -111,11 +167,33 @@ export function sanitizePostInput(input, { partial = false } = {}) {
         else data.slug = slug;
     }
 
-    if (!partial || input.content !== undefined) {
-        const content = typeof input.content === 'string' ? input.content.trim() : '';
-        if (!content) errors.push('El contenido es obligatorio.');
-        else if (content.length > 150000) errors.push('El contenido es demasiado largo.');
-        else data.content = content;
+    const shouldValidateContent = !partial || input.content !== undefined || input.contentHtml !== undefined || input.legacyMarkdown !== undefined || input.format !== undefined;
+    if (shouldValidateContent) {
+        const rawFormat = normalizeFormat(input.format);
+        if (rawFormat === null) {
+            errors.push('El formato del contenido no es valido.');
+        } else {
+            const fallbackContent = typeof input.content === 'string' ? input.content.trim() : '';
+            const rawHtml = typeof input.contentHtml === 'string' ? input.contentHtml.trim() : '';
+            const rawLegacy = typeof input.legacyMarkdown === 'string' ? input.legacyMarkdown.trim() : '';
+            const resolvedFormat = rawFormat || (rawHtml || looksLikeHtml(fallbackContent) ? 'html' : rawLegacy ? 'markdown' : 'html');
+            const resolvedHtml = sanitizeHtml(rawHtml || (resolvedFormat === 'html' ? fallbackContent : ''));
+            const resolvedLegacy = rawLegacy || (resolvedFormat === 'markdown' ? fallbackContent : '');
+            const canonicalContent = resolvedFormat === 'html' ? resolvedHtml : resolvedLegacy;
+
+            if (!canonicalContent) errors.push('El contenido es obligatorio.');
+            else if (canonicalContent.length > 150000) errors.push('El contenido es demasiado largo.');
+            else {
+                if (resolvedFormat === 'html') {
+                    collectBlockValidationErrors(resolvedHtml, errors);
+                }
+
+                data.format = resolvedFormat;
+                data.contentHtml = resolvedFormat === 'html' ? resolvedHtml : '';
+                data.legacyMarkdown = resolvedFormat === 'markdown' ? resolvedLegacy : '';
+                data.content = canonicalContent;
+            }
+        }
     }
 
     if (input.excerpt !== undefined) {
@@ -171,6 +249,12 @@ export function sanitizePostInput(input, { partial = false } = {}) {
     if (input.tocTitles !== undefined) {
         const tocTitles = normalizeTocTitles(input.tocTitles, { maxItems: 12, maxLengthPerTitle: 120 });
         data.tocTitles = tocTitles;
+    }
+
+    if (input.revision !== undefined) {
+        const revision = normalizeRevision(input.revision);
+        if (revision === null) errors.push('La revision no es valida.');
+        else data.revision = revision;
     }
 
     if (!partial || input.status !== undefined) {

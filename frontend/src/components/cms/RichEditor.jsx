@@ -60,7 +60,6 @@ const CustomTableHeader = TableHeader.extend({
         };
     },
 });
-import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import { common, createLowlight } from 'lowlight';
 import Superscript from '@tiptap/extension-superscript';
 import Subscript from '@tiptap/extension-subscript';
@@ -68,9 +67,19 @@ import 'highlight.js/styles/github-dark.css';
 import mermaid from 'mermaid';
 import { useCallback, useRef, useEffect, useState } from 'react';
 import { LineHeight, AccordionExtension, ContentButtonExtension, DocumentAttachmentExtension, ImageGridExtension } from './editor/extensions';
+import { createTechnicalCodeBlockExtension } from './editor/technicalCodeBlockExtension';
 import EmojiPicker from './editor/EmojiPicker';
 import SlashMenu from './editor/SlashMenu';
-import { AUDIO_INPUT_ACCEPT, IMAGE_INPUT_ACCEPT, validateAudioFile, validateImageFile } from '../../lib/mediaUploadPolicy';
+import {
+    AUDIO_INPUT_ACCEPT,
+    DOCUMENT_INPUT_ACCEPT,
+    DOCUMENT_UPLOAD_LABEL,
+    IMAGE_INPUT_ACCEPT,
+    validateAudioFile,
+    validateDocumentFile,
+    validateImageFile,
+} from '../../lib/mediaUploadPolicy';
+import { cmsApi } from '../../lib/cmsApi';
 
 const lowlight = createLowlight(common);
 
@@ -675,6 +684,8 @@ function ToolBtn({ onClick, active, disabled, title, children }) {
             onMouseDown={e => { e.preventDefault(); onClick(); }}
             disabled={disabled}
             title={title}
+            aria-label={title}
+            aria-pressed={active ? 'true' : 'false'}
             className={`flex items-center justify-center w-8 h-8 shrink-0 rounded-lg text-sm transition-all
                 ${active
                     ? 'bg-fuchsia-500/20 text-fuchsia-400 ring-1 ring-fuchsia-500/50'
@@ -690,28 +701,13 @@ function Divider() {
 }
 
 // ─── Upload helpers ───────────────────────────────────────────────────────────
-async function uploadFile(file, token) {
-    const fd = new FormData();
-    fd.append('image', file);
-    const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/bitacora/upload`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: fd,
-    });
-    if (!res.ok) throw new Error('Error al subir fichero');
-    return (await res.json()).url;
+function getUploadErrorMessage(error, fallbackMessage) {
+    return error?.details?.message || error?.message || fallbackMessage;
 }
 
 async function uploadAudioFile(file, token) {
-    const fd = new FormData();
-    fd.append('audio', file);
-    const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/bitacora/upload-audio`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: fd,
-    });
-    if (!res.ok) throw new Error('Error al subir audio');
-    return (await res.json()).url;
+    const uploaded = await cmsApi.uploadAudio(token, file);
+    return uploaded.url;
 }
 
 const FONT_SIZES = ['12px','14px','16px','18px','20px','24px','28px','32px','36px','48px'];
@@ -737,6 +733,11 @@ const CODE_LANGUAGES = [
     { value: 'rust', label: 'Rust' },
     { value: 'php', label: 'PHP' },
     { value: 'ruby', label: 'Ruby' },
+];
+
+const CODE_VARIANTS = [
+    { value: 'plain', label: 'Snippet' },
+    { value: 'terminal', label: 'Terminal' },
 ];
 
 // ─── RichEditor ───────────────────────────────────────────────────────────────
@@ -789,7 +790,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
     const editor = useEditor({
         extensions: [
             StarterKit.configure({ codeBlock: false }),
-            CodeBlockLowlight.configure({ lowlight, defaultLanguage: 'javascript' }),
+            createTechnicalCodeBlockExtension(lowlight),
             Underline,
             TextStyleKit,
             Highlight.configure({ multicolor: true }),
@@ -899,10 +900,11 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
         setUploading(true);
         setUploadError('');
         try {
-            const url = await uploadFile(file, token);
+            const uploaded = await cmsApi.uploadImage(token, file);
+            const url = uploaded.url;
             editor?.chain().focus().setImage({ src: url, alt: file.name.replace(/\.[^.]+$/, '') }).run();
         } catch (err) {
-            setUploadError(err.message || 'No se ha podido subir la imagen.');
+            setUploadError(getUploadErrorMessage(err, 'No se ha podido subir la imagen.'));
             console.error(err);
         }
         finally { setUploading(false); }
@@ -948,7 +950,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             const url = await uploadAudioFile(file, token);
             editor?.commands.insertAudio({ src: url, title: file.name });
         } catch (err) {
-            setUploadError(err.message || 'No se ha podido subir el audio.');
+            setUploadError(getUploadErrorMessage(err, 'No se ha podido subir el audio.'));
             console.error(err);
         }
         finally { setUploading(false); e.target.value = ''; }
@@ -982,24 +984,26 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
     async function handleDocumentUpload(e) {
         const file = e.target.files?.[0];
         if (!file || !token) return;
+        const validationError = validateDocumentFile(file);
+        if (validationError) {
+            setUploadError(validationError);
+            e.target.value = '';
+            return;
+        }
         setUploading(true);
+        setUploadError('');
         try {
-            const fd = new FormData();
-            fd.append('document', file);
-            const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/bitacora/upload-document`, {
-                method: 'POST',
-                headers: { Authorization: `Bearer ${token}` },
-                body: fd,
-            });
-            if (!res.ok) throw new Error('Error al subir documento');
-            const data = await res.json();
+            const data = await cmsApi.uploadDocument(token, file);
             editor?.commands.insertDocument({
                 src: data.url,
                 filename: data.filename,
                 fileType: data.fileType,
                 fileSize: data.fileSize,
             });
-        } catch (err) { console.error(err); }
+        } catch (err) {
+            setUploadError(getUploadErrorMessage(err, 'No se ha podido subir el documento.'));
+            console.error(err);
+        }
         finally { setUploading(false); e.target.value = ''; }
     }
 
@@ -1408,7 +1412,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             {/* ── TOOLBAR CONTEXTUAL DE CODE BLOCK ───────────────────────── */}
             {editor.isActive('codeBlock') && (
                 <div className="flex flex-wrap items-center gap-2 px-3 py-1.5 border-b border-[var(--border-color)] bg-[var(--bg-elevated)] text-xs">
-                    <span className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mr-1">Código:</span>
+                    <span className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mr-1">Codigo:</span>
                     <select
                         className="h-7 px-2 rounded bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-secondary)] text-xs focus:outline-none focus:border-fuchsia-500/60 cursor-pointer"
                         value={editor.getAttributes('codeBlock').language || 'javascript'}
@@ -1416,6 +1420,27 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                     >
                         {CODE_LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
                     </select>
+                    <select
+                        className="h-7 px-2 rounded bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-secondary)] text-xs focus:outline-none focus:border-fuchsia-500/60 cursor-pointer"
+                        value={editor.getAttributes('codeBlock').variant || 'plain'}
+                        onChange={e => editor.chain().focus().updateAttributes('codeBlock', { variant: e.target.value }).run()}
+                    >
+                        {CODE_VARIANTS.map(variant => <option key={variant.value} value={variant.value}>{variant.label}</option>)}
+                    </select>
+                    <input
+                        type="text"
+                        value={editor.getAttributes('codeBlock').filename || ''}
+                        onChange={e => editor.chain().focus().updateAttributes('codeBlock', { filename: e.target.value }).run()}
+                        placeholder="archivo.ext"
+                        className="h-7 min-w-[120px] rounded border border-[var(--border-color)] bg-[var(--bg-primary)] px-2 text-xs text-[var(--text-secondary)] outline-none focus:border-fuchsia-500/60"
+                    />
+                    <input
+                        type="text"
+                        value={editor.getAttributes('codeBlock').title || ''}
+                        onChange={e => editor.chain().focus().updateAttributes('codeBlock', { title: e.target.value }).run()}
+                        placeholder="Titulo opcional"
+                        className="h-7 min-w-[160px] rounded border border-[var(--border-color)] bg-[var(--bg-primary)] px-2 text-xs text-[var(--text-secondary)] outline-none focus:border-fuchsia-500/60"
+                    />
                     <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().toggleCodeBlock().run(); }}
                         className="px-2 py-1 rounded hover:bg-red-500/10 text-red-400 transition-colors ml-auto">Quitar bloque</button>
                 </div>
@@ -1504,6 +1529,12 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                 </div>
             )}
 
+            {!uploadError && uploading && (
+                <div className="mx-4 mt-3 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-sm text-cyan-300">
+                    Subiendo archivo al CMS...
+                </div>
+            )}
+
             {/* ── ÁREA DE EDICIÓN ──────────────────────────────────────────── */}
             <div
                 className={`flex-1 overflow-y-auto bg-[var(--bg-primary)] focus-within:outline-none ${markdownMode ? 'hidden' : ''}`}
@@ -1547,8 +1578,14 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             {markdownMode && (
                 <div className="flex-1 bg-[var(--bg-primary)]" style={{ minHeight: fullscreen ? 'calc(100vh - 120px)' : '420px' }}>
                     <textarea
+                        aria-label="Editor HTML source"
+                        data-testid="cms-html-source"
                         value={markdownSource}
-                        onChange={e => setMarkdownSource(e.target.value)}
+                        onChange={e => {
+                            const nextValue = e.target.value;
+                            setMarkdownSource(nextValue);
+                            onChange(nextValue);
+                        }}
                         className="w-full h-full min-h-[420px] p-6 bg-transparent text-[var(--text-secondary)] font-mono text-sm leading-relaxed outline-none resize-none"
                         placeholder="Edita el código fuente HTML aquí…"
                         spellCheck={false}
@@ -1568,7 +1605,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             )}
 
             {/* Hidden inputs */}
-            <input ref={docInputRef} type="file" accept=".pdf,.zip,.docx,.doc" className="hidden" onChange={handleDocumentUpload} />
+            <input ref={docInputRef} type="file" accept={DOCUMENT_INPUT_ACCEPT} className="hidden" onChange={handleDocumentUpload} />
 
             {/* ── STATUS BAR ───────────────────────────────────────────────── */}
             <div className="flex items-center justify-between px-4 py-2 border-t border-[var(--border-color)] bg-[var(--bg-surface)] text-xs text-[var(--text-muted)] rounded-b-2xl">
@@ -1578,6 +1615,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                 </div>
                 <div className="flex items-center gap-2">
                     {markdownMode && <span className="text-cyan-400 font-medium">HTML Source</span>}
+                    <span className="text-[var(--text-muted)] opacity-60">Docs: {DOCUMENT_UPLOAD_LABEL}</span>
                     <span className="text-[var(--text-muted)] opacity-60">Tip: escribe "/" para insertar bloques</span>
                 </div>
             </div>

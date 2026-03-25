@@ -3,11 +3,11 @@ import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import { ChevronUp, ArrowRight } from 'lucide-react';
-import { sanitizePostContent } from '../lib/postContentSanitizer';
 import { buildShareLinks, extractHeadings } from '../components/blog/markdownComponents';
 import { usePost } from '../hooks/usePost';
 import { useReadingProgress } from '../hooks/useReadingProgress';
 import { useActiveHeading } from '../hooks/useActiveHeading';
+import { inferPostContentFields } from '../lib/postContentSource';
 import PostSkeleton from '../components/blog/PostSkeleton';
 import PostHeader from '../components/blog/PostHeader';
 import PostContent from '../components/blog/PostContent';
@@ -21,8 +21,8 @@ const BlogPost = () => {
   const { postMeta, content, loading, error } = usePost(slug);
   const { readProgress, showScrollTop } = useReadingProgress();
 
-  const sanitizedContent = useMemo(() => sanitizePostContent(content), [content]);
-  const headings = useMemo(() => extractHeadings(content), [content]);
+  const resolvedContent = useMemo(() => inferPostContentFields(postMeta || { content }), [postMeta, content]);
+  const headings = useMemo(() => extractHeadings(resolvedContent.sourceContent), [resolvedContent.sourceContent]);
   const hasToc = headings.length >= 3;
 
   const activeHeadingId = useActiveHeading(headings, hasToc);
@@ -113,7 +113,7 @@ const BlogPost = () => {
 
             <div className="order-1 min-w-0">
               <div className="mx-auto max-w-3xl">
-                <PostContent sanitizedContent={sanitizedContent} />
+                <PostContent post={postMeta} />
                 <ShareButtons postMeta={postMeta} />
 
                 {/* CTA — Seguir leyendo */}
