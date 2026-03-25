@@ -3,6 +3,7 @@ import { Node, Extension, mergeAttributes } from '@tiptap/core';
 import { ReactNodeViewRenderer, NodeViewWrapper, NodeViewContent } from '@tiptap/react';
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
+import { normalizeContentLinkHref, resolveContentLinkAttributes } from '../../../lib/contentLinkUtils';
 
 // ─── LineHeight — control de interlineado ─────────────────────────────────────
 export const LineHeight = Extension.create({
@@ -159,6 +160,12 @@ function buildButtonStyle(attrs) {
     return style;
 }
 
+function resolveFloatingBlockAlignment(value) {
+    if (value === 'center') return { display: 'flex', justifyContent: 'center' };
+    if (value === 'right') return { display: 'flex', justifyContent: 'flex-end' };
+    return undefined;
+}
+
 function ContentButtonView({ node, updateAttributes, selected }) {
     const hasCustomColor = !!node.attrs.bgColor;
     const variantClass = hasCustomColor ? '' : (VARIANT_STYLES[node.attrs.variant] || VARIANT_STYLES.primary);
@@ -255,7 +262,7 @@ function ContentButtonView({ node, updateAttributes, selected }) {
     } : {};
 
     return (
-        <NodeViewWrapper className="my-4" data-drag-handle style={node.attrs.textAlign && node.attrs.textAlign !== 'left' ? { display: 'flex', justifyContent: node.attrs.textAlign === 'center' ? 'center' : 'flex-end' } : undefined}>
+        <NodeViewWrapper className="my-4" data-drag-handle style={resolveFloatingBlockAlignment(node.attrs.textAlign)}>
             <div className={`group/cta relative inline-block ${selected ? 'ring-2 ring-fuchsia-500 ring-offset-2 ring-offset-transparent rounded-xl p-2' : ''}`}>
                 {/* Drag handle */}
                 <div
@@ -267,9 +274,11 @@ function ContentButtonView({ node, updateAttributes, selected }) {
                     <svg className="w-4 h-4 text-[var(--text-muted)]" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
                 </div>
                 <a
-                    href={node.attrs.documentUrl || node.attrs.href}
-                    target={node.attrs.documentUrl ? '_self' : (node.attrs.newTab ? '_blank' : '_self')}
-                    rel="noopener noreferrer"
+                    {...resolveContentLinkAttributes({
+                        href: node.attrs.documentUrl || node.attrs.href,
+                        target: node.attrs.documentUrl ? '_self' : (node.attrs.newTab ? '_blank' : '_self'),
+                        rel: 'noopener noreferrer',
+                    })}
                     {...(node.attrs.documentUrl ? { download: node.attrs.documentFilename || '' } : {})}
                     className={`inline-block px-6 py-3 text-sm transition-all cursor-pointer ${variantClass} ${!hasCustomColor ? 'rounded-xl font-semibold' : ''}`}
                     style={{
@@ -326,12 +335,36 @@ function ContentButtonView({ node, updateAttributes, selected }) {
                             </div>
                             <div>
                                 <label className="text-[10px] uppercase text-[var(--text-muted)] tracking-wider block mb-1">Enlace</label>
-                                <input
-                                    value={node.attrs.href}
-                                    onChange={e => updateAttributes({ href: e.target.value })}
-                                    placeholder="https://…"
-                                    className="w-full px-3 py-1.5 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-primary)] outline-none focus:border-fuchsia-500/60"
-                                />
+                                    <input
+                                        value={node.attrs.href}
+                                        onChange={e => updateAttributes({ href: normalizeContentLinkHref(e.target.value) })}
+                                        placeholder="https://…"
+                                        className="w-full px-3 py-1.5 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-primary)] outline-none focus:border-fuchsia-500/60"
+                                    />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="text-[10px] uppercase text-[var(--text-muted)] tracking-wider block mb-1.5">Posicion en el contenido</label>
+                            <div className="flex gap-1.5">
+                                {[
+                                    { key: 'left', label: 'Izquierda' },
+                                    { key: 'center', label: 'Centrado' },
+                                    { key: 'right', label: 'Derecha' },
+                                ].map(option => (
+                                    <button
+                                        key={option.key}
+                                        type="button"
+                                        onClick={() => updateAttributes({ textAlign: option.key })}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                                            (node.attrs.textAlign || 'left') === option.key
+                                                ? 'bg-fuchsia-500 text-white'
+                                                : 'bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-secondary)]'
+                                        }`}
+                                    >
+                                        {option.label}
+                                    </button>
+                                ))}
                             </div>
                         </div>
 
@@ -585,11 +618,13 @@ export const ContentButtonExtension = Node.create({
         if (node.attrs.rounded)   style.push(`border-radius:${node.attrs.rounded}px`);
         const htmlAttrs = {
             'data-content-button': '',
-            href: node.attrs.documentUrl || node.attrs.href,
-            target: node.attrs.documentUrl ? '_self' : (node.attrs.newTab ? '_blank' : '_self'),
-            rel: 'noopener noreferrer',
             class: `content-button content-button--${node.attrs.variant || 'custom'}`,
             style: style.join(';'),
+            ...resolveContentLinkAttributes({
+                href: node.attrs.documentUrl || node.attrs.href,
+                target: node.attrs.documentUrl ? '_self' : (node.attrs.newTab ? '_blank' : '_self'),
+                rel: 'noopener noreferrer',
+            }),
         };
         if (node.attrs.textAlign) htmlAttrs['data-align'] = node.attrs.textAlign;
         if (node.attrs.documentUrl) htmlAttrs.download = node.attrs.documentFilename || '';

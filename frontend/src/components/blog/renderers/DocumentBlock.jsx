@@ -39,6 +39,11 @@ export default function DocumentBlock({
   const shouldEmbed = isPdf && display === 'embed' && !isMobile;
   const resolvedName = title || filename || 'Documento adjunto';
   const label = FILE_LABELS[normalizedType] || 'FILE';
+  const description = isPdf
+    ? isMobile
+      ? 'Abrilo o descargalo en una pestaña aparte para verlo con comodidad.'
+      : 'Vista previa disponible aqui y acceso directo al archivo completo.'
+    : `Archivo ${label} disponible para descarga.`;
 
   if (!src) return null;
 
@@ -67,13 +72,7 @@ export default function DocumentBlock({
             </span>
           </div>
           <p className="truncate text-base font-semibold text-[var(--text-primary)]">{resolvedName}</p>
-          <p className="mt-1 text-sm leading-6 text-[var(--text-muted)]">
-            {isPdf
-              ? isMobile
-                ? 'En mobile priorizamos apertura directa o descarga para evitar un visor roto o ilegible.'
-                : 'El PDF se incrusta en desktop y mantiene acciones directas para abrirlo completo.'
-              : `Archivo ${label} disponible para descarga.`}
-          </p>
+          <p className="mt-1 text-sm leading-6 text-[var(--text-muted)]">{description}</p>
         </div>
 
         <div className="flex flex-wrap gap-3">

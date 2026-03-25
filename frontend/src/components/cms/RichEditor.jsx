@@ -21,16 +21,26 @@ const CustomTableCell = TableCell.extend({
                 default: null,
                 parseHTML: el => el.style.backgroundColor || el.getAttribute('data-bg') || null,
                 renderHTML: attrs => {
-                    if (!attrs.backgroundColor) return {};
-                    return { style: `background-color: ${attrs.backgroundColor}`, 'data-bg': attrs.backgroundColor };
+                    const style = [];
+                    if (attrs.backgroundColor) style.push(`background-color: ${attrs.backgroundColor}`);
+                    if (attrs.borderColor) style.push(`border-color: ${attrs.borderColor}`);
+                    return {
+                        ...(style.length ? { style: style.join(';') } : {}),
+                        ...(attrs.backgroundColor ? { 'data-bg': attrs.backgroundColor } : {}),
+                    };
                 },
             },
             borderColor: {
                 default: null,
-                parseHTML: el => el.getAttribute('data-border-color') || null,
+                parseHTML: el => el.style.borderColor || el.getAttribute('data-border-color') || null,
                 renderHTML: attrs => {
-                    if (!attrs.borderColor) return {};
-                    return { style: `border-color: ${attrs.borderColor}`, 'data-border-color': attrs.borderColor };
+                    const style = [];
+                    if (attrs.backgroundColor) style.push(`background-color: ${attrs.backgroundColor}`);
+                    if (attrs.borderColor) style.push(`border-color: ${attrs.borderColor}`);
+                    return {
+                        ...(style.length ? { style: style.join(';') } : {}),
+                        ...(attrs.borderColor ? { 'data-border-color': attrs.borderColor } : {}),
+                    };
                 },
             },
         };
@@ -45,16 +55,26 @@ const CustomTableHeader = TableHeader.extend({
                 default: null,
                 parseHTML: el => el.style.backgroundColor || el.getAttribute('data-bg') || null,
                 renderHTML: attrs => {
-                    if (!attrs.backgroundColor) return {};
-                    return { style: `background-color: ${attrs.backgroundColor}`, 'data-bg': attrs.backgroundColor };
+                    const style = [];
+                    if (attrs.backgroundColor) style.push(`background-color: ${attrs.backgroundColor}`);
+                    if (attrs.borderColor) style.push(`border-color: ${attrs.borderColor}`);
+                    return {
+                        ...(style.length ? { style: style.join(';') } : {}),
+                        ...(attrs.backgroundColor ? { 'data-bg': attrs.backgroundColor } : {}),
+                    };
                 },
             },
             borderColor: {
                 default: null,
-                parseHTML: el => el.getAttribute('data-border-color') || null,
+                parseHTML: el => el.style.borderColor || el.getAttribute('data-border-color') || null,
                 renderHTML: attrs => {
-                    if (!attrs.borderColor) return {};
-                    return { style: `border-color: ${attrs.borderColor}`, 'data-border-color': attrs.borderColor };
+                    const style = [];
+                    if (attrs.backgroundColor) style.push(`background-color: ${attrs.backgroundColor}`);
+                    if (attrs.borderColor) style.push(`border-color: ${attrs.borderColor}`);
+                    return {
+                        ...(style.length ? { style: style.join(';') } : {}),
+                        ...(attrs.borderColor ? { 'data-border-color': attrs.borderColor } : {}),
+                    };
                 },
             },
         };

@@ -1,10 +1,20 @@
 import { createElement, Fragment, useMemo } from 'react';
 import { sanitizePostContent } from '../../../lib/postContentSanitizer';
+import { resolveContentLinkAttributes } from '../../../lib/contentLinkUtils';
 import { slugifyHeading } from '../markdownComponents';
 import DocumentBlock from './DocumentBlock';
 import ImageGridBlock from './ImageGridBlock';
 import CodeBlock from './CodeBlock';
 import { parseImageGridPayload } from './imageGridPayload';
+
+function joinClassNames(...values) {
+  return values.filter(Boolean).join(' ');
+}
+
+function normalizeBlockAlignment(value = '') {
+  if (value === 'center' || value === 'right') return value;
+  return 'left';
+}
 
 function parseStyle(styleText = '') {
   return styleText.split(';').reduce((acc, chunk) => {
@@ -13,7 +23,7 @@ function parseStyle(styleText = '') {
     const key = rawKey.trim().replace(/-([a-z])/g, (_, char) => char.toUpperCase());
     const value = rawValue.trim();
     if (!key || !value) return acc;
-    if (['textAlign', 'background', 'color', 'fontWeight', 'fontStyle', 'textDecoration', 'textTransform', 'fontSize', 'borderRadius', 'boxShadow'].includes(key)) {
+    if (['textAlign', 'background', 'backgroundColor', 'borderColor', 'color', 'fontWeight', 'fontStyle', 'textDecoration', 'textTransform', 'fontSize', 'borderRadius', 'boxShadow'].includes(key)) {
       acc[key] = value;
     }
     return acc;
@@ -31,6 +41,12 @@ function getElementProps(node, extra = {}) {
     else if (!attr.name.startsWith('data-')) props[attr.name] = attr.value;
   }
   return props;
+}
+
+function getBlockWrapperClassName(alignment) {
+  if (alignment === 'center') return 'flex justify-center';
+  if (alignment === 'right') return 'flex justify-end';
+  return '';
 }
 
 function renderChildren(node, path) {
@@ -67,16 +83,18 @@ function renderNode(node, path) {
   const dataBlock = node.getAttribute('data-block');
 
   if (dataBlock === 'document' || node.hasAttribute('data-document')) {
+    const alignment = normalizeBlockAlignment(node.getAttribute('data-align'));
     return (
-      <DocumentBlock
-        key={path}
-        src={node.getAttribute('data-src') || ''}
-        title={node.getAttribute('data-title') || ''}
-        filename={node.getAttribute('data-filename') || ''}
-        fileType={node.getAttribute('data-file-type') || ''}
-        display={node.getAttribute('data-display') || node.getAttribute('data-display-mode') || 'embed'}
-        embedHeight={node.getAttribute('data-embed-height') || 560}
-      />
+      <div key={path} className={getBlockWrapperClassName(alignment)}>
+        <DocumentBlock
+          src={node.getAttribute('data-src') || ''}
+          title={node.getAttribute('data-title') || ''}
+          filename={node.getAttribute('data-filename') || ''}
+          fileType={node.getAttribute('data-file-type') || ''}
+          display={node.getAttribute('data-display') || node.getAttribute('data-display-mode') || 'embed'}
+          embedHeight={node.getAttribute('data-embed-height') || 560}
+        />
+      </div>
     );
   }
 
@@ -126,20 +144,39 @@ function renderNode(node, path) {
   }
 
   if (tagName === 'a' && node.hasAttribute('data-content-button')) {
+    const elementProps = getElementProps(node, { key: path });
+    const linkProps = resolveContentLinkAttributes({
+      href: elementProps.href,
+      target: node.getAttribute('target') || '',
+      rel: node.getAttribute('rel') || '',
+    });
+    const alignment = normalizeBlockAlignment(
+      node.getAttribute('data-align') || elementProps.style?.textAlign || ''
+    );
+
     return createElement('a', {
-      ...getElementProps(node, { key: path }),
-      className: 'my-8 inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold no-underline transition-transform hover:-translate-y-0.5',
-      target: node.getAttribute('target') || '_blank',
-      rel: node.getAttribute('rel') || 'noopener noreferrer',
-    }, node.textContent || 'Abrir enlace');
+      ...elementProps,
+      ...linkProps,
+      className: joinClassNames(
+        elementProps.className,
+        'my-8 inline-flex max-w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold no-underline transition-transform hover:-translate-y-0.5'
+      ),
+      'data-content-button': '',
+      ...(alignment !== 'left' ? { 'data-align': alignment } : {}),
+    }, ...renderChildren(node, path));
   }
 
   if (tagName === 'a') {
+    const linkProps = resolveContentLinkAttributes({
+      href: node.getAttribute('href') || '',
+      target: node.getAttribute('target') || '',
+      rel: node.getAttribute('rel') || '',
+    });
+
     return createElement('a', {
       ...getElementProps(node, { key: path }),
+      ...linkProps,
       className: 'font-medium text-[var(--accent-secondary)] underline decoration-[var(--accent-secondary)]/30 underline-offset-4 transition-colors hover:text-[var(--text-primary)]',
-      target: node.getAttribute('target') || '_blank',
-      rel: node.getAttribute('rel') || 'noopener noreferrer',
     }, ...renderChildren(node, path));
   }
 
@@ -150,7 +187,7 @@ function renderNode(node, path) {
   if (tagName === 'hr') return <hr key={path} className="my-10 border-0 border-t border-[var(--border-default)]" />;
   if (tagName === 'table') return <div key={path} className="my-8 overflow-x-auto rounded-[1.2rem] border border-[var(--border-default)]"><table className="min-w-full border-collapse text-left">{renderChildren(node, path)}</table></div>;
   if (tagName === 'thead') return <thead key={path} className="bg-[var(--bg-surface)]/85">{renderChildren(node, path)}</thead>;
-  if (tagName === 'th') return <th key={path} className="border-b border-[var(--border-default)] px-4 py-3 text-sm font-semibold text-[var(--text-primary)]">{renderChildren(node, path)}</th>;
+  if (tagName === 'th') return <th key={path} {...getElementProps(node, { key: path })} className="border-b border-[var(--border-default)] px-4 py-3 text-sm font-semibold text-[var(--text-primary)]">{renderChildren(node, path)}</th>;
   if (tagName === 'td') return <td key={path} {...getElementProps(node, { key: path })} className="border-b border-[var(--border-default)] px-4 py-3 text-justify text-sm leading-7 text-[var(--text-secondary)]">{renderChildren(node, path)}</td>;
   if (tagName === 'pre') return <CodeBlock key={path} {...buildCodeBlockProps(node)} />;
   if (tagName === 'code') {

@@ -62,4 +62,68 @@ describe('HtmlContentRenderer', () => {
     expect(document.body.innerHTML).not.toContain('<script>');
     expect(document.body.innerHTML).not.toContain('javascript:');
   });
+
+  it('preserva variante, estilos y alineacion de los CTA publicados', () => {
+    const { container } = render(
+      <HtmlContentRenderer
+        content={`
+          <a
+            data-content-button
+            data-align="center"
+            class="content-button content-button--primary"
+            href="https://example.com/demo"
+            style="background:#2563eb;color:#ffffff;border-radius:18px;font-size:16px"
+          >Ver demo</a>
+        `}
+      />
+    );
+
+    const cta = screen.getByRole('link', { name: 'Ver demo' });
+    expect(cta).toHaveAttribute('data-content-button');
+    expect(cta).toHaveAttribute('data-align', 'center');
+    expect(cta.className).toContain('content-button--primary');
+    expect(cta.style.background).toBe('rgb(37, 99, 235)');
+    expect(cta.style.borderRadius).toBe('18px');
+    expect(container.querySelector('a[data-content-button][data-align="center"]')).not.toBeNull();
+  });
+
+  it('normaliza enlaces externos de CTA sin protocolo para no romper la redireccion publicada', () => {
+    render(
+      <HtmlContentRenderer
+        content={'<a data-content-button href="www.example.com/demo">Ver demo</a>'}
+      />
+    );
+
+    expect(screen.getByRole('link', { name: 'Ver demo' })).toHaveAttribute('href', 'https://www.example.com/demo');
+  });
+
+  it('preserva estilos semanticos y colores de tablas publicadas', () => {
+    render(
+      <HtmlContentRenderer
+        content={`
+          <table>
+            <thead>
+              <tr>
+                <th style="background-color:#dbeafe;border-color:#2563eb">Plan</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="background-color:#eff6ff;border-color:#60a5fa">Pro</td>
+              </tr>
+            </tbody>
+          </table>
+        `}
+      />
+    );
+
+    expect(screen.getByRole('columnheader', { name: 'Plan' })).toHaveStyle({
+      backgroundColor: 'rgb(219, 234, 254)',
+      borderColor: '#2563eb',
+    });
+    expect(screen.getByRole('cell', { name: 'Pro' })).toHaveStyle({
+      backgroundColor: 'rgb(239, 246, 255)',
+      borderColor: '#60a5fa',
+    });
+  });
 });

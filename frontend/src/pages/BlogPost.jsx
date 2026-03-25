@@ -48,34 +48,30 @@ const BlogPost = () => {
   if (!postMeta) return null;
 
   const shareLinks = buildShareLinks(postMeta);
+  const seoTitle = postMeta.seoTitle || postMeta.title;
+  const seoDescription = postMeta.seoDescription || postMeta.excerpt;
+  const canonicalUrl = shareLinks.url;
+  const socialImageUrl = postMeta.ogImage
+    ? (postMeta.ogImage.startsWith('http') ? postMeta.ogImage : `${window.location.origin}${postMeta.ogImage}`)
+    : '';
 
   return (
     <div className="relative min-h-screen blog-cosmic-grid px-6 py-24 text-[var(--text-primary)] selection:bg-violet-500/30 md:px-10 lg:px-14">
       <Helmet>
-        <title>{postMeta.seoTitle || postMeta.title} | Guadalupe Cano</title>
-        <meta name="description" content={postMeta.seoDescription || postMeta.excerpt} />
-        <meta property="og:url" content={shareLinks.url} />
-        <meta property="og:title" content={postMeta.seoTitle || postMeta.title} />
-        <meta property="og:description" content={postMeta.seoDescription || postMeta.excerpt} />
-        {postMeta.ogImage && (
-          <meta
-            property="og:image"
-            content={postMeta.ogImage.startsWith('http') ? postMeta.ogImage : `${window.location.origin}${postMeta.ogImage}`}
-          />
-        )}
+        <title>{seoTitle} | Guadalupe Cano</title>
+        <meta name="description" content={seoDescription} />
+        <meta name="robots" content={postMeta.noindex ? 'noindex, nofollow' : 'index, follow'} />
+        <link rel="canonical" href={canonicalUrl} />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:title" content={seoTitle} />
+        <meta property="og:description" content={seoDescription} />
+        {socialImageUrl && <meta property="og:image" content={socialImageUrl} />}
         <meta property="og:type" content="article" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:url" content={shareLinks.url} />
-        <meta name="twitter:title" content={postMeta.seoTitle || postMeta.title} />
-        <meta name="twitter:description" content={postMeta.seoDescription || postMeta.excerpt} />
-        {postMeta.ogImage && (
-          <meta
-            name="twitter:image"
-            content={postMeta.ogImage.startsWith('http') ? postMeta.ogImage : `${window.location.origin}${postMeta.ogImage}`}
-          />
-        )}
-        {postMeta.canonicalUrl && <link rel="canonical" href={postMeta.canonicalUrl} />}
-        {postMeta.noindex && <meta name="robots" content="noindex" />}
+        <meta name="twitter:url" content={canonicalUrl} />
+        <meta name="twitter:title" content={seoTitle} />
+        <meta name="twitter:description" content={seoDescription} />
+        {socialImageUrl && <meta name="twitter:image" content={socialImageUrl} />}
       </Helmet>
 
       {/* Barra de progreso de lectura */}

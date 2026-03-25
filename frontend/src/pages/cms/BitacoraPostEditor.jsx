@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { cmsApi } from '../../lib/cmsApi';
 import { IMAGE_INPUT_ACCEPT, IMAGE_UPLOAD_LABEL, validateImageFile } from '../../lib/mediaUploadPolicy';
-import { inferPostContentFields, looksLikeHtmlContent } from '../../lib/postContentSource';
+import { createPostContentPayload, inferPostContentFields, looksLikeHtmlContent } from '../../lib/postContentSource';
 import TemplatePicker from '../../components/cms/editor/TemplatePicker';
 import EditorialChecklist from '../../components/cms/editor/EditorialChecklist';
 import { X } from 'lucide-react';
@@ -273,24 +273,7 @@ export default function BitacoraPostEditor() {
     }, [isEdit, editSlug, token, loadRevisions]);
 
     const buildContentPayload = useCallback(() => {
-        const normalizedContent = form.content || '';
-        const resolvedFormat = looksLikeHtmlContent(normalizedContent)
-            ? 'html'
-            : contentFormat === 'markdown'
-              ? 'markdown'
-              : 'html';
-
-        return resolvedFormat === 'html'
-            ? {
-                format: 'html',
-                contentHtml: normalizedContent,
-                legacyMarkdown: '',
-              }
-            : {
-                format: 'markdown',
-                contentHtml: '',
-                legacyMarkdown: normalizedContent,
-              };
+        return createPostContentPayload(form.content, contentFormat);
     }, [contentFormat, form.content]);
 
     // ── Autoguardado por post (local + remoto si edita un post existente) ───
@@ -319,7 +302,6 @@ export default function BitacoraPostEditor() {
                 revision,
                 tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
             };
-            delete payload.content;
 
             const serializedPayload = JSON.stringify(payload);
             if (serializedPayload === lastAutosavedPayload.current) {
@@ -463,7 +445,6 @@ export default function BitacoraPostEditor() {
             tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
             status: statusOverride || form.status || 'draft',
         };
-        delete payload.content;
 
         try {
             if (isEdit) {
@@ -544,9 +525,7 @@ export default function BitacoraPostEditor() {
             setRevision(nextRevision);
             lastAutosavedPayload.current = JSON.stringify({
                 ...restoredForm,
-                format: resolved.format,
-                contentHtml: resolved.format === 'html' ? restoredForm.content : '',
-                legacyMarkdown: resolved.format === 'markdown' ? restoredForm.content : '',
+                ...createPostContentPayload(restoredForm.content, resolved.format),
                 revision: nextRevision,
                 tags: restoredForm.tags.split(',').map(t => t.trim()).filter(Boolean),
             });
@@ -830,13 +809,15 @@ export default function BitacoraPostEditor() {
                         )}
 
                         {form.ogImage && (
-                            <div className="mt-2 rounded-xl border border-[var(--border-default)] bg-[var(--bg-primary)] p-2">
+                            <div className="mt-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-primary)] p-3">
                                 <p className="mb-1 text-[10px] uppercase tracking-wide text-[var(--text-muted)]">Vista previa de portada seleccionada</p>
-                                <img
-                                    src={form.ogImage}
-                                    alt="Vista previa de portada del post"
-                                    className="h-24 w-full rounded-lg object-cover"
-                                />
+                                <div className="overflow-hidden rounded-lg border border-[var(--border-default)] bg-[var(--bg-elevated)] aspect-[16/9] min-h-[12rem]">
+                                    <img
+                                        src={form.ogImage}
+                                        alt="Vista previa de portada del post"
+                                        className="h-full w-full object-cover"
+                                    />
+                                </div>
                             </div>
                         )}
                     </div>

@@ -97,7 +97,7 @@ describe('rich blocks', () => {
       />
     );
 
-    expect(screen.getByText('En mobile priorizamos apertura directa o descarga para evitar un visor roto o ilegible.')).toBeInTheDocument();
+    expect(screen.getByText('Abrilo o descargalo en una pestaña aparte para verlo con comodidad.')).toBeInTheDocument();
     expect(screen.queryByTitle('Guia PDF')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Abrir' })).toHaveAttribute('href', '/docs/guia.pdf');
   });

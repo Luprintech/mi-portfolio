@@ -5,7 +5,7 @@ const ThemeContext = createContext(null)
 
 // ─── Utilidades ───────────────────────────────────────────────────────────────
 /**
- * Devuelve el tema guardado en localStorage, o 'light' por defecto.
+ * Devuelve el tema guardado en localStorage, o 'dark' por defecto.
  */
 function getInitialTheme() {
   try {
@@ -14,8 +14,8 @@ function getInitialTheme() {
   } catch {
     // localStorage puede no estar disponible (modo privado muy restringido)
   }
-  // Tema predeterminado: modo claro
-  return 'light'
+  // Tema predeterminado: modo oscuro
+  return 'dark'
 }
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
@@ -43,12 +43,12 @@ export function ThemeProvider({ children }) {
 
   // Escucha cambios en la preferencia del SO mientras la app está abierta
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: light)')
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
     const handleChange = (e) => {
       // Solo actualiza si el usuario no ha elegido manualmente
       const saved = localStorage.getItem('theme')
       if (!saved) {
-        setTheme(e.matches ? 'light' : 'dark')
+        setTheme(e.matches ? 'dark' : 'light')
       }
     }
     mediaQuery.addEventListener('change', handleChange)
