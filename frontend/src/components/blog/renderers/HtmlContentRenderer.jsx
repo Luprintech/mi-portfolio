@@ -5,7 +5,7 @@ import { slugifyHeading } from '../markdownComponents';
 import DocumentBlock from './DocumentBlock';
 import ImageGridBlock from './ImageGridBlock';
 import CodeBlock from './CodeBlock';
-import { parseImageGridPayload } from './imageGridPayload';
+import { parseImageGridConfigFromElement, parseImageGridPayload } from './imageGridPayload';
 import { normalizeRichBlockAlignment } from '../../cms/editor/blockAlignment';
 
 function joinClassNames(...values) {
@@ -143,13 +143,13 @@ function renderNode(node, path) {
   if (dataBlock === 'image-grid' || node.hasAttribute('data-image-grid')) {
     const alignment = normalizeRichBlockAlignment(node.getAttribute('data-align'));
     return (
-      <div key={path} className={getBlockWrapperClassName(alignment)}>
-        <ImageGridBlock
-          columns={Number(node.getAttribute('data-columns') || node.getAttribute('data-cols')) || 2}
-          images={parseImageGridPayload(node.getAttribute('data-images') || '[]')}
-        />
-      </div>
-    );
+        <div key={path} className={getBlockWrapperClassName(alignment)}>
+          <ImageGridBlock
+            images={parseImageGridPayload(node.getAttribute('data-images') || '[]')}
+            config={parseImageGridConfigFromElement(node)}
+          />
+        </div>
+      );
   }
 
   if (dataBlock === 'code') {

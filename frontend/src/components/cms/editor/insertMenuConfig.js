@@ -1,3 +1,5 @@
+import { getMermaidTemplateByAction } from './diagramConfig';
+
 export const INSERT_MENU_ITEMS = [
     { title: 'Titulo 1', icon: 'H1', desc: 'Titulo principal', category: 'Bloques', action: 'h1', toolbar: 'primary' },
     { title: 'Titulo 2', icon: 'H2', desc: 'Subtitulo', category: 'Bloques', action: 'h2', toolbar: 'primary' },
@@ -24,6 +26,7 @@ export const INSERT_MENU_ITEMS = [
     { title: 'Diagrama flujo', icon: 'FLOW', desc: 'Mermaid flowchart', category: 'Diagramas', action: 'mermaid-flowchart', toolbar: 'overflow' },
     { title: 'Mapa mental', icon: 'MIND', desc: 'Mermaid mindmap', category: 'Diagramas', action: 'mermaid-mindmap', toolbar: 'overflow' },
     { title: 'Secuencia', icon: 'SEQ', desc: 'Mermaid sequence', category: 'Diagramas', action: 'mermaid-sequence', toolbar: 'overflow' },
+    { title: 'Mapa conceptual', icon: 'GRAPH', desc: 'Mermaid graph', category: 'Diagramas', action: 'mermaid-graph', toolbar: 'overflow' },
     { title: 'Emoji', icon: ':)', desc: 'Insertar emoji', category: 'Extra', action: 'emoji', toolbar: 'primary' },
 ];
 
@@ -56,31 +59,46 @@ export function groupInsertMenuItems(items) {
 }
 
 export function runInsertMenuEditorAction(editor, action) {
+    return runInsertMenuEditorActionWithOptions(editor, action);
+}
+
+export function runInsertMenuEditorActionWithOptions(editor, action, options = {}) {
     if (!editor) return false;
 
+    const mermaidTemplate = getMermaidTemplateByAction(action);
+    const range = options.range || null;
+    let chain = editor.chain().focus();
+
+    if (range) {
+        chain = chain.deleteRange(range);
+    }
+
     const actions = {
-        h1: () => editor.chain().focus().setHeading({ level: 1 }).run(),
-        h2: () => editor.chain().focus().setHeading({ level: 2 }).run(),
-        h3: () => editor.chain().focus().setHeading({ level: 3 }).run(),
-        bulletList: () => editor.chain().focus().toggleBulletList().run(),
-        orderedList: () => editor.chain().focus().toggleOrderedList().run(),
-        blockquote: () => editor.chain().focus().setBlockquote().run(),
-        hr: () => editor.chain().focus().setHorizontalRule().run(),
-        codeBlock: () => editor.chain().focus().setCodeBlock().run(),
-        code: () => editor.chain().focus().toggleCode().run(),
-        terminal: () => editor.chain().focus().setCodeBlock().updateAttributes('codeBlock', { language: 'bash', variant: 'terminal', filename: 'terminal', title: 'Comandos' }).run(),
-        table: () => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
-        'callout-tip': () => editor.chain().focus().insertCallout('tip').run(),
-        'callout-warning': () => editor.chain().focus().insertCallout('warning').run(),
-        'callout-info': () => editor.chain().focus().insertCallout('info').run(),
-        'callout-note': () => editor.chain().focus().insertCallout('note').run(),
-        accordion: () => editor.chain().focus().insertAccordion().run(),
-        contentButton: () => editor.chain().focus().insertContentButton().run(),
-        imageGrid: () => editor.chain().focus().insertImageGrid(2).run(),
+        h1: currentChain => currentChain.setHeading({ level: 1 }),
+        h2: currentChain => currentChain.setHeading({ level: 2 }),
+        h3: currentChain => currentChain.setHeading({ level: 3 }),
+        bulletList: currentChain => currentChain.toggleBulletList(),
+        orderedList: currentChain => currentChain.toggleOrderedList(),
+        blockquote: currentChain => currentChain.setBlockquote(),
+        hr: currentChain => currentChain.setHorizontalRule(),
+        codeBlock: currentChain => currentChain.setCodeBlock(),
+        code: currentChain => currentChain.toggleCode(),
+        terminal: currentChain => currentChain.setCodeBlock().updateAttributes('codeBlock', { language: 'bash', variant: 'terminal', filename: 'terminal', title: 'Comandos' }),
+        table: currentChain => currentChain.insertTable({ rows: 3, cols: 3, withHeaderRow: true }),
+        'callout-tip': currentChain => currentChain.insertCallout('tip'),
+        'callout-warning': currentChain => currentChain.insertCallout('warning'),
+        'callout-info': currentChain => currentChain.insertCallout('info'),
+        'callout-note': currentChain => currentChain.insertCallout('note'),
+        accordion: currentChain => currentChain.insertAccordion(),
+        contentButton: currentChain => currentChain.insertContentButton(),
+        imageGrid: currentChain => currentChain.insertImageGrid(2),
+        ...(mermaidTemplate ? {
+            [action]: currentChain => currentChain.insertMermaid(mermaidTemplate),
+        } : {}),
     };
 
     const command = actions[action];
     if (!command) return false;
-    command();
-    return true;
+    command(chain);
+    return chain.run();
 }
