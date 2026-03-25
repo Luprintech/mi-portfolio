@@ -1,8 +1,17 @@
 // ─── Extensiones TipTap avanzadas para el editor del CMS ─────────────────────
 import { Node, Extension, mergeAttributes } from '@tiptap/core';
-import { ReactNodeViewRenderer, NodeViewWrapper, NodeViewContent } from '@tiptap/react';
-import { useState, useRef, useEffect } from 'react';
+import { ReactNodeViewRenderer, NodeViewContent } from '@tiptap/react';
+import { useState, useRef } from 'react';
 import { useAuth } from '../../../context/AuthContext';
+import { cmsApi } from '../../../lib/cmsApi';
+import { normalizeContentLinkHref, resolveContentLinkAttributes } from '../../../lib/contentLinkUtils';
+import { validateImageFile } from '../../../lib/mediaUploadPolicy';
+import PdfPreview from '../../shared/PdfPreview';
+import RichBlockFrame from './RichBlockFrame';
+import {
+    createRichBlockTextAlignAttribute,
+    getRichBlockHtmlAttributes,
+} from './blockAlignment';
 
 // ─── LineHeight — control de interlineado ─────────────────────────────────────
 export const LineHeight = Extension.create({
@@ -36,13 +45,19 @@ export const LineHeight = Extension.create({
 });
 
 // ─── Accordion — bloques colapsables ──────────────────────────────────────────
-function AccordionView({ node, updateAttributes }) {
+function AccordionView({ node, updateAttributes, selected, deleteNode }) {
     const [open, setOpen] = useState(node.attrs.open !== false);
     return (
-        <NodeViewWrapper style={node.attrs.textAlign && node.attrs.textAlign !== 'left' ? { display: 'flex', justifyContent: node.attrs.textAlign === 'center' ? 'center' : 'flex-end' } : undefined}>
+        <RichBlockFrame
+            alignment={node.attrs.textAlign}
+            selected={selected}
+            onRemove={deleteNode}
+            frameClassName="w-full"
+        >
             <div className="border border-[var(--border-color)] rounded-xl overflow-hidden my-4">
                 <div
                     className="flex items-center gap-2 px-4 py-3 bg-[var(--bg-elevated)] cursor-pointer select-none"
+                    contentEditable={false}
                     onClick={() => { setOpen(!open); updateAttributes({ open: !open }); }}
                 >
                     <span className={`transition-transform duration-200 text-xs text-[var(--text-muted)] ${open ? 'rotate-90' : ''}`}>▶</span>
@@ -61,7 +76,7 @@ function AccordionView({ node, updateAttributes }) {
                     </div>
                 )}
             </div>
-        </NodeViewWrapper>
+        </RichBlockFrame>
     );
 }
 
@@ -82,11 +97,12 @@ export const AccordionExtension = Node.create({
                 parseHTML: el => el.getAttribute('data-open') !== 'false',
                 renderHTML: attrs => ({ 'data-open': String(attrs.open) }),
             },
+            textAlign: createRichBlockTextAlignAttribute(),
         };
     },
     parseHTML() { return [{ tag: 'div[data-accordion]' }]; },
     renderHTML({ node, HTMLAttributes }) {
-        return ['div', mergeAttributes(HTMLAttributes, { 'data-accordion': '', ...(node.attrs.textAlign && { 'data-align': node.attrs.textAlign }) }), 0];
+        return ['div', mergeAttributes(getRichBlockHtmlAttributes(HTMLAttributes, node.attrs.textAlign, { 'data-accordion': '' })), 0];
     },
     addNodeView() { return ReactNodeViewRenderer(AccordionView); },
     addCommands() {
@@ -143,6 +159,27 @@ function saveButtonConfigs(configs) {
     localStorage.setItem(CTA_BUTTON_CONFIGS_KEY, JSON.stringify(configs));
 }
 
+function parseBooleanAttribute(value, fallback = false) {
+    if (value === null || value === undefined || value === '') return fallback;
+    if (typeof value === 'boolean') return value;
+
+    const normalized = String(value).toLowerCase();
+
+    if (['false', '0', 'no', 'off'].includes(normalized)) return false;
+    if (['true', '1', 'yes', 'on'].includes(normalized)) return true;
+
+    return fallback;
+}
+
+function parseIntegerAttribute(value, fallback) {
+    const parsed = Number.parseInt(value, 10);
+    return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function getStyleProperty(el, propertyName) {
+    return el?.style?.[propertyName] || '';
+}
+
 function buildButtonStyle(attrs) {
     const style = {};
     if (attrs.bgColor) {
@@ -159,7 +196,7 @@ function buildButtonStyle(attrs) {
     return style;
 }
 
-function ContentButtonView({ node, updateAttributes, selected }) {
+function ContentButtonView({ node, updateAttributes, selected, deleteNode }) {
     const hasCustomColor = !!node.attrs.bgColor;
     const variantClass = hasCustomColor ? '' : (VARIANT_STYLES[node.attrs.variant] || VARIANT_STYLES.primary);
     const customStyle = buildButtonStyle(node.attrs);
@@ -255,8 +292,14 @@ function ContentButtonView({ node, updateAttributes, selected }) {
     } : {};
 
     return (
-        <NodeViewWrapper className="my-4" data-drag-handle style={node.attrs.textAlign && node.attrs.textAlign !== 'left' ? { display: 'flex', justifyContent: node.attrs.textAlign === 'center' ? 'center' : 'flex-end' } : undefined}>
-            <div className={`group/cta relative inline-block ${selected ? 'ring-2 ring-fuchsia-500 ring-offset-2 ring-offset-transparent rounded-xl p-2' : ''}`}>
+        <RichBlockFrame
+            alignment={node.attrs.textAlign}
+            selected={selected}
+            onRemove={deleteNode}
+            dragHandle
+            frameClassName="inline-block"
+        >
+            <div className={`group/cta relative inline-block ${selected ? 'ring-2 ring-fuchsia-500 ring-offset-2 ring-offset-transparent rounded-xl p-2' : ''}`} contentEditable={false}>
                 {/* Drag handle */}
                 <div
                     className="absolute -left-7 top-1/2 -translate-y-1/2 opacity-0 group-hover/cta:opacity-60 hover:!opacity-100 cursor-grab active:cursor-grabbing transition-opacity"
@@ -267,9 +310,11 @@ function ContentButtonView({ node, updateAttributes, selected }) {
                     <svg className="w-4 h-4 text-[var(--text-muted)]" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
                 </div>
                 <a
-                    href={node.attrs.documentUrl || node.attrs.href}
-                    target={node.attrs.documentUrl ? '_self' : (node.attrs.newTab ? '_blank' : '_self')}
-                    rel="noopener noreferrer"
+                    {...resolveContentLinkAttributes({
+                        href: node.attrs.documentUrl || node.attrs.href,
+                        target: node.attrs.documentUrl ? '_self' : (node.attrs.newTab ? '_blank' : '_self'),
+                        rel: 'noopener noreferrer',
+                    })}
                     {...(node.attrs.documentUrl ? { download: node.attrs.documentFilename || '' } : {})}
                     className={`inline-block px-6 py-3 text-sm transition-all cursor-pointer ${variantClass} ${!hasCustomColor ? 'rounded-xl font-semibold' : ''}`}
                     style={{
@@ -284,7 +329,8 @@ function ContentButtonView({ node, updateAttributes, selected }) {
                 </a>
 
                 {selected && (
-                    <div className="mt-3 p-4 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-2xl space-y-3 max-w-md"
+                    <div className="mt-3 max-w-md space-y-3 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-elevated)] p-4"
+                         contentEditable={false}
                          onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>
 
                         {/* Configs guardados */}
@@ -326,12 +372,36 @@ function ContentButtonView({ node, updateAttributes, selected }) {
                             </div>
                             <div>
                                 <label className="text-[10px] uppercase text-[var(--text-muted)] tracking-wider block mb-1">Enlace</label>
-                                <input
-                                    value={node.attrs.href}
-                                    onChange={e => updateAttributes({ href: e.target.value })}
-                                    placeholder="https://…"
-                                    className="w-full px-3 py-1.5 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-primary)] outline-none focus:border-fuchsia-500/60"
-                                />
+                                    <input
+                                        value={node.attrs.href}
+                                        onChange={e => updateAttributes({ href: normalizeContentLinkHref(e.target.value) })}
+                                        placeholder="https://…"
+                                        className="w-full px-3 py-1.5 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-primary)] outline-none focus:border-fuchsia-500/60"
+                                    />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="text-[10px] uppercase text-[var(--text-muted)] tracking-wider block mb-1.5">Posicion en el contenido</label>
+                            <div className="flex gap-1.5">
+                                {[
+                                    { key: 'left', label: 'Izquierda' },
+                                    { key: 'center', label: 'Centrado' },
+                                    { key: 'right', label: 'Derecha' },
+                                ].map(option => (
+                                    <button
+                                        key={option.key}
+                                        type="button"
+                                        onClick={() => updateAttributes({ textAlign: option.key })}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                                            (node.attrs.textAlign || 'left') === option.key
+                                                ? 'bg-fuchsia-500 text-white'
+                                                : 'bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-secondary)]'
+                                        }`}
+                                    >
+                                        {option.label}
+                                    </button>
+                                ))}
                             </div>
                         </div>
 
@@ -545,7 +615,7 @@ function ContentButtonView({ node, updateAttributes, selected }) {
                     </div>
                 )}
             </div>
-        </NodeViewWrapper>
+        </RichBlockFrame>
     );
 }
 
@@ -556,20 +626,77 @@ export const ContentButtonExtension = Node.create({
     draggable: true,
     addAttributes() {
         return {
-            text:      { default: 'Click aquí' },
-            href:      { default: '#' },
-            variant:   { default: 'primary' },
-            newTab:    { default: true },
-            bgColor:   { default: '' },
-            textColor: { default: '' },
-            bold:      { default: false },
-            italic:    { default: false },
-            underline: { default: false },
-            uppercase: { default: false },
-            fontSize:  { default: 14 },
-            rounded:   { default: 12 },
-            documentUrl:      { default: '' },
-            documentFilename: { default: '' },
+            text: {
+                default: 'Click aquí',
+                parseHTML: el => el.getAttribute('data-text') || el.textContent || 'Click aquí',
+                renderHTML: attrs => ({ 'data-text': attrs.text || 'Click aquí' }),
+            },
+            href: {
+                default: '#',
+                parseHTML: el => el.getAttribute('data-href') || el.getAttribute('href') || '#',
+                renderHTML: attrs => ({ 'data-href': attrs.href || '#' }),
+            },
+            variant: {
+                default: 'primary',
+                parseHTML: el => el.getAttribute('data-variant') || Array.from(el.classList).find(cls => cls.startsWith('content-button--'))?.replace('content-button--', '') || 'primary',
+                renderHTML: attrs => ({ 'data-variant': attrs.variant || 'primary' }),
+            },
+            newTab: {
+                default: true,
+                parseHTML: el => parseBooleanAttribute(el.getAttribute('data-new-tab'), el.getAttribute('target') === '_blank'),
+                renderHTML: attrs => ({ 'data-new-tab': String(attrs.newTab !== false) }),
+            },
+            bgColor: {
+                default: '',
+                parseHTML: el => el.getAttribute('data-bg-color') || getStyleProperty(el, 'background') || '',
+                renderHTML: attrs => attrs.bgColor ? { 'data-bg-color': attrs.bgColor } : {},
+            },
+            textColor: {
+                default: '',
+                parseHTML: el => el.getAttribute('data-text-color') || getStyleProperty(el, 'color') || '',
+                renderHTML: attrs => attrs.textColor ? { 'data-text-color': attrs.textColor } : {},
+            },
+            bold: {
+                default: false,
+                parseHTML: el => parseBooleanAttribute(el.getAttribute('data-bold'), ['bold', '700'].includes(getStyleProperty(el, 'fontWeight'))),
+                renderHTML: attrs => attrs.bold ? { 'data-bold': 'true' } : {},
+            },
+            italic: {
+                default: false,
+                parseHTML: el => parseBooleanAttribute(el.getAttribute('data-italic'), getStyleProperty(el, 'fontStyle') === 'italic'),
+                renderHTML: attrs => attrs.italic ? { 'data-italic': 'true' } : {},
+            },
+            underline: {
+                default: false,
+                parseHTML: el => parseBooleanAttribute(el.getAttribute('data-underline'), getStyleProperty(el, 'textDecoration').includes('underline')),
+                renderHTML: attrs => attrs.underline ? { 'data-underline': 'true' } : {},
+            },
+            uppercase: {
+                default: false,
+                parseHTML: el => parseBooleanAttribute(el.getAttribute('data-uppercase'), getStyleProperty(el, 'textTransform') === 'uppercase'),
+                renderHTML: attrs => attrs.uppercase ? { 'data-uppercase': 'true' } : {},
+            },
+            fontSize: {
+                default: 14,
+                parseHTML: el => parseIntegerAttribute(el.getAttribute('data-font-size') || getStyleProperty(el, 'fontSize'), 14),
+                renderHTML: attrs => ({ 'data-font-size': String(attrs.fontSize || 14) }),
+            },
+            rounded: {
+                default: 12,
+                parseHTML: el => parseIntegerAttribute(el.getAttribute('data-rounded') || getStyleProperty(el, 'borderRadius'), 12),
+                renderHTML: attrs => ({ 'data-rounded': String(attrs.rounded || 12) }),
+            },
+            documentUrl: {
+                default: '',
+                parseHTML: el => el.getAttribute('data-document-url') || '',
+                renderHTML: attrs => attrs.documentUrl ? { 'data-document-url': attrs.documentUrl } : {},
+            },
+            documentFilename: {
+                default: '',
+                parseHTML: el => el.getAttribute('data-document-filename') || el.getAttribute('download') || '',
+                renderHTML: attrs => attrs.documentFilename ? { 'data-document-filename': attrs.documentFilename } : {},
+            },
+            textAlign: createRichBlockTextAlignAttribute(),
         };
     },
     parseHTML() { return [{ tag: 'a[data-content-button]' }]; },
@@ -585,15 +712,30 @@ export const ContentButtonExtension = Node.create({
         if (node.attrs.rounded)   style.push(`border-radius:${node.attrs.rounded}px`);
         const htmlAttrs = {
             'data-content-button': '',
-            href: node.attrs.documentUrl || node.attrs.href,
-            target: node.attrs.documentUrl ? '_self' : (node.attrs.newTab ? '_blank' : '_self'),
-            rel: 'noopener noreferrer',
             class: `content-button content-button--${node.attrs.variant || 'custom'}`,
             style: style.join(';'),
+            'data-text': node.attrs.text || 'Click aquí',
+            'data-href': node.attrs.href || '#',
+            'data-variant': node.attrs.variant || 'primary',
+            'data-new-tab': String(node.attrs.newTab !== false),
+            ...(node.attrs.bgColor ? { 'data-bg-color': node.attrs.bgColor } : {}),
+            ...(node.attrs.textColor ? { 'data-text-color': node.attrs.textColor } : {}),
+            ...(node.attrs.bold ? { 'data-bold': 'true' } : {}),
+            ...(node.attrs.italic ? { 'data-italic': 'true' } : {}),
+            ...(node.attrs.underline ? { 'data-underline': 'true' } : {}),
+            ...(node.attrs.uppercase ? { 'data-uppercase': 'true' } : {}),
+            'data-font-size': String(node.attrs.fontSize || 14),
+            'data-rounded': String(node.attrs.rounded || 12),
+            ...(node.attrs.documentUrl ? { 'data-document-url': node.attrs.documentUrl } : {}),
+            ...(node.attrs.documentFilename ? { 'data-document-filename': node.attrs.documentFilename } : {}),
+            ...resolveContentLinkAttributes({
+                href: node.attrs.documentUrl || node.attrs.href,
+                target: node.attrs.documentUrl ? '_self' : (node.attrs.newTab ? '_blank' : '_self'),
+                rel: 'noopener noreferrer',
+            }),
         };
-        if (node.attrs.textAlign) htmlAttrs['data-align'] = node.attrs.textAlign;
         if (node.attrs.documentUrl) htmlAttrs.download = node.attrs.documentFilename || '';
-        return ['a', mergeAttributes(HTMLAttributes, htmlAttrs), node.attrs.text];
+        return ['a', mergeAttributes(getRichBlockHtmlAttributes(HTMLAttributes, node.attrs.textAlign, htmlAttrs)), node.attrs.text];
     },
     addNodeView() { return ReactNodeViewRenderer(ContentButtonView); },
     addCommands() {
@@ -614,130 +756,7 @@ function formatFileSize(bytes) {
     return `${(bytes / 1048576).toFixed(1)} MB`;
 }
 
-// ─── PdfCarousel — visor de PDF por páginas con navegación ────────────────────
-function PdfCarousel({ src, height }) {
-    const canvasRef = useRef(null);
-    const containerRef = useRef(null);
-    const [pdfDoc, setPdfDoc] = useState(null);
-    const [page, setPage] = useState(1);
-    const [numPages, setNumPages] = useState(0);
-    const [loading, setLoading] = useState(true);
-    const renderTaskRef = useRef(null);
-
-    useEffect(() => {
-        let cancelled = false;
-        (async () => {
-            try {
-                const pdfjsLib = await import('pdfjs-dist');
-                if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-                    pdfjsLib.GlobalWorkerOptions.workerSrc =
-                        `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
-                }
-                const doc = await pdfjsLib.getDocument(src).promise;
-                if (!cancelled) {
-                    setPdfDoc(doc);
-                    setNumPages(doc.numPages);
-                    setLoading(false);
-                }
-            } catch (err) {
-                console.error('Error loading PDF:', err);
-                if (!cancelled) setLoading(false);
-            }
-        })();
-        return () => { cancelled = true; };
-    }, [src]);
-
-    useEffect(() => {
-        if (!pdfDoc || !canvasRef.current || !containerRef.current) return;
-        let cancelled = false;
-        (async () => {
-            try {
-                if (renderTaskRef.current) {
-                    try { renderTaskRef.current.cancel(); } catch {
-                        renderTaskRef.current = null;
-                    }
-                }
-                const pdfPage = await pdfDoc.getPage(page);
-                if (cancelled) return;
-                const canvas = canvasRef.current;
-                const ctx = canvas.getContext('2d');
-                const containerWidth = containerRef.current.clientWidth || 600;
-                const navHeight = 48;
-                const availableHeight = height - navHeight;
-                const unscaledViewport = pdfPage.getViewport({ scale: 1 });
-                const scale = Math.min(
-                    containerWidth / unscaledViewport.width,
-                    availableHeight / unscaledViewport.height
-                );
-                const dpr = window.devicePixelRatio || 1;
-                const viewport = pdfPage.getViewport({ scale: scale * dpr });
-                canvas.width = viewport.width;
-                canvas.height = viewport.height;
-                canvas.style.width = `${viewport.width / dpr}px`;
-                canvas.style.height = `${viewport.height / dpr}px`;
-                const task = pdfPage.render({ canvasContext: ctx, viewport });
-                renderTaskRef.current = task;
-                await task.promise;
-            } catch (err) {
-                if (err?.name !== 'RenderingCancelledException') console.error(err);
-            }
-        })();
-        return () => { cancelled = true; };
-    }, [pdfDoc, page, height]);
-
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center bg-[var(--bg-primary)]" style={{ height: `${height}px` }}>
-                <div className="w-6 h-6 border-2 border-fuchsia-500/30 border-t-fuchsia-500 rounded-full animate-spin" />
-            </div>
-        );
-    }
-
-    if (!pdfDoc) {
-        return (
-            <div className="flex items-center justify-center bg-[var(--bg-primary)] text-[var(--text-muted)] text-sm" style={{ height: `${height}px` }}>
-                Error al cargar el PDF
-            </div>
-        );
-    }
-
-    return (
-        <div ref={containerRef} className="relative bg-[var(--bg-primary)] select-none" style={{ height: `${height}px` }}>
-            <div className="flex items-center justify-center overflow-hidden" style={{ height: `${height - 48}px` }}>
-                <canvas ref={canvasRef} />
-            </div>
-            {numPages > 1 && (
-                <>
-                    <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); setPage(p => Math.max(1, p - 1)); }}
-                        disabled={page <= 1}
-                        className="absolute left-3 top-[calc(50%-24px)] w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors disabled:opacity-20 disabled:cursor-not-allowed backdrop-blur-sm shadow-lg"
-                        contentEditable={false}
-                    >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M15 19l-7-7 7-7"/></svg>
-                    </button>
-                    <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); setPage(p => Math.min(numPages, p + 1)); }}
-                        disabled={page >= numPages}
-                        className="absolute right-3 top-[calc(50%-24px)] w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors disabled:opacity-20 disabled:cursor-not-allowed backdrop-blur-sm shadow-lg"
-                        contentEditable={false}
-                    >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M9 5l7 7-7 7"/></svg>
-                    </button>
-                </>
-            )}
-            <div className="absolute bottom-0 inset-x-0 h-12 flex items-center justify-center bg-gradient-to-t from-black/40 to-transparent">
-                <div className="px-4 py-1.5 rounded-full bg-black/60 backdrop-blur-sm text-white text-sm font-medium tabular-nums">
-                    {page} / {numPages}
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function DocumentView({ node, updateAttributes, selected }) {
+function DocumentView({ node, updateAttributes, selected, deleteNode }) {
     const isPdf = node.attrs.fileType === 'pdf';
     const mode = node.attrs.displayMode || (isPdf ? 'embed' : 'link');
     const ICONS = { pdf: '📄', zip: '📦', docx: '📝' };
@@ -781,10 +800,16 @@ function DocumentView({ node, updateAttributes, selected }) {
     const handleCls = 'absolute w-3 h-3 bg-fuchsia-500 border-2 border-white rounded-full z-10';
 
     return (
-        <NodeViewWrapper className="my-4" style={node.attrs.textAlign && node.attrs.textAlign !== 'left' ? { display: 'flex', justifyContent: node.attrs.textAlign === 'center' ? 'center' : 'flex-end' } : undefined}>
+        <RichBlockFrame
+            alignment={node.attrs.textAlign}
+            selected={selected}
+            onRemove={deleteNode}
+            frameClassName="w-full"
+        >
             <div
                 ref={wrapRef}
                 className={`relative group border border-[var(--border-color)] rounded-xl overflow-hidden ${selected ? 'ring-2 ring-fuchsia-500 ring-offset-2 ring-offset-transparent' : ''}`}
+                contentEditable={false}
                 style={{ width: embedWidth ? `${embedWidth}px` : '100%', maxWidth: '100%', cursor: resizing ? 'nwse-resize' : 'default' }}
             >
                 {/* Resize handles */}
@@ -798,7 +823,13 @@ function DocumentView({ node, updateAttributes, selected }) {
                 )}
                 {/* PDF carousel viewer */}
                 {isPdf && mode === 'embed' && (
-                    <PdfCarousel src={node.attrs.src} height={node.attrs.embedHeight || 500} />
+                    <div className="bg-[var(--bg-primary)]/70 p-2">
+                        <PdfPreview
+                            src={node.attrs.src}
+                            title={node.attrs.filename || 'Documento PDF'}
+                            height={node.attrs.embedHeight || 500}
+                        />
+                    </div>
                 )}
 
                 {/* Bottom bar — always visible */}
@@ -832,6 +863,7 @@ function DocumentView({ node, updateAttributes, selected }) {
                 {/* Editing controls when selected */}
                 {selected && (
                     <div className="px-4 py-3 border-t border-[var(--border-color)] bg-[var(--bg-surface)] space-y-2"
+                         contentEditable={false}
                          onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>
                         {isPdf && (
                             <div>
@@ -867,7 +899,7 @@ function DocumentView({ node, updateAttributes, selected }) {
                     </div>
                 )}
             </div>
-        </NodeViewWrapper>
+        </RichBlockFrame>
     );
 }
 
@@ -908,16 +940,15 @@ export const DocumentAttachmentExtension = Node.create({
                     return v ? parseInt(v) : null;
                 },
             },
+            textAlign: createRichBlockTextAlignAttribute(),
         };
     },
-    parseHTML() { return [{ tag: 'div[data-document]' }]; },
+    parseHTML() { return [{ tag: 'div[data-document]' }, { tag: 'div[data-block="document"]' }]; },
     renderHTML({ node, HTMLAttributes }) {
         const isPdf = node.attrs.fileType === 'pdf';
         const mode = node.attrs.displayMode || (isPdf ? 'embed' : 'link');
         const height = node.attrs.embedHeight || 500;
         const width = node.attrs.embedWidth;
-        const ICONS = { pdf: '📄', zip: '📦', docx: '📝' };
-        const icon = ICONS[node.attrs.fileType] || '📎';
 
         const containerStyle = [
             'border:1px solid var(--border-color,rgba(255,255,255,0.1))',
@@ -927,48 +958,22 @@ export const DocumentAttachmentExtension = Node.create({
             width ? `width:${width}px;max-width:100%` : '',
         ].filter(Boolean).join(';');
 
-        const containerAttrs = mergeAttributes(HTMLAttributes, {
+        const containerAttrs = mergeAttributes(getRichBlockHtmlAttributes(HTMLAttributes, node.attrs.textAlign, {
+            'data-block': 'document',
+            'data-version': '1',
             'data-document': '',
             'data-src': node.attrs.src,
+            'data-title': node.attrs.filename,
             'data-filename': node.attrs.filename,
             'data-file-type': node.attrs.fileType,
+            'data-display': mode,
             'data-display-mode': mode,
             'data-embed-height': String(height),
-            ...(node.attrs.textAlign && { 'data-align': node.attrs.textAlign }),
+            ...(width ? { 'data-embed-width': String(width) } : {}),
             style: containerStyle,
-        });
+        }));
 
-        const barStyle = 'display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--bg-elevated,rgba(15,15,30,0.8))';
-        const nameStyle = 'font-size:14px;font-weight:500;color:var(--text-primary,#e2e8f0);margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
-
-        if (isPdf && mode === 'embed') {
-            return ['div', containerAttrs,
-                ['iframe', {
-                    src: node.attrs.src,
-                    style: `width:100%;height:${height}px;border:none;`,
-                    loading: 'lazy',
-                    title: node.attrs.filename,
-                    allowfullscreen: 'true',
-                }],
-                ['div', { style: barStyle },
-                    ['span', { style: 'font-size:1.25rem' }, icon],
-                    ['span', { style: nameStyle }, node.attrs.filename],
-                ],
-            ];
-        }
-
-        // Link mode or non-PDF
-        return ['div', containerAttrs,
-            ['div', { style: barStyle },
-                ['span', { style: 'font-size:1.5rem' }, icon],
-                ['span', { style: `flex:1;${nameStyle}` }, node.attrs.filename],
-                ['a', {
-                    href: node.attrs.src,
-                    download: node.attrs.filename,
-                    style: 'padding:8px 16px;background:#c026d3;color:white;border-radius:8px;font-size:14px;font-weight:500;text-decoration:none;white-space:nowrap',
-                }, 'Descargar'],
-            ],
-        ];
+        return ['div', containerAttrs];
     },
     addNodeView() { return ReactNodeViewRenderer(DocumentView); },
     addCommands() {
@@ -982,9 +987,30 @@ export const DocumentAttachmentExtension = Node.create({
 });
 
 // ─── ImageGrid — contenedor grid para imágenes ───────────────────────────────
-function ImageGridView({ node, updateAttributes, selected }) {
+function normalizeImageGridItem(item) {
+    if (typeof item === 'string') {
+        return { src: item, alt: '', caption: '' };
+    }
+
+    if (item && typeof item === 'object') {
+        return {
+            src: typeof item.src === 'string' ? item.src : '',
+            alt: typeof item.alt === 'string' ? item.alt : '',
+            caption: typeof item.caption === 'string' ? item.caption : '',
+        };
+    }
+
+    return { src: '', alt: '', caption: '' };
+}
+
+function normalizeImageGridItems(items) {
+    if (!Array.isArray(items)) return [];
+    return items.map(normalizeImageGridItem).filter(item => item.src);
+}
+
+function ImageGridView({ node, updateAttributes, selected, deleteNode }) {
     const cols = node.attrs.cols || 2;
-    const images = node.attrs.images || [];
+    const images = normalizeImageGridItems(node.attrs.images);
     const { token } = useAuth();
     const fileRef = useRef(null);
     const [uploadIdx, setUploadIdx] = useState(null);
@@ -998,22 +1024,20 @@ function ImageGridView({ node, updateAttributes, selected }) {
     async function handleFile(e) {
         const file = e.target.files?.[0];
         if (!file || !token) return;
+        const validationError = validateImageFile(file);
+        if (validationError) {
+            console.error(validationError);
+            e.target.value = '';
+            return;
+        }
         setUploading(true);
         try {
-            const fd = new FormData();
-            fd.append('image', file);
-            const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/bitacora/upload`, {
-                method: 'POST',
-                headers: { Authorization: `Bearer ${token}` },
-                body: fd,
-            });
-            if (!res.ok) throw new Error('Error al subir imagen');
-            const { url } = await res.json();
+            const { url } = await cmsApi.uploadImage(token, file);
             const next = [...images];
             if (uploadIdx !== null && uploadIdx < next.length) {
-                next[uploadIdx] = url;
+                next[uploadIdx] = { ...next[uploadIdx], src: url };
             } else {
-                next.push(url);
+                next.push({ src: url, alt: '', caption: '' });
             }
             updateAttributes({ images: next });
         } catch (err) { console.error(err); }
@@ -1026,8 +1050,14 @@ function ImageGridView({ node, updateAttributes, selected }) {
     }
 
     return (
-        <NodeViewWrapper className="my-6" data-image-grid="" style={node.attrs.textAlign && node.attrs.textAlign !== 'left' ? { display: 'flex', justifyContent: node.attrs.textAlign === 'center' ? 'center' : 'flex-end' } : undefined}>
-            <div className={`${selected ? 'ring-2 ring-fuchsia-500 ring-offset-2 ring-offset-transparent rounded-xl' : ''}`}>
+        <RichBlockFrame
+            alignment={node.attrs.textAlign}
+            selected={selected}
+            onRemove={deleteNode}
+            wrapperClassName="my-6"
+            frameClassName="w-full"
+        >
+            <div className={`${selected ? 'ring-2 ring-fuchsia-500 ring-offset-2 ring-offset-transparent rounded-xl' : ''}`} contentEditable={false}>
                 {selected && (
                     <div className="flex items-center gap-2 mb-2">
                         <span className="text-[10px] uppercase text-[var(--text-muted)] tracking-wider">Columnas:</span>
@@ -1041,9 +1071,9 @@ function ImageGridView({ node, updateAttributes, selected }) {
                     </div>
                 )}
                 <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: '8px' }}>
-                    {images.map((src, i) => (
-                        <div key={i} className="relative group rounded-lg overflow-hidden bg-[var(--bg-elevated)] aspect-square">
-                            <img src={src} alt="" className="w-full h-full object-cover" />
+                    {images.map((image, i) => (
+                        <div key={`${image.src}-${i}`} className="relative group rounded-lg overflow-hidden bg-[var(--bg-elevated)] aspect-square">
+                            <img src={image.src} alt={image.alt || ''} className="w-full h-full object-cover" />
                             {selected && (
                                 <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button type="button" onClick={() => openPicker(i)}
@@ -1071,8 +1101,39 @@ function ImageGridView({ node, updateAttributes, selected }) {
                     </button>
                 </div>
                 <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+                {selected && images.length > 0 && (
+                    <div className="mt-3 space-y-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-elevated)]/60 p-3">
+                        <p className="text-[10px] uppercase tracking-[0.24em] text-[var(--text-muted)]">Metadata de imagen</p>
+                        {images.map((image, index) => (
+                            <div key={`${image.src}-meta-${index}`} className="grid gap-2 md:grid-cols-2">
+                                <input
+                                    type="text"
+                                    value={image.alt || ''}
+                                    onChange={(event) => {
+                                        const next = [...images];
+                                        next[index] = { ...next[index], alt: event.target.value };
+                                        updateAttributes({ images: next });
+                                    }}
+                                    placeholder={`Alt imagen ${index + 1}`}
+                                    className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)]/80 px-3 py-2 text-xs text-[var(--text-primary)] outline-none focus:border-fuchsia-500"
+                                />
+                                <input
+                                    type="text"
+                                    value={image.caption || ''}
+                                    onChange={(event) => {
+                                        const next = [...images];
+                                        next[index] = { ...next[index], caption: event.target.value };
+                                        updateAttributes({ images: next });
+                                    }}
+                                    placeholder={`Caption imagen ${index + 1}`}
+                                    className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)]/80 px-3 py-2 text-xs text-[var(--text-primary)] outline-none focus:border-fuchsia-500"
+                                />
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
-        </NodeViewWrapper>
+        </RichBlockFrame>
     );
 }
 
@@ -1091,26 +1152,31 @@ export const ImageGridExtension = Node.create({
             images: {
                 default: [],
                 parseHTML: el => {
-                    try { return JSON.parse(el.getAttribute('data-images') || '[]'); }
+                    try { return normalizeImageGridItems(JSON.parse(el.getAttribute('data-images') || '[]')); }
                     catch { return []; }
                 },
-                renderHTML: attrs => ({ 'data-images': JSON.stringify(attrs.images || []) }),
+                renderHTML: attrs => ({ 'data-images': JSON.stringify(normalizeImageGridItems(attrs.images)) }),
             },
+            textAlign: createRichBlockTextAlignAttribute(),
         };
     },
-    parseHTML() { return [{ tag: 'div[data-image-grid]' }]; },
+    parseHTML() { return [{ tag: 'div[data-image-grid]' }, { tag: 'div[data-block="image-grid"]' }]; },
     renderHTML({ node, HTMLAttributes }) {
         const cols = node.attrs.cols || 2;
-        const images = node.attrs.images || [];
+        const images = normalizeImageGridItems(node.attrs.images);
         const gridStyle = `display:grid;grid-template-columns:repeat(${cols},1fr);gap:8px;margin:1.5em 0`;
-        const children = images.map(src => ['div', { style: 'border-radius:8px;overflow:hidden;aspect-ratio:1' },
-            ['img', { src, alt: '', style: 'width:100%;height:100%;object-fit:cover', loading: 'lazy' }],
-        ]);
-        return ['div', mergeAttributes(HTMLAttributes, {
+        const children = images.map(image => ['figure', { style: 'border-radius:8px;overflow:hidden;aspect-ratio:1;background:rgba(15,23,42,0.08);margin:0' },
+            ['img', { src: image.src, alt: image.alt || '', style: 'width:100%;height:100%;object-fit:cover', loading: 'lazy' }],
+            image.caption || image.alt ? ['figcaption', { style: 'padding:8px 10px;font-size:12px;line-height:1.5;color:var(--text-muted,#94a3b8);border-top:1px solid rgba(148,163,184,0.18)' }, image.caption || image.alt] : null,
+        ].filter(Boolean));
+        return ['div', mergeAttributes(getRichBlockHtmlAttributes(HTMLAttributes, node.attrs.textAlign, {
+            'data-block': 'image-grid',
+            'data-version': '1',
             'data-image-grid': '',
+            'data-columns': cols,
+            'data-images': JSON.stringify(images),
             style: gridStyle,
-            ...(node.attrs.textAlign && { 'data-align': node.attrs.textAlign }),
-        }), ...children];
+        })), ...children];
     },
     addNodeView() { return ReactNodeViewRenderer(ImageGridView); },
     addCommands() {

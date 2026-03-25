@@ -1,5 +1,33 @@
 const BASE_URL = import.meta.env.VITE_API_URL || '';
 
+class CmsApiError extends Error {
+    constructor(message, details = {}) {
+        super(message);
+        this.name = 'CmsApiError';
+        this.status = details.status;
+        this.code = details.code || details.type || 'api-error';
+        this.details = details;
+    }
+}
+
+function extractErrorPayload(data) {
+    if (data?.error && typeof data.error === 'object') {
+        return data.error;
+    }
+
+    return {
+        message: data?.error || data?.message || '',
+    };
+}
+
+function createApiError(response, data) {
+    const payload = extractErrorPayload(data);
+    return new CmsApiError(payload.message || `HTTP ${response.status}`, {
+        ...payload,
+        status: response.status,
+    });
+}
+
 async function request(path, { token, method = 'GET', body } = {}) {
     const headers = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -12,8 +40,22 @@ async function request(path, { token, method = 'GET', body } = {}) {
     });
 
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+    if (!response.ok) throw createApiError(response, data);
     return data;
+}
+
+async function upload(path, fieldName, token, file) {
+    const form = new FormData();
+    form.append(fieldName, file);
+    const response = await fetch(`${BASE_URL}${path}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw createApiError(response, data);
+    return data.file || data;
 }
 
 export const cmsApi = {
@@ -24,8 +66,15 @@ export const cmsApi = {
     // Posts
     getPosts: (token)                  => request('/api/bitacora/posts', { token }),
     getPost:  (token, slug)            => request(`/api/bitacora/posts/${slug}`, { token }),
+    getPostRevisions: (token, slug)    => request(`/api/bitacora/posts/${slug}/revisions`, { token }),
     createPost: (token, data)          => request('/api/bitacora/posts', { token, method: 'POST', body: data }),
     updatePost: (token, slug, data)    => request(`/api/bitacora/posts/${slug}`, { token, method: 'PUT', body: data }),
+    autosavePost: (token, slug, data)  => request(`/api/bitacora/posts/${slug}/autosave`, { token, method: 'POST', body: data }),
+    restorePostRevision: (token, slug, revisionId, revision) => request(`/api/bitacora/posts/${slug}/restore`, {
+        token,
+        method: 'POST',
+        body: { revisionId, revision },
+    }),
     deletePost: (token, slug)          => request(`/api/bitacora/posts/${slug}`, { token, method: 'DELETE' }),
 
     // Projects
@@ -39,30 +88,10 @@ export const cmsApi = {
     deleteImage: (token, filename)     => request(`/api/bitacora/images/${filename}`, { token, method: 'DELETE' }),
 
     // Upload (multipart)
-    uploadImage: async (token, file) => {
-        const form = new FormData();
-        form.append('image', file);
-        const response = await fetch(`${BASE_URL}/api/bitacora/upload`, {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${token}` },
-            body: form,
-        });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
-        return data;
-    },
+    uploadImage: (token, file) => upload('/api/bitacora/upload', 'image', token, file),
 
     // Upload Document (multipart)
-    uploadDocument: async (token, file) => {
-        const form = new FormData();
-        form.append('document', file);
-        const response = await fetch(`${BASE_URL}/api/bitacora/upload-document`, {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${token}` },
-            body: form,
-        });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
-        return data;
-    },
+    uploadDocument: (token, file) => upload('/api/bitacora/upload-document', 'document', token, file),
+    uploadAudio: (token, file) => upload('/api/bitacora/upload-audio', 'audio', token, file),
+    uploadCv: (token, file) => upload('/api/bitacora/upload-cv', 'cv', token, file),
 };

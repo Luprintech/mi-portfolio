@@ -24,6 +24,8 @@ backend/.env
 dist-ssr
 *.local
 .vite
+frontend/playwright-report/
+frontend/test-results/
 
 # OS
 .DS_Store

@@ -4,6 +4,8 @@
  */
 
 import DocumentEmbed from './DocumentEmbed';
+import ImageGridBlock from './renderers/ImageGridBlock';
+import { parseImageGridPayload } from './renderers/imageGridPayload';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -26,6 +28,10 @@ export const formatDate = (dateString) =>
   });
 
 export const getReadTime = (post) => Math.max(4, Number(post?.readingTime) || 4);
+
+function joinClassNames(...values) {
+  return values.filter(Boolean).join(' ');
+}
 
 export function getChildrenText(children) {
   if (typeof children === 'string') return children;
@@ -135,10 +141,30 @@ function buildMarkdownComponents() {
             fileType={props['data-file-type']}
             displayMode={props['data-display-mode']}
             embedHeight={props['data-embed-height'] || props.embedheight}
+            embedWidth={props['data-embed-width'] || props.embedwidth}
           />
         );
 
         return alignClass ? <div className={alignClass}>{embed}</div> : embed;
+      }
+
+      if (props['data-image-grid'] !== undefined || props['data-block'] === 'image-grid') {
+        const align = props['data-align'];
+        const alignClass =
+          align === 'center'
+            ? 'flex justify-center'
+            : align === 'right'
+              ? 'flex justify-end'
+              : '';
+
+        const grid = (
+          <ImageGridBlock
+            columns={Number(props['data-columns'] || props['data-cols']) || 2}
+            images={parseImageGridPayload(props['data-images'])}
+          />
+        );
+
+        return alignClass ? <div className={alignClass}>{grid}</div> : grid;
       }
 
       return <div {...props} />;
@@ -244,18 +270,18 @@ function buildMarkdownComponents() {
       </figure>
     ),
     hr: () => <hr className="my-10 border-0 border-t border-[var(--border-default)]" />,
-    table: ({ node, ...props }) => (
-      <div className="my-8 overflow-x-auto rounded-[1.2rem] border border-[var(--border-default)]">
-        <table className="min-w-full border-collapse text-left" {...props} />
+    table: ({ node, className, ...props }) => (
+      <div className="my-8 overflow-x-auto rounded-[1.2rem] border border-[var(--border-default)] bg-[var(--bg-primary)]/55 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+        <table className={joinClassNames('min-w-full border-collapse text-left', className)} {...props} />
       </div>
     ),
-    thead: ({ node, ...props }) => <thead className="bg-[var(--bg-surface)]/85" {...props} />,
-    th: ({ node, ...props }) => (
-      <th className="border-b border-[var(--border-default)] px-4 py-3 text-sm font-semibold text-[var(--text-primary)]" {...props} />
+    thead: ({ node, className, ...props }) => <thead className={joinClassNames('bg-[var(--bg-surface)]/85', className)} {...props} />,
+    th: ({ node, className, ...props }) => (
+      <th className={joinClassNames('border border-[var(--border-default)] px-4 py-3 text-sm font-semibold text-[var(--text-primary)] align-top', className)} {...props} />
     ),
-    td: ({ node, ...props }) => (
+    td: ({ node, className, ...props }) => (
       <td
-        className="border-b border-[var(--border-default)] px-4 py-3 text-justify text-sm leading-7 text-[var(--text-secondary)]"
+        className={joinClassNames('border border-[var(--border-default)] px-4 py-3 text-justify text-sm leading-7 text-[var(--text-secondary)] align-top', className)}
         {...props}
       />
     ),

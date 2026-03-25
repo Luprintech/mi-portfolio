@@ -1,6 +1,23 @@
 import { query, withTransaction } from './database.js';
+import { deriveHtmlMetadata } from '../utils/htmlMetadata.js';
 
 const READING_SPEED_WPM = 190;
+
+function inferFormat(row) {
+    if (row.format === 'html' || row.format === 'markdown') return row.format;
+    if (row.content_html) return 'html';
+    if (row.content_markdown_legacy) return 'markdown';
+    return /<\/?[a-z][\s\S]*>/i.test(String(row.content || '')) ? 'html' : 'markdown';
+}
+
+function resolveContentFields(row) {
+    const format = inferFormat(row);
+    const contentHtml = row.content_html || (format === 'html' ? row.content || '' : '');
+    const legacyMarkdown = row.content_markdown_legacy || (format === 'markdown' ? row.content || '' : '');
+    const content = format === 'html' ? contentHtml : legacyMarkdown;
+
+    return { format, contentHtml, legacyMarkdown, content };
+}
 
 function toDateString(value) {
     if (!value) return '';
@@ -16,18 +33,26 @@ function getStringArray(value) {
     return [];
 }
 
-function extractPresentation(content, fallbackImage = '') {
+function extractPresentation(content, fallbackImage = '', format = 'markdown') {
     const coverMatch = typeof content === 'string'
-        ? content.match(/!\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/)
+        ? format === 'html'
+            ? content.match(/<img[^>]+src=["']([^"']+)["']/i)
+            : content.match(/!\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/)
         : null;
 
     const normalizedText = typeof content === 'string'
-        ? content
-            .replace(/```[\s\S]*?```/g, ' ')
-            .replace(/`[^`]*`/g, ' ')
-            .replace(/!\[[^\]]*\]\([^)]+\)/g, ' ')
-            .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-            .replace(/[#>*_~-]+/g, ' ')
+        ? (format === 'html'
+            ? content
+                .replace(/<pre[\s\S]*?<\/pre>/gi, ' ')
+                .replace(/<code[\s\S]*?<\/code>/gi, ' ')
+                .replace(/<img[^>]*>/gi, ' ')
+                .replace(/<[^>]+>/g, ' ')
+            : content
+                .replace(/```[\s\S]*?```/g, ' ')
+                .replace(/`[^`]*`/g, ' ')
+                .replace(/!\[[^\]]*\]\([^)]+\)/g, ' ')
+                .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+                .replace(/[#>*_~-]+/g, ' '))
             .replace(/\s+/g, ' ')
             .trim()
         : '';
@@ -40,7 +65,148 @@ function extractPresentation(content, fallbackImage = '') {
     };
 }
 
+function extractMarkdownTocTitles(content = '') {
+    return String(content)
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => /^###{0,1}\s+/.test(line))
+        .map(line => line.replace(/^#{2,4}\s+/, '').trim())
+        .filter(Boolean)
+        .slice(0, 12);
+}
+
+function derivePostMetadata({ format, contentHtml, legacyMarkdown, fallbackImage = '', existingTocTitles = [] }) {
+    if (format === 'html') {
+        return deriveHtmlMetadata(contentHtml, { fallbackImage });
+    }
+
+    const legacyPresentation = extractPresentation(legacyMarkdown, fallbackImage, 'markdown');
+    const tocTitles = extractMarkdownTocTitles(legacyMarkdown);
+
+    return {
+        ...legacyPresentation,
+        tocTitles: tocTitles.length ? tocTitles : existingTocTitles,
+        attachmentsMeta: [],
+        documentSummary: [],
+    };
+}
+
+function getRevisionNumber(value, fallback = 0) {
+    const parsed = Number(value);
+    return Number.isInteger(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
+function getAttachmentsMeta(value) {
+    if (!Array.isArray(value)) return [];
+
+    return value
+        .map(item => {
+            if (!item || typeof item !== 'object') return null;
+
+            return {
+                src: typeof item.src === 'string' ? item.src : '',
+                title: typeof item.title === 'string' ? item.title : '',
+                fileType: typeof item.fileType === 'string' ? item.fileType : '',
+                display: typeof item.display === 'string' ? item.display : '',
+            };
+        })
+        .filter(item => item?.src);
+}
+
+function createRevisionConflictError(currentRevision) {
+    const error = new Error('La revision del post esta desactualizada. Recarga antes de guardar.');
+    error.code = 'REVISION_CONFLICT';
+    error.status = 409;
+    error.currentRevision = currentRevision;
+    return error;
+}
+
+function buildPersistedPost(currentRow, patch = {}) {
+    const currentContent = currentRow ? resolveContentFields(currentRow) : { format: 'html', contentHtml: '', legacyMarkdown: '', content: '' };
+    const format = patch.format ?? currentContent.format ?? 'html';
+    const contentHtml = patch.contentHtml ?? (format === 'html' ? currentContent.contentHtml : '');
+    const legacyMarkdown = patch.legacyMarkdown ?? (format === 'markdown' ? currentContent.legacyMarkdown : '');
+    const content = format === 'html' ? contentHtml : legacyMarkdown;
+    const existingTocTitles = currentRow ? getStringArray(currentRow.toc_titles) : [];
+    const metadata = derivePostMetadata({
+        format,
+        contentHtml,
+        legacyMarkdown,
+        fallbackImage: patch.ogImage ?? currentRow?.og_image ?? '',
+        existingTocTitles,
+    });
+
+    return {
+        slug: patch.slug ?? currentRow?.slug,
+        title: patch.title ?? currentRow?.title ?? '',
+        content,
+        format,
+        contentHtml: format === 'html' ? contentHtml : '',
+        legacyMarkdown: format === 'markdown' ? legacyMarkdown : '',
+        excerpt: patch.excerpt ?? currentRow?.excerpt ?? '',
+        tags: patch.tags ?? getStringArray(currentRow?.tags),
+        date: patch.date ?? toDateString(currentRow?.publication_date),
+        seoTitle: patch.seoTitle ?? currentRow?.seo_title ?? '',
+        seoDescription: patch.seoDescription ?? currentRow?.seo_description ?? '',
+        ogImage: patch.ogImage ?? currentRow?.og_image ?? '',
+        canonicalUrl: patch.canonicalUrl ?? currentRow?.canonical_url ?? '',
+        noindex: patch.noindex ?? Boolean(currentRow?.noindex),
+        featured: patch.featured ?? Boolean(currentRow?.featured),
+        status: patch.status ?? currentRow?.status ?? 'draft',
+        coverImage: metadata.coverImage,
+        readingTime: metadata.readingTime,
+        tocTitles: metadata.tocTitles,
+        attachmentsMeta: metadata.attachmentsMeta,
+    };
+}
+
+async function createRevisionSnapshot(client, row, source) {
+    const contentFields = resolveContentFields(row);
+    const metadata = {
+        title: row.title,
+        excerpt: row.excerpt || '',
+        tags: getStringArray(row.tags),
+        seoTitle: row.seo_title || '',
+        seoDescription: row.seo_description || '',
+        ogImage: row.og_image || '',
+        canonicalUrl: row.canonical_url || '',
+        noindex: Boolean(row.noindex),
+        featured: Boolean(row.featured),
+        status: row.status,
+        tocTitles: getStringArray(row.toc_titles),
+        coverImage: row.cover_image || '',
+        readingTime: Number(row.reading_time) || 4,
+        attachmentsMeta: getAttachmentsMeta(row.attachments_meta),
+        publicationDate: toDateString(row.publication_date),
+    };
+
+    await client.query(
+        `INSERT INTO post_revisions (
+            post_id,
+            revision,
+            snapshot_format,
+            snapshot_content_html,
+            snapshot_content_markdown_legacy,
+            snapshot_meta,
+            source
+        ) VALUES (
+            $1, $2, $3, $4, $5, $6::jsonb, $7
+        )`,
+        [
+            row.id,
+            getRevisionNumber(row.revision, 1),
+            contentFields.format,
+            contentFields.contentHtml,
+            contentFields.legacyMarkdown,
+            JSON.stringify(metadata),
+            source,
+        ]
+    );
+}
+
 function mapPostRow(row, { includeContent = false, includePresentation = false } = {}) {
+    const contentFields = resolveContentFields(row);
+    const derivedPresentation = extractPresentation(contentFields.content, row.og_image || '', contentFields.format);
     const mapped = {
         slug: row.slug,
         title: row.title,
@@ -55,16 +221,22 @@ function mapPostRow(row, { includeContent = false, includePresentation = false }
         noindex: Boolean(row.noindex),
         featured: Boolean(row.featured),
         status: row.status,
+        format: contentFields.format,
+        revision: getRevisionNumber(row.revision, contentFields.content ? 1 : 0),
+        updatedAt: row.updated_at || null,
+        lastAutosavedAt: row.last_autosaved_at || null,
     };
 
     if (includeContent) {
-        mapped.content = row.content;
+        mapped.content = contentFields.content;
+        mapped.contentHtml = contentFields.contentHtml;
+        mapped.legacyMarkdown = contentFields.legacyMarkdown;
     }
 
     if (includePresentation) {
-        const presentation = extractPresentation(row.content, row.og_image || '');
-        mapped.coverImage = presentation.coverImage;
-        mapped.readingTime = presentation.readingTime;
+        mapped.coverImage = row.cover_image || derivedPresentation.coverImage;
+        mapped.readingTime = Number(row.reading_time) || derivedPresentation.readingTime;
+        mapped.attachmentsMeta = getAttachmentsMeta(row.attachments_meta);
     }
 
     return mapped;
@@ -129,6 +301,8 @@ export async function getPostForCms(slug) {
 
 export async function createPost(data) {
     return withTransaction(async (client) => {
+        const persisted = buildPersistedPost(null, data);
+
         if (data.featured && data.status === 'published') {
             await client.query(
                 "UPDATE posts SET featured = FALSE WHERE featured = TRUE AND status = 'published'"
@@ -140,6 +314,9 @@ export async function createPost(data) {
                 slug,
                 title,
                 content,
+                format,
+                content_html,
+                content_markdown_legacy,
                 excerpt,
                 tags,
                 publication_date,
@@ -149,54 +326,57 @@ export async function createPost(data) {
                 canonical_url,
                 noindex,
                 featured,
+                cover_image,
+                reading_time,
                 toc_titles,
+                attachments_meta,
+                revision,
                 status
             ) VALUES (
-                $1, $2, $3, $4, $5::jsonb, $6, $7, $8, $9, $10, $11, $12, $13::jsonb, $14
+                $1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18::jsonb, $19::jsonb, $20, $21
             )
             RETURNING *`,
             [
-                data.slug,
-                data.title,
-                data.content,
-                data.excerpt || '',
-                JSON.stringify(data.tags || []),
-                data.date,
-                data.seoTitle || '',
-                data.seoDescription || '',
-                data.ogImage || '',
-                data.canonicalUrl || '',
-                Boolean(data.noindex),
-                Boolean(data.featured),
-                JSON.stringify(data.tocTitles || []),
-                data.status,
+                persisted.slug,
+                persisted.title,
+                persisted.content,
+                persisted.format,
+                persisted.contentHtml,
+                persisted.legacyMarkdown,
+                persisted.excerpt,
+                JSON.stringify(persisted.tags || []),
+                persisted.date,
+                persisted.seoTitle,
+                persisted.seoDescription,
+                persisted.ogImage,
+                persisted.canonicalUrl,
+                Boolean(persisted.noindex),
+                Boolean(persisted.featured),
+                persisted.coverImage,
+                persisted.readingTime,
+                JSON.stringify(persisted.tocTitles || []),
+                JSON.stringify(persisted.attachmentsMeta || []),
+                1,
+                persisted.status,
             ]
         );
 
-        return mapPostRow(result.rows[0]);
+        await createRevisionSnapshot(client, result.rows[0], persisted.status === 'published' ? 'publish' : 'manual-save');
+
+        return mapPostRow(result.rows[0], { includeContent: true, includePresentation: true });
     });
 }
 
-export async function updatePost(slug, patch) {
+async function persistPostUpdate(slug, patch, { source = 'manual-save', touchAutosave = false } = {}) {
     const currentRow = await getPostRowBySlug(slug, { includeDrafts: true });
     if (!currentRow) return null;
 
-    const merged = {
-        slug: currentRow.slug,
-        title: patch.title ?? currentRow.title,
-        content: patch.content ?? currentRow.content,
-        excerpt: patch.excerpt ?? currentRow.excerpt,
-        tags: patch.tags ?? getStringArray(currentRow.tags),
-        date: patch.date ?? toDateString(currentRow.publication_date),
-        seoTitle: patch.seoTitle ?? currentRow.seo_title,
-        seoDescription: patch.seoDescription ?? currentRow.seo_description,
-        ogImage: patch.ogImage ?? currentRow.og_image,
-        canonicalUrl: patch.canonicalUrl ?? currentRow.canonical_url,
-        noindex: patch.noindex ?? Boolean(currentRow.noindex),
-        featured: patch.featured ?? Boolean(currentRow.featured),
-        tocTitles: patch.tocTitles ?? getStringArray(currentRow.toc_titles),
-        status: patch.status ?? currentRow.status,
-    };
+    if (patch.revision !== undefined && getRevisionNumber(patch.revision, -1) !== getRevisionNumber(currentRow.revision, 0)) {
+        throw createRevisionConflictError(getRevisionNumber(currentRow.revision, 0));
+    }
+
+    const merged = buildPersistedPost(currentRow, patch);
+    const nextRevision = getRevisionNumber(currentRow.revision, 0) + 1;
 
     return withTransaction(async (client) => {
         if (merged.featured && merged.status === 'published') {
@@ -209,25 +389,36 @@ export async function updatePost(slug, patch) {
         const result = await client.query(
             `UPDATE posts
              SET title = $2,
-                 content = $3,
-                 excerpt = $4,
-                 tags = $5::jsonb,
-                 publication_date = $6,
-                 seo_title = $7,
-                 seo_description = $8,
-                 og_image = $9,
-                 canonical_url = $10,
-                 noindex = $11,
-                 featured = $12,
-                 toc_titles = $13::jsonb,
-                 status = $14,
-                 updated_at = NOW()
-             WHERE slug = $1
-             RETURNING *`,
+                  content = $3,
+                  format = $4,
+                  content_html = $5,
+                  content_markdown_legacy = $6,
+                  excerpt = $7,
+                  tags = $8::jsonb,
+                  publication_date = $9,
+                  seo_title = $10,
+                  seo_description = $11,
+                  og_image = $12,
+                  canonical_url = $13,
+                  noindex = $14,
+                  featured = $15,
+                  cover_image = $16,
+                  reading_time = $17,
+                  toc_titles = $18::jsonb,
+                  attachments_meta = $19::jsonb,
+                  revision = $20,
+                  status = $21,
+                  last_autosaved_at = CASE WHEN $22 THEN NOW() ELSE last_autosaved_at END,
+                  updated_at = NOW()
+               WHERE slug = $1
+               RETURNING *`,
             [
                 slug,
                 merged.title,
                 merged.content,
+                merged.format,
+                merged.contentHtml,
+                merged.legacyMarkdown,
                 merged.excerpt,
                 JSON.stringify(merged.tags || []),
                 merged.date,
@@ -237,13 +428,96 @@ export async function updatePost(slug, patch) {
                 merged.canonicalUrl,
                 Boolean(merged.noindex),
                 Boolean(merged.featured),
+                merged.coverImage,
+                merged.readingTime,
                 JSON.stringify(merged.tocTitles || []),
+                JSON.stringify(merged.attachmentsMeta || []),
+                nextRevision,
                 merged.status,
+                touchAutosave,
             ]
         );
 
-        return mapPostRow(result.rows[0]);
+        await createRevisionSnapshot(client, result.rows[0], source);
+
+        return mapPostRow(result.rows[0], { includeContent: true, includePresentation: true });
     });
+}
+
+export async function updatePost(slug, patch, options = {}) {
+    return persistPostUpdate(slug, patch, {
+        source: options.source || (patch.status === 'published' ? 'publish' : 'manual-save'),
+        touchAutosave: false,
+    });
+}
+
+export async function autosavePost(slug, patch) {
+    return persistPostUpdate(slug, patch, { source: 'autosave', touchAutosave: true });
+}
+
+export async function listPostRevisions(slug) {
+    const row = await getPostRowBySlug(slug, { includeDrafts: true });
+    if (!row) return null;
+
+    const result = await query(
+        `SELECT id, revision, source, created_at
+         FROM post_revisions
+         WHERE post_id = $1
+         ORDER BY revision DESC, created_at DESC
+         LIMIT 20`,
+        [row.id]
+    );
+
+    return result.rows.map(item => ({
+        id: item.id,
+        revision: getRevisionNumber(item.revision, 0),
+        source: item.source,
+        createdAt: item.created_at,
+    }));
+}
+
+export async function restorePostRevision(slug, revisionId, expectedRevision) {
+    const currentRow = await getPostRowBySlug(slug, { includeDrafts: true });
+    if (!currentRow) return null;
+
+    if (expectedRevision !== undefined && getRevisionNumber(expectedRevision, -1) !== getRevisionNumber(currentRow.revision, 0)) {
+        throw createRevisionConflictError(getRevisionNumber(currentRow.revision, 0));
+    }
+
+    const revisionResult = await query(
+        `SELECT *
+         FROM post_revisions
+         WHERE id = $1 AND post_id = $2
+         LIMIT 1`,
+        [revisionId, currentRow.id]
+    );
+
+    const snapshot = revisionResult.rows[0];
+    if (!snapshot) return undefined;
+
+    const snapshotMeta = snapshot.snapshot_meta || {};
+
+    return persistPostUpdate(
+        slug,
+        {
+            title: snapshotMeta.title,
+            excerpt: snapshotMeta.excerpt,
+            tags: snapshotMeta.tags,
+            date: snapshotMeta.publicationDate,
+            seoTitle: snapshotMeta.seoTitle,
+            seoDescription: snapshotMeta.seoDescription,
+            ogImage: snapshotMeta.ogImage,
+            canonicalUrl: snapshotMeta.canonicalUrl,
+            noindex: snapshotMeta.noindex,
+            featured: snapshotMeta.featured,
+            status: snapshotMeta.status,
+            format: snapshot.snapshot_format,
+            contentHtml: snapshot.snapshot_content_html,
+            legacyMarkdown: snapshot.snapshot_content_markdown_legacy,
+            revision: getRevisionNumber(currentRow.revision, 0),
+        },
+        { source: 'restore', touchAutosave: false }
+    );
 }
 
 export async function deletePost(slug) {

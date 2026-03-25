@@ -3,11 +3,11 @@ import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import { ChevronUp, ArrowRight } from 'lucide-react';
-import { sanitizePostContent } from '../lib/postContentSanitizer';
 import { buildShareLinks, extractHeadings } from '../components/blog/markdownComponents';
 import { usePost } from '../hooks/usePost';
 import { useReadingProgress } from '../hooks/useReadingProgress';
 import { useActiveHeading } from '../hooks/useActiveHeading';
+import { inferPostContentFields } from '../lib/postContentSource';
 import PostSkeleton from '../components/blog/PostSkeleton';
 import PostHeader from '../components/blog/PostHeader';
 import PostContent from '../components/blog/PostContent';
@@ -21,8 +21,8 @@ const BlogPost = () => {
   const { postMeta, content, loading, error } = usePost(slug);
   const { readProgress, showScrollTop } = useReadingProgress();
 
-  const sanitizedContent = useMemo(() => sanitizePostContent(content), [content]);
-  const headings = useMemo(() => extractHeadings(content), [content]);
+  const resolvedContent = useMemo(() => inferPostContentFields(postMeta || { content }), [postMeta, content]);
+  const headings = useMemo(() => extractHeadings(resolvedContent.sourceContent), [resolvedContent.sourceContent]);
   const hasToc = headings.length >= 3;
 
   const activeHeadingId = useActiveHeading(headings, hasToc);
@@ -48,34 +48,30 @@ const BlogPost = () => {
   if (!postMeta) return null;
 
   const shareLinks = buildShareLinks(postMeta);
+  const seoTitle = postMeta.seoTitle || postMeta.title;
+  const seoDescription = postMeta.seoDescription || postMeta.excerpt;
+  const canonicalUrl = shareLinks.url;
+  const socialImageUrl = postMeta.ogImage
+    ? (postMeta.ogImage.startsWith('http') ? postMeta.ogImage : `${window.location.origin}${postMeta.ogImage}`)
+    : '';
 
   return (
     <div className="relative min-h-screen blog-cosmic-grid px-6 py-24 text-[var(--text-primary)] selection:bg-violet-500/30 md:px-10 lg:px-14">
       <Helmet>
-        <title>{postMeta.seoTitle || postMeta.title} | Guadalupe Cano</title>
-        <meta name="description" content={postMeta.seoDescription || postMeta.excerpt} />
-        <meta property="og:url" content={shareLinks.url} />
-        <meta property="og:title" content={postMeta.seoTitle || postMeta.title} />
-        <meta property="og:description" content={postMeta.seoDescription || postMeta.excerpt} />
-        {postMeta.ogImage && (
-          <meta
-            property="og:image"
-            content={postMeta.ogImage.startsWith('http') ? postMeta.ogImage : `${window.location.origin}${postMeta.ogImage}`}
-          />
-        )}
+        <title>{seoTitle} | Guadalupe Cano</title>
+        <meta name="description" content={seoDescription} />
+        <meta name="robots" content={postMeta.noindex ? 'noindex, nofollow' : 'index, follow'} />
+        <link rel="canonical" href={canonicalUrl} />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:title" content={seoTitle} />
+        <meta property="og:description" content={seoDescription} />
+        {socialImageUrl && <meta property="og:image" content={socialImageUrl} />}
         <meta property="og:type" content="article" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:url" content={shareLinks.url} />
-        <meta name="twitter:title" content={postMeta.seoTitle || postMeta.title} />
-        <meta name="twitter:description" content={postMeta.seoDescription || postMeta.excerpt} />
-        {postMeta.ogImage && (
-          <meta
-            name="twitter:image"
-            content={postMeta.ogImage.startsWith('http') ? postMeta.ogImage : `${window.location.origin}${postMeta.ogImage}`}
-          />
-        )}
-        {postMeta.canonicalUrl && <link rel="canonical" href={postMeta.canonicalUrl} />}
-        {postMeta.noindex && <meta name="robots" content="noindex" />}
+        <meta name="twitter:url" content={canonicalUrl} />
+        <meta name="twitter:title" content={seoTitle} />
+        <meta name="twitter:description" content={seoDescription} />
+        {socialImageUrl && <meta name="twitter:image" content={socialImageUrl} />}
       </Helmet>
 
       {/* Barra de progreso de lectura */}
@@ -113,7 +109,7 @@ const BlogPost = () => {
 
             <div className="order-1 min-w-0">
               <div className="mx-auto max-w-3xl">
-                <PostContent sanitizedContent={sanitizedContent} />
+                <PostContent post={postMeta} />
                 <ShareButtons postMeta={postMeta} />
 
                 {/* CTA — Seguir leyendo */}

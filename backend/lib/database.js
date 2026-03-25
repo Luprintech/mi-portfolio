@@ -318,6 +318,45 @@ async function ensureSchema() {
         ALTER TABLE posts
             ADD COLUMN IF NOT EXISTS toc_titles JSONB NOT NULL DEFAULT '[]'::jsonb;
 
+        ALTER TABLE posts
+            ADD COLUMN IF NOT EXISTS format VARCHAR(16);
+
+        ALTER TABLE posts
+            ADD COLUMN IF NOT EXISTS content_html TEXT NOT NULL DEFAULT '';
+
+        ALTER TABLE posts
+            ADD COLUMN IF NOT EXISTS content_markdown_legacy TEXT NOT NULL DEFAULT '';
+
+        ALTER TABLE posts
+            ADD COLUMN IF NOT EXISTS cover_image TEXT NOT NULL DEFAULT '';
+
+        ALTER TABLE posts
+            ADD COLUMN IF NOT EXISTS reading_time INTEGER NOT NULL DEFAULT 4;
+
+        ALTER TABLE posts
+            ADD COLUMN IF NOT EXISTS attachments_meta JSONB NOT NULL DEFAULT '[]'::jsonb;
+
+        ALTER TABLE posts
+            ADD COLUMN IF NOT EXISTS revision INTEGER NOT NULL DEFAULT 0;
+
+        ALTER TABLE posts
+            ADD COLUMN IF NOT EXISTS last_autosaved_at TIMESTAMPTZ;
+
+        CREATE TABLE IF NOT EXISTS post_revisions (
+            id BIGSERIAL PRIMARY KEY,
+            post_id BIGINT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+            revision INTEGER NOT NULL,
+            snapshot_format VARCHAR(16) NOT NULL,
+            snapshot_content_html TEXT NOT NULL DEFAULT '',
+            snapshot_content_markdown_legacy TEXT NOT NULL DEFAULT '',
+            snapshot_meta JSONB NOT NULL DEFAULT '{}'::jsonb,
+            source VARCHAR(24) NOT NULL DEFAULT 'manual-save',
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_post_revisions_post_id_revision
+            ON post_revisions (post_id, revision DESC, created_at DESC);
+
         CREATE INDEX IF NOT EXISTS idx_posts_publication_date
             ON posts (publication_date DESC, created_at DESC);
 

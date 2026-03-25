@@ -1,11 +1,14 @@
 import { Router } from 'express';
 import { logger } from '../lib/logger.js';
 import {
+    autosavePost,
     createPost,
     deletePost,
     getPostForCms,
+    listPostRevisions,
     listPostsForCms,
     listPostsForSitemap,
+    restorePostRevision,
     updatePost,
 } from '../lib/contentRepository.js';
 import { generateSitemap } from '../lib/sitemap.js';
@@ -62,6 +65,10 @@ router.post('/', async (req, res, next) => {
             return res.status(409).json({ error: 'Ya existe un post con ese slug' });
         }
 
+        if (error.code === 'REVISION_CONFLICT') {
+            return res.status(409).json({ error: error.message, currentRevision: error.currentRevision });
+        }
+
         next(createHttpError(500, 'Error creando el post', { cause: error }));
     }
 });
@@ -76,7 +83,9 @@ router.put('/:slug', async (req, res, next) => {
             return res.status(400).json({ error: errors[0] });
         }
 
-        const updated = await updatePost(slug, data);
+        const updated = await updatePost(slug, data, {
+            source: data.status === 'published' ? 'publish' : 'manual-save',
+        });
         if (!updated) return res.status(404).json({ error: 'Post no encontrado' });
 
         await generateSitemap(listPostsForSitemap);
@@ -89,7 +98,90 @@ router.put('/:slug', async (req, res, next) => {
 
         res.json(updated);
     } catch (error) {
+        if (error.code === 'REVISION_CONFLICT') {
+            return res.status(409).json({ error: error.message, currentRevision: error.currentRevision });
+        }
+
         next(createHttpError(500, 'Error actualizando el post', { cause: error }));
+    }
+});
+
+router.post('/:slug/autosave', async (req, res, next) => {
+    try {
+        const slug = validateRouteSlug(req.params.slug);
+        if (!slug) return res.status(400).json({ error: 'Slug no valido' });
+
+        const { errors, data } = sanitizePostInput(req.body, { partial: true });
+        if (errors.length) {
+            return res.status(400).json({ error: errors[0] });
+        }
+
+        const updated = await autosavePost(slug, data);
+        if (!updated) return res.status(404).json({ error: 'Post no encontrado' });
+
+        postsLogger.info('Post autosaved', {
+            requestId: req.requestId,
+            slug,
+            username: req.user?.username || null,
+            revision: updated.revision,
+        });
+
+        res.json(updated);
+    } catch (error) {
+        if (error.code === 'REVISION_CONFLICT') {
+            return res.status(409).json({ error: error.message, currentRevision: error.currentRevision });
+        }
+
+        next(createHttpError(500, 'Error autoguardando el post', { cause: error }));
+    }
+});
+
+router.get('/:slug/revisions', async (req, res, next) => {
+    try {
+        const slug = validateRouteSlug(req.params.slug);
+        if (!slug) return res.status(400).json({ error: 'Slug no valido' });
+
+        const revisions = await listPostRevisions(slug);
+        if (!revisions) return res.status(404).json({ error: 'Post no encontrado' });
+
+        res.json(revisions);
+    } catch (error) {
+        next(createHttpError(500, 'Error leyendo revisiones del post', { cause: error }));
+    }
+});
+
+router.post('/:slug/restore', async (req, res, next) => {
+    try {
+        const slug = validateRouteSlug(req.params.slug);
+        if (!slug) return res.status(400).json({ error: 'Slug no valido' });
+
+        const revisionId = Number(req.body?.revisionId);
+        if (!Number.isInteger(revisionId) || revisionId <= 0) {
+            return res.status(400).json({ error: 'La revision solicitada no es valida' });
+        }
+
+        const restored = await restorePostRevision(slug, revisionId, req.body?.revision);
+        if (restored === undefined) {
+            return res.status(404).json({ error: 'Revision no encontrada' });
+        }
+
+        if (!restored) return res.status(404).json({ error: 'Post no encontrado' });
+
+        postsLogger.info('Post restored from revision', {
+            requestId: req.requestId,
+            slug,
+            revisionId,
+            username: req.user?.username || null,
+            revision: restored.revision,
+        });
+
+        res.json(restored);
+    } catch (error) {
+        if (error.code === 'REVISION_CONFLICT') {
+            return res.status(409).json({ error: error.message, currentRevision: error.currentRevision });
+        }
+
+        next(createHttpError(500, 'Error restaurando la revision del post', { cause: error }));
     }
 });
 

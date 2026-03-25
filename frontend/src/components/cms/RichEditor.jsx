@@ -1,4 +1,4 @@
-import { useEditor, EditorContent, ReactNodeViewRenderer, NodeViewWrapper, NodeViewContent } from '@tiptap/react';
+import { useEditor, EditorContent, ReactNodeViewRenderer, NodeViewContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
@@ -21,16 +21,26 @@ const CustomTableCell = TableCell.extend({
                 default: null,
                 parseHTML: el => el.style.backgroundColor || el.getAttribute('data-bg') || null,
                 renderHTML: attrs => {
-                    if (!attrs.backgroundColor) return {};
-                    return { style: `background-color: ${attrs.backgroundColor}`, 'data-bg': attrs.backgroundColor };
+                    const style = [];
+                    if (attrs.backgroundColor) style.push(`background-color: ${attrs.backgroundColor}`);
+                    if (attrs.borderColor) style.push(`border-color: ${attrs.borderColor}`);
+                    return {
+                        ...(style.length ? { style: style.join(';') } : {}),
+                        ...(attrs.backgroundColor ? { 'data-bg': attrs.backgroundColor } : {}),
+                    };
                 },
             },
             borderColor: {
                 default: null,
-                parseHTML: el => el.getAttribute('data-border-color') || null,
+                parseHTML: el => el.style.borderColor || el.getAttribute('data-border-color') || null,
                 renderHTML: attrs => {
-                    if (!attrs.borderColor) return {};
-                    return { style: `border-color: ${attrs.borderColor}`, 'data-border-color': attrs.borderColor };
+                    const style = [];
+                    if (attrs.backgroundColor) style.push(`background-color: ${attrs.backgroundColor}`);
+                    if (attrs.borderColor) style.push(`border-color: ${attrs.borderColor}`);
+                    return {
+                        ...(style.length ? { style: style.join(';') } : {}),
+                        ...(attrs.borderColor ? { 'data-border-color': attrs.borderColor } : {}),
+                    };
                 },
             },
         };
@@ -45,22 +55,31 @@ const CustomTableHeader = TableHeader.extend({
                 default: null,
                 parseHTML: el => el.style.backgroundColor || el.getAttribute('data-bg') || null,
                 renderHTML: attrs => {
-                    if (!attrs.backgroundColor) return {};
-                    return { style: `background-color: ${attrs.backgroundColor}`, 'data-bg': attrs.backgroundColor };
+                    const style = [];
+                    if (attrs.backgroundColor) style.push(`background-color: ${attrs.backgroundColor}`);
+                    if (attrs.borderColor) style.push(`border-color: ${attrs.borderColor}`);
+                    return {
+                        ...(style.length ? { style: style.join(';') } : {}),
+                        ...(attrs.backgroundColor ? { 'data-bg': attrs.backgroundColor } : {}),
+                    };
                 },
             },
             borderColor: {
                 default: null,
-                parseHTML: el => el.getAttribute('data-border-color') || null,
+                parseHTML: el => el.style.borderColor || el.getAttribute('data-border-color') || null,
                 renderHTML: attrs => {
-                    if (!attrs.borderColor) return {};
-                    return { style: `border-color: ${attrs.borderColor}`, 'data-border-color': attrs.borderColor };
+                    const style = [];
+                    if (attrs.backgroundColor) style.push(`background-color: ${attrs.backgroundColor}`);
+                    if (attrs.borderColor) style.push(`border-color: ${attrs.borderColor}`);
+                    return {
+                        ...(style.length ? { style: style.join(';') } : {}),
+                        ...(attrs.borderColor ? { 'data-border-color': attrs.borderColor } : {}),
+                    };
                 },
             },
         };
     },
 });
-import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import { common, createLowlight } from 'lowlight';
 import Superscript from '@tiptap/extension-superscript';
 import Subscript from '@tiptap/extension-subscript';
@@ -68,16 +87,40 @@ import 'highlight.js/styles/github-dark.css';
 import mermaid from 'mermaid';
 import { useCallback, useRef, useEffect, useState } from 'react';
 import { LineHeight, AccordionExtension, ContentButtonExtension, DocumentAttachmentExtension, ImageGridExtension } from './editor/extensions';
+import RichBlockFrame from './editor/RichBlockFrame';
+import {
+    canUseJustifyAlignment,
+    createRichBlockTextAlignAttribute,
+    getRichBlockHtmlAttributes,
+    isRichBlockNodeActive,
+} from './editor/blockAlignment';
+import { createTechnicalCodeBlockExtension } from './editor/technicalCodeBlockExtension';
 import EmojiPicker from './editor/EmojiPicker';
 import SlashMenu from './editor/SlashMenu';
-import { AUDIO_INPUT_ACCEPT, IMAGE_INPUT_ACCEPT, validateAudioFile, validateImageFile } from '../../lib/mediaUploadPolicy';
+import {
+    filterInsertMenuItems,
+    groupInsertMenuItems,
+    INSERT_MENU_CATEGORY_STYLES,
+    PLUS_MENU_ITEMS,
+    runInsertMenuEditorAction,
+} from './editor/insertMenuConfig';
+import {
+    AUDIO_INPUT_ACCEPT,
+    DOCUMENT_INPUT_ACCEPT,
+    DOCUMENT_UPLOAD_LABEL,
+    IMAGE_INPUT_ACCEPT,
+    validateAudioFile,
+    validateDocumentFile,
+    validateImageFile,
+} from '../../lib/mediaUploadPolicy';
+import { cmsApi } from '../../lib/cmsApi';
 
 const lowlight = createLowlight(common);
 
 mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
 
 // ─── ResizableImage — nodo React con handles de resize ────────────────────────
-function ResizableImageView({ node, updateAttributes, selected }) {
+function ResizableImageView({ node, updateAttributes, selected, deleteNode }) {
     const containerRef = useRef(null);
     const [resizing, setResizing]   = useState(false);
     const startData = useRef(null);
@@ -139,7 +182,14 @@ function ResizableImageView({ node, updateAttributes, selected }) {
     const handleStyle = 'absolute w-3 h-3 bg-fuchsia-500 border-2 border-white rounded-full z-10 cursor-nwse-resize';
 
     return (
-        <NodeViewWrapper className="inline-block relative my-4 mx-auto block" data-drag-handle style={node.attrs.textAlign && node.attrs.textAlign !== 'left' ? { display: 'flex', justifyContent: node.attrs.textAlign === 'center' ? 'center' : 'flex-end' } : undefined}>
+        <RichBlockFrame
+            alignment={node.attrs.textAlign}
+            selected={selected}
+            onRemove={deleteNode}
+            wrapperClassName="my-4"
+            dragHandle
+            frameClassName="inline-block"
+        >
             <div
                 ref={containerRef}
                 className={`relative inline-block group ${selected ? 'ring-2 ring-fuchsia-500 ring-offset-2 ring-offset-transparent' : ''}`}
@@ -169,12 +219,12 @@ function ResizableImageView({ node, updateAttributes, selected }) {
                     <p className="text-xs text-center text-gray-500 mt-2 italic">{node.attrs.alt}</p>
                 )}
             </div>
-        </NodeViewWrapper>
+        </RichBlockFrame>
     );
 }
 
 // ─── ResizableYoutube — nodo React con handles de resize ─────────────────────
-function ResizableYoutubeView({ node, updateAttributes, selected }) {
+function ResizableYoutubeView({ node, updateAttributes, selected, deleteNode }) {
     const containerRef = useRef(null);
     const startData = useRef(null);
 
@@ -223,7 +273,14 @@ function ResizableYoutubeView({ node, updateAttributes, selected }) {
     }
 
     return (
-        <NodeViewWrapper className="my-4 block" data-drag-handle style={node.attrs.textAlign && node.attrs.textAlign !== 'left' ? { display: 'flex', justifyContent: node.attrs.textAlign === 'center' ? 'center' : 'flex-end' } : undefined}>
+        <RichBlockFrame
+            alignment={node.attrs.textAlign}
+            selected={selected}
+            onRemove={deleteNode}
+            wrapperClassName="my-4"
+            dragHandle
+            frameClassName="inline-block"
+        >
             <div
                 ref={containerRef}
                 className={`relative group rounded-xl overflow-hidden ${selected ? 'ring-2 ring-fuchsia-500' : ''}`}
@@ -249,7 +306,7 @@ function ResizableYoutubeView({ node, updateAttributes, selected }) {
                     </svg>
                 </div>
             </div>
-        </NodeViewWrapper>
+        </RichBlockFrame>
     );
 }
 
@@ -260,7 +317,11 @@ const ResizableImageExtension = Image.extend({
             ...this.parent?.(),
             width:  { default: null },
             height: { default: null },
+            textAlign: createRichBlockTextAlignAttribute(),
         };
+    },
+    renderHTML({ HTMLAttributes }) {
+        return ['img', mergeAttributes(getRichBlockHtmlAttributes(HTMLAttributes, HTMLAttributes.textAlign))];
     },
     addNodeView() {
         return ReactNodeViewRenderer(ResizableImageView);
@@ -269,6 +330,12 @@ const ResizableImageExtension = Image.extend({
 
 // ─── Extensión Youtube con NodeView React ─────────────────────────────────────
 const ResizableYoutubeExtension = Youtube.extend({
+    addAttributes() {
+        return {
+            ...this.parent?.(),
+            textAlign: createRichBlockTextAlignAttribute(),
+        };
+    },
     addNodeView() {
         return ReactNodeViewRenderer(ResizableYoutubeView);
     },
@@ -283,29 +350,15 @@ const AudioNode = Node.create({
         return {
             src:   { default: null },
             title: { default: null },
+            textAlign: createRichBlockTextAlignAttribute(),
         };
     },
     parseHTML() { return [{ tag: 'audio' }]; },
-    renderHTML({ HTMLAttributes }) {
-        return ['audio', mergeAttributes({ controls: true, class: 'w-full my-4 rounded-lg' }, HTMLAttributes)];
+    renderHTML({ node, HTMLAttributes }) {
+        return ['audio', mergeAttributes(getRichBlockHtmlAttributes(HTMLAttributes, node.attrs.textAlign, { controls: true, class: 'w-full my-4 rounded-lg' }))];
     },
     addNodeView() {
-        return ({ node }) => {
-            const dom = document.createElement('div');
-            dom.className = 'my-4';
-            const audio = document.createElement('audio');
-            audio.controls = true;
-            audio.className = 'w-full rounded-lg';
-            audio.src = node.attrs.src || '';
-            dom.appendChild(audio);
-            if (node.attrs.title) {
-                const cap = document.createElement('p');
-                cap.className = 'text-sm text-center text-gray-500 mt-1 italic';
-                cap.textContent = node.attrs.title;
-                dom.appendChild(cap);
-            }
-            return { dom };
-        };
+        return ReactNodeViewRenderer(AudioView);
     },
     addCommands() {
         return {
@@ -315,6 +368,25 @@ const AudioNode = Node.create({
     },
 });
 
+function AudioView({ node, selected, deleteNode }) {
+    return (
+        <RichBlockFrame
+            alignment={node.attrs.textAlign}
+            selected={selected}
+            onRemove={deleteNode}
+            wrapperClassName="my-4"
+            frameClassName="w-full"
+        >
+            <div className={`${selected ? 'rounded-xl ring-2 ring-fuchsia-500 ring-offset-2 ring-offset-transparent' : ''}`}>
+                <audio controls className="w-full rounded-lg" src={node.attrs.src || ''} />
+                {node.attrs.title ? (
+                    <p className="mt-1 text-center text-sm italic text-gray-500">{node.attrs.title}</p>
+                ) : null}
+            </div>
+        </RichBlockFrame>
+    );
+}
+
 // ─── Callout — TIP / NOTE / WARNING / INFO ────────────────────────────────────
 const CALLOUT_CONFIG = {
     tip:     { icon: '💡', label: 'TIP',     border: '#22c55e', bg: 'rgba(34,197,94,0.08)'  },
@@ -323,10 +395,15 @@ const CALLOUT_CONFIG = {
     info:    { icon: '📌', label: 'INFO',    border: '#8b5cf6', bg: 'rgba(139,92,246,0.08)' },
 };
 
-function CalloutView({ node, updateAttributes }) {
+function CalloutView({ node, updateAttributes, selected, deleteNode }) {
     const cfg = CALLOUT_CONFIG[node.attrs.type] || CALLOUT_CONFIG.tip;
     return (
-        <NodeViewWrapper>
+        <RichBlockFrame
+            alignment={node.attrs.textAlign}
+            selected={selected}
+            onRemove={deleteNode}
+            frameClassName="w-full"
+        >
             <div style={{
                 borderLeft: `4px solid ${cfg.border}`,
                 background: cfg.bg,
@@ -351,7 +428,7 @@ function CalloutView({ node, updateAttributes }) {
                 </div>
                 <NodeViewContent style={{ margin: 0 }} />
             </div>
-        </NodeViewWrapper>
+        </RichBlockFrame>
     );
 }
 
@@ -367,11 +444,12 @@ const CalloutExtension = Node.create({
                 parseHTML: el => el.getAttribute('data-callout-type') || 'tip',
                 renderHTML: attrs => ({ 'data-callout-type': attrs.type }),
             },
+            textAlign: createRichBlockTextAlignAttribute(),
         };
     },
     parseHTML() { return [{ tag: 'div[data-callout]' }]; },
     renderHTML({ node, HTMLAttributes }) {
-        return ['div', mergeAttributes(HTMLAttributes, { 'data-callout': '', ...(node.attrs.textAlign && { 'data-align': node.attrs.textAlign }) }), 0];
+        return ['div', mergeAttributes(getRichBlockHtmlAttributes(HTMLAttributes, node.attrs.textAlign, { 'data-callout': '' })), 0];
     },
     addNodeView() {
         return ReactNodeViewRenderer(CalloutView);
@@ -414,7 +492,7 @@ const MERMAID_BG_COLORS = [
 
 let mermaidCounter = 0;
 
-function MermaidView({ node, updateAttributes, selected }) {
+function MermaidView({ node, updateAttributes, selected, deleteNode }) {
     const [editing, setEditing]     = useState(false);
     const [settings, setSettings]   = useState(false);
     const [localCode, setLocalCode] = useState(node.attrs.code || '');
@@ -459,8 +537,15 @@ function MermaidView({ node, updateAttributes, selected }) {
     }
 
     return (
-        <NodeViewWrapper className="my-4" style={node.attrs.textAlign && node.attrs.textAlign !== 'left' ? { display: 'flex', justifyContent: node.attrs.textAlign === 'center' ? 'center' : 'flex-end' } : undefined}>
+        <RichBlockFrame
+            alignment={node.attrs.textAlign}
+            selected={selected}
+            onRemove={deleteNode}
+            wrapperClassName="my-4"
+            frameClassName="w-full"
+        >
             <div className={`border rounded-xl overflow-hidden ${selected ? 'ring-2 ring-fuchsia-500 ring-offset-2 ring-offset-transparent' : ''}`}
+                 contentEditable={false}
                  style={{ borderColor: borderColor || 'var(--border-color)' }}>
 
                 {/* Header bar */}
@@ -486,6 +571,7 @@ function MermaidView({ node, updateAttributes, selected }) {
                 {/* Settings panel */}
                 {settings && (
                     <div className="p-4 space-y-3 border-b border-white/8" style={{ background: bgColor }}
+                         contentEditable={false}
                          onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>
 
                         {/* Title */}
@@ -574,7 +660,7 @@ function MermaidView({ node, updateAttributes, selected }) {
 
                 {/* Code editor */}
                 {editing && (
-                    <div style={{ background: '#0d1117' }}>
+                    <div style={{ background: '#0d1117' }} contentEditable={false}>
                         <textarea
                             value={localCode}
                             onChange={e => setLocalCode(e.target.value)}
@@ -604,7 +690,7 @@ function MermaidView({ node, updateAttributes, selected }) {
                     }
                 </div>
             </div>
-        </NodeViewWrapper>
+        </RichBlockFrame>
     );
 }
 
@@ -639,11 +725,12 @@ const MermaidNode = Node.create({
                 parseHTML: el => el.getAttribute('data-mermaid-title') || '',
                 renderHTML: attrs => attrs.title ? { 'data-mermaid-title': attrs.title } : {},
             },
+            textAlign: createRichBlockTextAlignAttribute(),
         };
     },
     parseHTML() { return [{ tag: 'div[data-mermaid-code]' }]; },
     renderHTML({ node, HTMLAttributes }) {
-        return ['div', mergeAttributes(HTMLAttributes, { class: 'mermaid-block', ...(node.attrs.textAlign && { 'data-align': node.attrs.textAlign }) }), 0];
+        return ['div', mergeAttributes(getRichBlockHtmlAttributes(HTMLAttributes, node.attrs.textAlign, { class: 'mermaid-block' })), 0];
     },
     addNodeView() { return ReactNodeViewRenderer(MermaidView); },
     addCommands() {
@@ -675,6 +762,8 @@ function ToolBtn({ onClick, active, disabled, title, children }) {
             onMouseDown={e => { e.preventDefault(); onClick(); }}
             disabled={disabled}
             title={title}
+            aria-label={title}
+            aria-pressed={active ? 'true' : 'false'}
             className={`flex items-center justify-center w-8 h-8 shrink-0 rounded-lg text-sm transition-all
                 ${active
                     ? 'bg-fuchsia-500/20 text-fuchsia-400 ring-1 ring-fuchsia-500/50'
@@ -690,28 +779,13 @@ function Divider() {
 }
 
 // ─── Upload helpers ───────────────────────────────────────────────────────────
-async function uploadFile(file, token) {
-    const fd = new FormData();
-    fd.append('image', file);
-    const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/bitacora/upload`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: fd,
-    });
-    if (!res.ok) throw new Error('Error al subir fichero');
-    return (await res.json()).url;
+function getUploadErrorMessage(error, fallbackMessage) {
+    return error?.details?.message || error?.message || fallbackMessage;
 }
 
 async function uploadAudioFile(file, token) {
-    const fd = new FormData();
-    fd.append('audio', file);
-    const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/bitacora/upload-audio`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: fd,
-    });
-    if (!res.ok) throw new Error('Error al subir audio');
-    return (await res.json()).url;
+    const uploaded = await cmsApi.uploadAudio(token, file);
+    return uploaded.url;
 }
 
 const FONT_SIZES = ['12px','14px','16px','18px','20px','24px','28px','32px','36px','48px'];
@@ -739,6 +813,11 @@ const CODE_LANGUAGES = [
     { value: 'ruby', label: 'Ruby' },
 ];
 
+const CODE_VARIANTS = [
+    { value: 'plain', label: 'Snippet' },
+    { value: 'terminal', label: 'Terminal' },
+];
+
 // ─── RichEditor ───────────────────────────────────────────────────────────────
 export default function RichEditor({ value, onChange, token, fullscreen, onToggleFullscreen }) {
     const fileInputRef  = useRef(null);
@@ -761,9 +840,11 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
     const [lineHeight,      setLineHeight]      = useState('1.8');
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [showInsertMenu,  setShowInsertMenu]  = useState(false);
+    const [insertMenuQuery, setInsertMenuQuery] = useState('');
     const [markdownMode,    setMarkdownMode]    = useState(false);
     const [markdownSource,  setMarkdownSource]  = useState('');
     const [uploadError,     setUploadError]     = useState('');
+    const [codeBlockMeta,   setCodeBlockMeta]   = useState({ filename: '', title: '' });
 
     // Slash commands
     const [slashMenu, setSlashMenu] = useState({ open: false, query: '', coords: { top: 0, left: 0 } });
@@ -780,6 +861,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             setShowMermaidMenu(false);
             setShowEmojiPicker(false);
             setShowInsertMenu(false);
+            setInsertMenuQuery('');
             setShowTableColors(false);
         }
         document.addEventListener('mousedown', close);
@@ -789,7 +871,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
     const editor = useEditor({
         extensions: [
             StarterKit.configure({ codeBlock: false }),
-            CodeBlockLowlight.configure({ lowlight, defaultLanguage: 'javascript' }),
+            createTechnicalCodeBlockExtension(lowlight),
             Underline,
             TextStyleKit,
             Highlight.configure({ multicolor: true }),
@@ -801,7 +883,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             ResizableImageExtension.configure({ allowBase64: false }),
             ResizableYoutubeExtension,
             AudioNode,
-            Table.configure({ resizable: false }),
+            Table.configure({ resizable: true }),
             TableRow,
             CustomTableHeader,
             CustomTableCell,
@@ -883,6 +965,13 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             const blockAttrs = editor.getAttributes('paragraph');
             const headingAttrs = editor.getAttributes('heading');
             setLineHeight(blockAttrs.lineHeight || headingAttrs.lineHeight || '1.8');
+            if (editor.isActive('codeBlock')) {
+                const codeAttrs = editor.getAttributes('codeBlock');
+                setCodeBlockMeta({
+                    filename: codeAttrs.filename || '',
+                    title: codeAttrs.title || '',
+                });
+            }
         };
         editor.on('selectionUpdate', update);
         editor.on('transaction',     update);
@@ -899,10 +988,11 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
         setUploading(true);
         setUploadError('');
         try {
-            const url = await uploadFile(file, token);
+            const uploaded = await cmsApi.uploadImage(token, file);
+            const url = uploaded.url;
             editor?.chain().focus().setImage({ src: url, alt: file.name.replace(/\.[^.]+$/, '') }).run();
         } catch (err) {
-            setUploadError(err.message || 'No se ha podido subir la imagen.');
+            setUploadError(getUploadErrorMessage(err, 'No se ha podido subir la imagen.'));
             console.error(err);
         }
         finally { setUploading(false); }
@@ -948,7 +1038,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             const url = await uploadAudioFile(file, token);
             editor?.commands.insertAudio({ src: url, title: file.name });
         } catch (err) {
-            setUploadError(err.message || 'No se ha podido subir el audio.');
+            setUploadError(getUploadErrorMessage(err, 'No se ha podido subir el audio.'));
             console.error(err);
         }
         finally { setUploading(false); e.target.value = ''; }
@@ -982,24 +1072,26 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
     async function handleDocumentUpload(e) {
         const file = e.target.files?.[0];
         if (!file || !token) return;
+        const validationError = validateDocumentFile(file);
+        if (validationError) {
+            setUploadError(validationError);
+            e.target.value = '';
+            return;
+        }
         setUploading(true);
+        setUploadError('');
         try {
-            const fd = new FormData();
-            fd.append('document', file);
-            const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/bitacora/upload-document`, {
-                method: 'POST',
-                headers: { Authorization: `Bearer ${token}` },
-                body: fd,
-            });
-            if (!res.ok) throw new Error('Error al subir documento');
-            const data = await res.json();
+            const data = await cmsApi.uploadDocument(token, file);
             editor?.commands.insertDocument({
                 src: data.url,
                 filename: data.filename,
                 fileType: data.fileType,
                 fileSize: data.fileSize,
             });
-        } catch (err) { console.error(err); }
+        } catch (err) {
+            setUploadError(getUploadErrorMessage(err, 'No se ha podido subir el documento.'));
+            console.error(err);
+        }
         finally { setUploading(false); e.target.value = ''; }
     }
 
@@ -1030,11 +1122,27 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
         }
     }
 
+    function handleInsertAction(action) {
+        if (!runInsertMenuEditorAction(editor, action)) {
+            handleSlashAction(action);
+        }
+        setShowInsertMenu(false);
+    }
+
+    function updateCodeBlockMetadata(patch) {
+        setCodeBlockMeta(prev => ({ ...prev, ...patch }));
+        editor.commands.updateAttributes('codeBlock', patch);
+    }
+
     if (!editor) return null;
 
     const wordCount = editor.storage.characterCount?.words?.() ?? 0;
     const charCount = editor.storage.characterCount?.characters?.() ?? 0;
     const readMin   = Math.max(1, Math.ceil(wordCount / 200));
+    const richBlockAlignmentActive = isRichBlockNodeActive(editor);
+    const justifyEnabled = canUseJustifyAlignment(editor);
+    const plusMenuItems = filterInsertMenuItems(PLUS_MENU_ITEMS, insertMenuQuery);
+    const plusMenuGroups = groupInsertMenuItems(plusMenuItems);
 
     return (
         <div className={`flex flex-col rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)]
@@ -1170,7 +1278,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                 <ToolBtn onClick={() => editor.chain().focus().setTextAlign('left').run()}    active={editor.isActive({ textAlign: 'left' })}    title="Izquierda"><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg></ToolBtn>
                 <ToolBtn onClick={() => editor.chain().focus().setTextAlign('center').run()}  active={editor.isActive({ textAlign: 'center' })}  title="Centrar"><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg></ToolBtn>
                 <ToolBtn onClick={() => editor.chain().focus().setTextAlign('right').run()}   active={editor.isActive({ textAlign: 'right' })}   title="Derecha"><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/></svg></ToolBtn>
-                <ToolBtn onClick={() => editor.chain().focus().setTextAlign('justify').run()} active={editor.isActive({ textAlign: 'justify' })} title="Justificar"><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></ToolBtn>
+                <ToolBtn onClick={() => editor.chain().focus().setTextAlign('justify').run()} active={!richBlockAlignmentActive && editor.isActive({ textAlign: 'justify' })} disabled={!justifyEnabled} title={justifyEnabled ? 'Justificar' : 'Justificar solo para párrafos y títulos'}><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></ToolBtn>
 
                 <Divider />
 
@@ -1334,57 +1442,76 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
 
                 {/* Insertar bloque especial */}
                 <div className="relative" onMouseDown={e => e.stopPropagation()}>
-                    <ToolBtn onClick={() => setShowInsertMenu(p => !p)} title="Insertar bloque especial (+)">
+                    <ToolBtn onClick={() => {
+                        setShowInsertMenu(prev => {
+                            const next = !prev;
+                            if (!next) setInsertMenuQuery('');
+                            return next;
+                        });
+                    }} title="Insertar bloque especial (+)">
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     </ToolBtn>
                     {showInsertMenu && (
-                        <div className="absolute top-10 left-0 z-50 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden w-72"
+                        <div className="absolute top-10 left-0 z-50 flex max-h-[min(78vh,36rem)] w-[min(26rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-2xl border border-[var(--border-color)] bg-[var(--bg-elevated)] shadow-2xl"
                              onMouseDown={e => e.stopPropagation()}>
-                            <div className="px-4 pt-3 pb-2 border-b border-[var(--border-default)]">
-                                <p className="text-xs font-semibold text-[var(--text-primary)]">Insertar bloque</p>
-                                <p className="text-[10px] text-[var(--text-muted)] mt-0.5">Componentes especiales para tu post</p>
+                            <div className="border-b border-[var(--border-default)] bg-[var(--bg-elevated)] px-4 pt-3 pb-3">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p className="text-xs font-semibold text-[var(--text-primary)]">Herramientas extra</p>
+                                        <p className="mt-0.5 text-[10px] text-[var(--text-muted)]">Todo lo que no esta visible en la toolbar principal.</p>
+                                    </div>
+                                    <span className="rounded-full border border-[var(--border-color)] bg-[var(--bg-surface)] px-2 py-1 text-[10px] font-medium text-[var(--text-muted)]">
+                                        {plusMenuItems.length}/{PLUS_MENU_ITEMS.length}
+                                    </span>
+                                </div>
+                                <div className="mt-3">
+                                    <input
+                                        type="search"
+                                        value={insertMenuQuery}
+                                        onChange={event => setInsertMenuQuery(event.target.value)}
+                                        placeholder="Buscar CTA, documento, acordeon..."
+                                        className="w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:border-fuchsia-500/60"
+                                        autoFocus
+                                    />
+                                </div>
                             </div>
-                            <div className="p-1.5 flex flex-col gap-0.5">
-                                <button type="button" onClick={() => { editor.chain().focus().insertAccordion().run(); setShowInsertMenu(false); }}
-                                    className="group flex items-start gap-3 px-3 py-2.5 rounded-xl hover:bg-fuchsia-500/10 text-left transition-colors">
-                                    <span className="mt-0.5 flex items-center justify-center w-8 h-8 rounded-lg bg-violet-500/15 text-violet-400 shrink-0">
-                                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
-                                    </span>
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-medium text-[var(--text-primary)] group-hover:text-fuchsia-400 transition-colors">Acordeón</p>
-                                        <p className="text-[11px] text-[var(--text-muted)] leading-tight mt-0.5">Sección colapsable con contenido expandible</p>
+                            <div className="flex flex-col gap-1 overflow-y-auto p-1.5 pr-1">
+                                {plusMenuItems.length === 0 && (
+                                    <div className="rounded-2xl border border-dashed border-[var(--border-color)] bg-[var(--bg-surface)]/70 px-4 py-5 text-center">
+                                        <p className="text-sm font-medium text-[var(--text-primary)]">No encontramos herramientas</p>
+                                        <p className="mt-1 text-xs text-[var(--text-muted)]">Proba con CTA, documento, acordeon o diagrama.</p>
                                     </div>
-                                </button>
-                                <button type="button" onClick={() => { editor.chain().focus().insertContentButton().run(); setShowInsertMenu(false); }}
-                                    className="group flex items-start gap-3 px-3 py-2.5 rounded-xl hover:bg-fuchsia-500/10 text-left transition-colors">
-                                    <span className="mt-0.5 flex items-center justify-center w-8 h-8 rounded-lg bg-cyan-500/15 text-cyan-400 shrink-0">
-                                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="8" width="16" height="8" rx="4"/><path d="M9 12h6"/></svg>
-                                    </span>
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-medium text-[var(--text-primary)] group-hover:text-fuchsia-400 transition-colors">Botón CTA</p>
-                                        <p className="text-[11px] text-[var(--text-muted)] leading-tight mt-0.5">Botón de llamada a la acción con enlace</p>
-                                    </div>
-                                </button>
-                                <button type="button" onClick={() => { docInputRef.current?.click(); setShowInsertMenu(false); }}
-                                    className="group flex items-start gap-3 px-3 py-2.5 rounded-xl hover:bg-fuchsia-500/10 text-left transition-colors">
-                                    <span className="mt-0.5 flex items-center justify-center w-8 h-8 rounded-lg bg-amber-500/15 text-amber-400 shrink-0">
-                                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-                                    </span>
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-medium text-[var(--text-primary)] group-hover:text-fuchsia-400 transition-colors">Documento</p>
-                                        <p className="text-[11px] text-[var(--text-muted)] leading-tight mt-0.5">Adjuntar PDF, ZIP o DOCX descargable</p>
-                                    </div>
-                                </button>
-                                <button type="button" onClick={() => { editor.chain().focus().insertImageGrid(2).run(); setShowInsertMenu(false); }}
-                                    className="group flex items-start gap-3 px-3 py-2.5 rounded-xl hover:bg-fuchsia-500/10 text-left transition-colors">
-                                    <span className="mt-0.5 flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-400 shrink-0">
-                                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-                                    </span>
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-medium text-[var(--text-primary)] group-hover:text-fuchsia-400 transition-colors">Grid de imágenes</p>
-                                        <p className="text-[11px] text-[var(--text-muted)] leading-tight mt-0.5">Cuadrícula de 2 columnas para imágenes</p>
-                                    </div>
-                                </button>
+                                )}
+                                {Object.entries(plusMenuGroups).map(([category, items]) => {
+                                    const categoryStyle = INSERT_MENU_CATEGORY_STYLES[category] || INSERT_MENU_CATEGORY_STYLES.Extra;
+                                    return (
+                                        <div key={category} className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)]/55 py-2">
+                                            <div className="flex items-center justify-between gap-2 px-3 pb-1.5">
+                                                <p className={`text-[10px] font-bold uppercase tracking-wider ${categoryStyle.color}`}>{category}</p>
+                                                <span className="text-[10px] text-[var(--text-muted)]">{items.length}</span>
+                                            </div>
+                                            {items.map(item => (
+                                                <button
+                                                    key={item.action}
+                                                    type="button"
+                                                    onClick={() => handleInsertAction(item.action)}
+                                                    className="group mx-1 flex w-[calc(100%-0.5rem)] items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-fuchsia-500/10"
+                                                >
+                                                    <span className={`mt-0.5 flex items-center justify-center w-8 h-8 rounded-lg shrink-0 text-[11px] font-semibold ${categoryStyle.bg} ${categoryStyle.color}`}>
+                                                        {item.icon}
+                                                    </span>
+                                                    <div className="min-w-0">
+                                                        <p className="text-sm font-medium text-[var(--text-primary)] group-hover:text-fuchsia-400 transition-colors">{item.title}</p>
+                                                        <p className="text-[11px] text-[var(--text-muted)] leading-tight mt-0.5">{item.desc}</p>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            <div className="border-t border-[var(--border-default)] bg-[var(--bg-elevated)] px-4 py-2 text-[10px] text-[var(--text-muted)]">
+                                Tip: tambien podes escribir <span className="font-semibold text-[var(--text-primary)]">/</span> dentro del editor para abrir estas mismas herramientas.
                             </div>
                         </div>
                     )}
@@ -1408,7 +1535,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             {/* ── TOOLBAR CONTEXTUAL DE CODE BLOCK ───────────────────────── */}
             {editor.isActive('codeBlock') && (
                 <div className="flex flex-wrap items-center gap-2 px-3 py-1.5 border-b border-[var(--border-color)] bg-[var(--bg-elevated)] text-xs">
-                    <span className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mr-1">Código:</span>
+                    <span className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mr-1">Codigo:</span>
                     <select
                         className="h-7 px-2 rounded bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-secondary)] text-xs focus:outline-none focus:border-fuchsia-500/60 cursor-pointer"
                         value={editor.getAttributes('codeBlock').language || 'javascript'}
@@ -1416,6 +1543,27 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                     >
                         {CODE_LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
                     </select>
+                    <select
+                        className="h-7 px-2 rounded bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-secondary)] text-xs focus:outline-none focus:border-fuchsia-500/60 cursor-pointer"
+                        value={editor.getAttributes('codeBlock').variant || 'plain'}
+                        onChange={e => editor.chain().focus().updateAttributes('codeBlock', { variant: e.target.value }).run()}
+                    >
+                        {CODE_VARIANTS.map(variant => <option key={variant.value} value={variant.value}>{variant.label}</option>)}
+                    </select>
+                    <input
+                        type="text"
+                        value={codeBlockMeta.filename}
+                        onChange={e => updateCodeBlockMetadata({ filename: e.target.value })}
+                        placeholder="archivo.ext"
+                        className="h-7 min-w-[120px] rounded border border-[var(--border-color)] bg-[var(--bg-primary)] px-2 text-xs text-[var(--text-secondary)] outline-none focus:border-fuchsia-500/60"
+                    />
+                    <input
+                        type="text"
+                        value={codeBlockMeta.title}
+                        onChange={e => updateCodeBlockMetadata({ title: e.target.value })}
+                        placeholder="Titulo opcional"
+                        className="h-7 min-w-[160px] rounded border border-[var(--border-color)] bg-[var(--bg-primary)] px-2 text-xs text-[var(--text-secondary)] outline-none focus:border-fuchsia-500/60"
+                    />
                     <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().toggleCodeBlock().run(); }}
                         className="px-2 py-1 rounded hover:bg-red-500/10 text-red-400 transition-colors ml-auto">Quitar bloque</button>
                 </div>
@@ -1445,6 +1593,11 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                         className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors" title="Combinar celdas">Combinar</button>
                     <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().splitCell().run(); }}
                         className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors" title="Dividir celda">Dividir</button>
+                    <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().setCellAttribute('backgroundColor', null).setCellAttribute('borderColor', null).run(); }}
+                        className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors" title="Limpiar estilos de celda">Limpiar celda</button>
+                    <span className="rounded-full border border-[var(--border-color)] bg-[var(--bg-primary)]/65 px-2 py-1 text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
+                        Arrastra bordes para ancho
+                    </span>
                     <div className="w-px h-4 bg-[var(--border-color)] mx-0.5 self-center" />
                     {/* Color picker */}
                     <div className="relative">
@@ -1504,6 +1657,12 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                 </div>
             )}
 
+            {!uploadError && uploading && (
+                <div className="mx-4 mt-3 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-sm text-cyan-300">
+                    Subiendo archivo al CMS...
+                </div>
+            )}
+
             {/* ── ÁREA DE EDICIÓN ──────────────────────────────────────────── */}
             <div
                 className={`flex-1 overflow-y-auto bg-[var(--bg-primary)] focus-within:outline-none ${markdownMode ? 'hidden' : ''}`}
@@ -1531,9 +1690,13 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                     [&_.tiptap_hr]:border-[var(--border-color)] [&_.tiptap_hr]:my-10
                     [&_.tiptap_a]:text-fuchsia-500 [&_.tiptap_a]:underline [&_.tiptap_a:hover]:text-fuchsia-400
                     [&_.tiptap_img]:rounded-xl [&_.tiptap_img]:shadow-2xl [&_.tiptap_img]:my-4
+                    [&_.tiptap_.tableWrapper]:my-6 [&_.tiptap_.tableWrapper]:overflow-x-auto
                     [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:my-6
                     [&_.tiptap_td]:border [&_.tiptap_td]:border-[var(--border-color)] [&_.tiptap_td]:p-3 [&_.tiptap_td]:text-[var(--text-secondary)]
                     [&_.tiptap_th]:border [&_.tiptap_th]:border-[var(--border-color)] [&_.tiptap_th]:p-3 [&_.tiptap_th]:bg-[var(--bg-elevated)] [&_.tiptap_th]:font-semibold [&_.tiptap_th]:text-[var(--text-primary)]
+                    [&_.tiptap_.column-resize-handle]:w-1 [&_.tiptap_.column-resize-handle]:bg-fuchsia-500/70
+                    [&_.tiptap_.selectedCell]:relative [&_.tiptap_.selectedCell]:after:absolute [&_.tiptap_.selectedCell]:after:inset-0 [&_.tiptap_.selectedCell]:after:pointer-events-none [&_.tiptap_.selectedCell]:after:ring-2 [&_.tiptap_.selectedCell]:after:ring-fuchsia-500/35
+                    [&_.resize-cursor]:cursor-col-resize
                     [&_.tiptap_p.is-editor-empty:first-child::before]:text-[var(--text-muted)]
                     [&_.tiptap_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)]
                     [&_.tiptap_p.is-editor-empty:first-child::before]:float-left
@@ -1547,8 +1710,14 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             {markdownMode && (
                 <div className="flex-1 bg-[var(--bg-primary)]" style={{ minHeight: fullscreen ? 'calc(100vh - 120px)' : '420px' }}>
                     <textarea
+                        aria-label="Editor HTML source"
+                        data-testid="cms-html-source"
                         value={markdownSource}
-                        onChange={e => setMarkdownSource(e.target.value)}
+                        onChange={e => {
+                            const nextValue = e.target.value;
+                            setMarkdownSource(nextValue);
+                            onChange(nextValue);
+                        }}
                         className="w-full h-full min-h-[420px] p-6 bg-transparent text-[var(--text-secondary)] font-mono text-sm leading-relaxed outline-none resize-none"
                         placeholder="Edita el código fuente HTML aquí…"
                         spellCheck={false}
@@ -1568,7 +1737,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             )}
 
             {/* Hidden inputs */}
-            <input ref={docInputRef} type="file" accept=".pdf,.zip,.docx,.doc" className="hidden" onChange={handleDocumentUpload} />
+            <input ref={docInputRef} type="file" accept={DOCUMENT_INPUT_ACCEPT} className="hidden" onChange={handleDocumentUpload} />
 
             {/* ── STATUS BAR ───────────────────────────────────────────────── */}
             <div className="flex items-center justify-between px-4 py-2 border-t border-[var(--border-color)] bg-[var(--bg-surface)] text-xs text-[var(--text-muted)] rounded-b-2xl">
@@ -1578,6 +1747,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                 </div>
                 <div className="flex items-center gap-2">
                     {markdownMode && <span className="text-cyan-400 font-medium">HTML Source</span>}
+                    <span className="text-[var(--text-muted)] opacity-60">Docs: {DOCUMENT_UPLOAD_LABEL}</span>
                     <span className="text-[var(--text-muted)] opacity-60">Tip: escribe "/" para insertar bloques</span>
                 </div>
             </div>
