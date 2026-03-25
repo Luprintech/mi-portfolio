@@ -3,7 +3,6 @@ import { logger } from '../lib/logger.js';
 
 const allowedOrigins = [
     'http://localhost:5173',
-    'http://192.168.1.91:8081',
     'https://guadalupecano.es',
     'https://www.guadalupecano.es',
     process.env.FRONTEND_URL,

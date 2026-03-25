@@ -4,12 +4,13 @@ import {
     listPostsForPublic,
     listProjectsForPublic,
 } from '../lib/contentRepository.js';
+import { publicReadLimiter } from '../middleware/rateLimiters.js';
 import { validateRouteSlug } from '../utils/contentValidation.js';
 import { createHttpError } from '../utils/httpErrors.js';
 
 const router = Router();
 
-router.get('/posts', async (_req, res, next) => {
+router.get('/posts', publicReadLimiter, async (_req, res, next) => {
     try {
         res.json(await listPostsForPublic());
     } catch (error) {
@@ -17,7 +18,7 @@ router.get('/posts', async (_req, res, next) => {
     }
 });
 
-router.get('/posts/:slug', async (req, res, next) => {
+router.get('/posts/:slug', publicReadLimiter, async (req, res, next) => {
     try {
         const slug = validateRouteSlug(req.params.slug);
         if (!slug) return res.status(400).json({ error: 'Slug no valido' });
@@ -31,7 +32,7 @@ router.get('/posts/:slug', async (req, res, next) => {
     }
 });
 
-router.get('/projects', async (_req, res, next) => {
+router.get('/projects', publicReadLimiter, async (_req, res, next) => {
     try {
         res.json(await listProjectsForPublic());
     } catch (error) {

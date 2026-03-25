@@ -1,10 +1,22 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
-import Particles from "react-tsparticles";
+import Particles, { initParticlesEngine } from "@tsparticles/react";
+import { loadSlim } from "@tsparticles/slim";
 import meowSound from "/sounds/meow.mp3";
 import luprincat from '/assets/meaow.webm';
 
+const PARTICLES_OPTIONS = {
+  particles: {
+    number: { value: 15 },
+    move: { enable: true, speed: 1.5 },
+    size: { value: 2 },
+    opacity: { value: 0.4 },
+    color: { value: "#00ffff" },
+  },
+};
+
 export default function LuprinCat({ onClose }) {
+  const [engineReady, setEngineReady] = useState(false);
   const [flip, setFlip] = useState(false);
   const [visible, setVisible] = useState(true);
   const [message, setMessage] = useState(null);
@@ -25,6 +37,13 @@ export default function LuprinCat({ onClose }) {
 
   const smoothX = useSpring(x, { stiffness: stiffness.current, damping: damping.current });
   const smoothY = useSpring(y, { stiffness: stiffness.current, damping: damping.current });
+
+  // Inicializar el engine de tsparticles v3 una sola vez
+  useEffect(() => {
+    initParticlesEngine(async (engine) => {
+      await loadSlim(engine);
+    }).then(() => setEngineReady(true));
+  }, []);
 
   // 🐾 Movimiento con detección de velocidad
   useEffect(() => {
@@ -128,21 +147,19 @@ export default function LuprinCat({ onClose }) {
     setTimeout(() => onClose?.(), 300);
   };
 
+  // Callback estable para Particles (evita re-renders)
+  const particlesLoaded = useCallback(() => {}, []);
+
   if (!visible) return null;
 
   return (
     <div className="fixed inset-0 z-9999 select-none pointer-events-none">
-      <Particles
-        options={{
-          particles: {
-            number: { value: 15 },
-            move: { enable: true, speed: 1.5 },
-            size: { value: 2 },
-            opacity: { value: 0.4 },
-            color: { value: "#00ffff" },
-          },
-        }}
-      />
+      {engineReady && (
+        <Particles
+          options={PARTICLES_OPTIONS}
+          particlesLoaded={particlesLoaded}
+        />
+      )}
 
       {/* 🐈 Gato */}
       <motion.video

@@ -6,8 +6,12 @@
   "scripts": {
     "start": "node server.js",
     "check": "node --check server.js",
-    "test": "node tests/run-tests.js",
-    "test:watch": "node --watch tests/run-tests.js"
+    "migrate": "node scripts/migrate.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "test:legacy": "node tests/run-tests.js"
   },
   "keywords": [],
   "author": "",
@@ -28,6 +32,9 @@
     "pg": "^8.16.3"
   },
   "devDependencies": {
-    "@express-rate-limit/tsconfig": "^1.0.2"
+    "@express-rate-limit/tsconfig": "^1.0.2",
+    "@vitest/ui": "^4.1.1",
+    "supertest": "^7.2.2",
+    "vitest": "^4.1.1"
   }
 }
