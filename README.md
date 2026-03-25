@@ -4,6 +4,20 @@
 
 Portfolio personal full-stack con web publica, blog tecnico, CMS propio y API en Express. El repositorio esta organizado como dos aplicaciones separadas (`frontend/` y `backend/`) que comparten una capa de contenido inicial en `frontend/public`, mientras que el estado operativo actual de posts y proyectos vive en PostgreSQL.
 
+## Tecnologias
+
+![Node.js](https://img.shields.io/badge/Node.js-20-339933?logo=nodedotjs&logoColor=white)
+![React](https://img.shields.io/badge/React-19-20232A?logo=react&logoColor=61DAFB)
+![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
+![Express](https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+![Nginx](https://img.shields.io/badge/Nginx-Reverse_Proxy-009639?logo=nginx&logoColor=white)
+![Vitest](https://img.shields.io/badge/Vitest-Testing-6E9F18?logo=vitest&logoColor=white)
+
+Stack principal verificado en este repo segun `frontend/package.json`, `backend/package.json`, `docker-compose.yml`, `nginx.conf`, `frontend/nginx.docker.conf` y `.github/workflows/ci.yml`.
+
 ## Indice
 
 - [Vision general](#vision-general)
