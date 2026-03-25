@@ -25,6 +25,7 @@ import {
     normalizeVideoGalleryItems,
     getVideoEmbedUrl,
 } from '../../../lib/videoGallery';
+import GifPicker from './GifPicker';
 import { validateImageFile } from '../../../lib/mediaUploadPolicy';
 import PdfPreview from '../../shared/PdfPreview';
 import RichBlockFrame from './RichBlockFrame';
@@ -2023,6 +2024,7 @@ function GifView({ node, updateAttributes, selected, deleteNode }) {
     const fileRef = useRef(null);
     const [uploading, setUploading] = useState(false);
     const [showControls, setShowControls] = useState(false);
+    const [showGifPicker, setShowGifPicker] = useState(false);
 
     const src = node.attrs.src || '';
     const alt = node.attrs.alt || '';
@@ -2050,7 +2052,7 @@ function GifView({ node, updateAttributes, selected, deleteNode }) {
             const formData = new FormData();
             formData.append('image', file);
             const result = await cmsApi.uploadImage(formData);
-            updateAttributes({ src: result.url });
+            updateAttributes({ src: result.url, alt: alt || 'GIF animado' });
         } catch (err) {
             console.error(err);
             alert('Error al subir el GIF');
@@ -2063,6 +2065,11 @@ function GifView({ node, updateAttributes, selected, deleteNode }) {
     function openFilePicker() {
         if (!isAuthenticated) return;
         fileRef.current?.click();
+    }
+
+    function handleGifSelect(gifUrl, gifTitle) {
+        updateAttributes({ src: gifUrl, alt: gifTitle || 'GIF animado' });
+        setShowGifPicker(false);
     }
 
     return (
@@ -2087,20 +2094,29 @@ function GifView({ node, updateAttributes, selected, deleteNode }) {
                         style={{ imageRendering: autoplay ? 'auto' : 'pixelated' }}
                     />
                 ) : (
-                    <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-[var(--border-color)] bg-[var(--bg-surface)]/50 p-8">
+                    <div className="flex min-h-[200px] flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed border-[var(--border-color)] bg-[var(--bg-surface)]/50 p-8">
                         <svg className="h-16 w-16 text-[var(--text-muted)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                             <rect x="3" y="3" width="18" height="18" rx="2" />
                             <circle cx="8.5" cy="8.5" r="1.5" />
                             <path d="m21 15-5-5L5 21" />
                         </svg>
-                        <button
-                            type="button"
-                            onClick={openFilePicker}
-                            disabled={uploading}
-                            className="rounded-lg border border-fuchsia-500/40 bg-fuchsia-500/10 px-4 py-2 text-sm font-medium text-fuchsia-200 transition-colors hover:bg-fuchsia-500/20 disabled:opacity-50"
-                        >
-                            {uploading ? 'Subiendo...' : 'Subir GIF'}
-                        </button>
+                        <div className="flex gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setShowGifPicker(true)}
+                                className="rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 transition-colors hover:bg-cyan-500/20"
+                            >
+                                🎬 Buscar GIF
+                            </button>
+                            <button
+                                type="button"
+                                onClick={openFilePicker}
+                                disabled={uploading}
+                                className="rounded-lg border border-fuchsia-500/40 bg-fuchsia-500/10 px-4 py-2 text-sm font-medium text-fuchsia-200 transition-colors hover:bg-fuchsia-500/20 disabled:opacity-50"
+                            >
+                                {uploading ? 'Subiendo...' : '📁 Subir GIF'}
+                            </button>
+                        </div>
                     </div>
                 )}
 
@@ -2168,6 +2184,13 @@ function GifView({ node, updateAttributes, selected, deleteNode }) {
 
             {caption && (
                 <p className="mt-2 text-center text-sm italic text-[var(--text-muted)]">{caption}</p>
+            )}
+
+            {showGifPicker && (
+                <GifPicker
+                    onSelect={handleGifSelect}
+                    onClose={() => setShowGifPicker(false)}
+                />
             )}
         </RichBlockFrame>
     );
