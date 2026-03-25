@@ -98,6 +98,13 @@ import { createTechnicalCodeBlockExtension } from './editor/technicalCodeBlockEx
 import EmojiPicker from './editor/EmojiPicker';
 import SlashMenu from './editor/SlashMenu';
 import {
+    filterInsertMenuItems,
+    groupInsertMenuItems,
+    INSERT_MENU_CATEGORY_STYLES,
+    PLUS_MENU_ITEMS,
+    runInsertMenuEditorAction,
+} from './editor/insertMenuConfig';
+import {
     AUDIO_INPUT_ACCEPT,
     DOCUMENT_INPUT_ACCEPT,
     DOCUMENT_UPLOAD_LABEL,
@@ -538,6 +545,7 @@ function MermaidView({ node, updateAttributes, selected, deleteNode }) {
             frameClassName="w-full"
         >
             <div className={`border rounded-xl overflow-hidden ${selected ? 'ring-2 ring-fuchsia-500 ring-offset-2 ring-offset-transparent' : ''}`}
+                 contentEditable={false}
                  style={{ borderColor: borderColor || 'var(--border-color)' }}>
 
                 {/* Header bar */}
@@ -563,6 +571,7 @@ function MermaidView({ node, updateAttributes, selected, deleteNode }) {
                 {/* Settings panel */}
                 {settings && (
                     <div className="p-4 space-y-3 border-b border-white/8" style={{ background: bgColor }}
+                         contentEditable={false}
                          onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>
 
                         {/* Title */}
@@ -651,7 +660,7 @@ function MermaidView({ node, updateAttributes, selected, deleteNode }) {
 
                 {/* Code editor */}
                 {editing && (
-                    <div style={{ background: '#0d1117' }}>
+                    <div style={{ background: '#0d1117' }} contentEditable={false}>
                         <textarea
                             value={localCode}
                             onChange={e => setLocalCode(e.target.value)}
@@ -831,9 +840,11 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
     const [lineHeight,      setLineHeight]      = useState('1.8');
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [showInsertMenu,  setShowInsertMenu]  = useState(false);
+    const [insertMenuQuery, setInsertMenuQuery] = useState('');
     const [markdownMode,    setMarkdownMode]    = useState(false);
     const [markdownSource,  setMarkdownSource]  = useState('');
     const [uploadError,     setUploadError]     = useState('');
+    const [codeBlockMeta,   setCodeBlockMeta]   = useState({ filename: '', title: '' });
 
     // Slash commands
     const [slashMenu, setSlashMenu] = useState({ open: false, query: '', coords: { top: 0, left: 0 } });
@@ -850,6 +861,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             setShowMermaidMenu(false);
             setShowEmojiPicker(false);
             setShowInsertMenu(false);
+            setInsertMenuQuery('');
             setShowTableColors(false);
         }
         document.addEventListener('mousedown', close);
@@ -953,6 +965,13 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             const blockAttrs = editor.getAttributes('paragraph');
             const headingAttrs = editor.getAttributes('heading');
             setLineHeight(blockAttrs.lineHeight || headingAttrs.lineHeight || '1.8');
+            if (editor.isActive('codeBlock')) {
+                const codeAttrs = editor.getAttributes('codeBlock');
+                setCodeBlockMeta({
+                    filename: codeAttrs.filename || '',
+                    title: codeAttrs.title || '',
+                });
+            }
         };
         editor.on('selectionUpdate', update);
         editor.on('transaction',     update);
@@ -1103,6 +1122,18 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
         }
     }
 
+    function handleInsertAction(action) {
+        if (!runInsertMenuEditorAction(editor, action)) {
+            handleSlashAction(action);
+        }
+        setShowInsertMenu(false);
+    }
+
+    function updateCodeBlockMetadata(patch) {
+        setCodeBlockMeta(prev => ({ ...prev, ...patch }));
+        editor.commands.updateAttributes('codeBlock', patch);
+    }
+
     if (!editor) return null;
 
     const wordCount = editor.storage.characterCount?.words?.() ?? 0;
@@ -1110,6 +1141,8 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
     const readMin   = Math.max(1, Math.ceil(wordCount / 200));
     const richBlockAlignmentActive = isRichBlockNodeActive(editor);
     const justifyEnabled = canUseJustifyAlignment(editor);
+    const plusMenuItems = filterInsertMenuItems(PLUS_MENU_ITEMS, insertMenuQuery);
+    const plusMenuGroups = groupInsertMenuItems(plusMenuItems);
 
     return (
         <div className={`flex flex-col rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)]
@@ -1409,57 +1442,76 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
 
                 {/* Insertar bloque especial */}
                 <div className="relative" onMouseDown={e => e.stopPropagation()}>
-                    <ToolBtn onClick={() => setShowInsertMenu(p => !p)} title="Insertar bloque especial (+)">
+                    <ToolBtn onClick={() => {
+                        setShowInsertMenu(prev => {
+                            const next = !prev;
+                            if (!next) setInsertMenuQuery('');
+                            return next;
+                        });
+                    }} title="Insertar bloque especial (+)">
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     </ToolBtn>
                     {showInsertMenu && (
-                        <div className="absolute top-10 left-0 z-50 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden w-72"
+                        <div className="absolute top-10 left-0 z-50 flex max-h-[min(78vh,36rem)] w-[min(26rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-2xl border border-[var(--border-color)] bg-[var(--bg-elevated)] shadow-2xl"
                              onMouseDown={e => e.stopPropagation()}>
-                            <div className="px-4 pt-3 pb-2 border-b border-[var(--border-default)]">
-                                <p className="text-xs font-semibold text-[var(--text-primary)]">Insertar bloque</p>
-                                <p className="text-[10px] text-[var(--text-muted)] mt-0.5">Componentes especiales para tu post</p>
+                            <div className="border-b border-[var(--border-default)] bg-[var(--bg-elevated)] px-4 pt-3 pb-3">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p className="text-xs font-semibold text-[var(--text-primary)]">Herramientas extra</p>
+                                        <p className="mt-0.5 text-[10px] text-[var(--text-muted)]">Todo lo que no esta visible en la toolbar principal.</p>
+                                    </div>
+                                    <span className="rounded-full border border-[var(--border-color)] bg-[var(--bg-surface)] px-2 py-1 text-[10px] font-medium text-[var(--text-muted)]">
+                                        {plusMenuItems.length}/{PLUS_MENU_ITEMS.length}
+                                    </span>
+                                </div>
+                                <div className="mt-3">
+                                    <input
+                                        type="search"
+                                        value={insertMenuQuery}
+                                        onChange={event => setInsertMenuQuery(event.target.value)}
+                                        placeholder="Buscar CTA, documento, acordeon..."
+                                        className="w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:border-fuchsia-500/60"
+                                        autoFocus
+                                    />
+                                </div>
                             </div>
-                            <div className="p-1.5 flex flex-col gap-0.5">
-                                <button type="button" onClick={() => { editor.chain().focus().insertAccordion().run(); setShowInsertMenu(false); }}
-                                    className="group flex items-start gap-3 px-3 py-2.5 rounded-xl hover:bg-fuchsia-500/10 text-left transition-colors">
-                                    <span className="mt-0.5 flex items-center justify-center w-8 h-8 rounded-lg bg-violet-500/15 text-violet-400 shrink-0">
-                                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
-                                    </span>
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-medium text-[var(--text-primary)] group-hover:text-fuchsia-400 transition-colors">Acordeón</p>
-                                        <p className="text-[11px] text-[var(--text-muted)] leading-tight mt-0.5">Sección colapsable con contenido expandible</p>
+                            <div className="flex flex-col gap-1 overflow-y-auto p-1.5 pr-1">
+                                {plusMenuItems.length === 0 && (
+                                    <div className="rounded-2xl border border-dashed border-[var(--border-color)] bg-[var(--bg-surface)]/70 px-4 py-5 text-center">
+                                        <p className="text-sm font-medium text-[var(--text-primary)]">No encontramos herramientas</p>
+                                        <p className="mt-1 text-xs text-[var(--text-muted)]">Proba con CTA, documento, acordeon o diagrama.</p>
                                     </div>
-                                </button>
-                                <button type="button" onClick={() => { editor.chain().focus().insertContentButton().run(); setShowInsertMenu(false); }}
-                                    className="group flex items-start gap-3 px-3 py-2.5 rounded-xl hover:bg-fuchsia-500/10 text-left transition-colors">
-                                    <span className="mt-0.5 flex items-center justify-center w-8 h-8 rounded-lg bg-cyan-500/15 text-cyan-400 shrink-0">
-                                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="8" width="16" height="8" rx="4"/><path d="M9 12h6"/></svg>
-                                    </span>
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-medium text-[var(--text-primary)] group-hover:text-fuchsia-400 transition-colors">Botón CTA</p>
-                                        <p className="text-[11px] text-[var(--text-muted)] leading-tight mt-0.5">Botón de llamada a la acción con enlace</p>
-                                    </div>
-                                </button>
-                                <button type="button" onClick={() => { docInputRef.current?.click(); setShowInsertMenu(false); }}
-                                    className="group flex items-start gap-3 px-3 py-2.5 rounded-xl hover:bg-fuchsia-500/10 text-left transition-colors">
-                                    <span className="mt-0.5 flex items-center justify-center w-8 h-8 rounded-lg bg-amber-500/15 text-amber-400 shrink-0">
-                                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-                                    </span>
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-medium text-[var(--text-primary)] group-hover:text-fuchsia-400 transition-colors">Documento</p>
-                                        <p className="text-[11px] text-[var(--text-muted)] leading-tight mt-0.5">Adjuntar PDF, ZIP o DOCX descargable</p>
-                                    </div>
-                                </button>
-                                <button type="button" onClick={() => { editor.chain().focus().insertImageGrid(2).run(); setShowInsertMenu(false); }}
-                                    className="group flex items-start gap-3 px-3 py-2.5 rounded-xl hover:bg-fuchsia-500/10 text-left transition-colors">
-                                    <span className="mt-0.5 flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-400 shrink-0">
-                                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-                                    </span>
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-medium text-[var(--text-primary)] group-hover:text-fuchsia-400 transition-colors">Grid de imágenes</p>
-                                        <p className="text-[11px] text-[var(--text-muted)] leading-tight mt-0.5">Cuadrícula de 2 columnas para imágenes</p>
-                                    </div>
-                                </button>
+                                )}
+                                {Object.entries(plusMenuGroups).map(([category, items]) => {
+                                    const categoryStyle = INSERT_MENU_CATEGORY_STYLES[category] || INSERT_MENU_CATEGORY_STYLES.Extra;
+                                    return (
+                                        <div key={category} className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)]/55 py-2">
+                                            <div className="flex items-center justify-between gap-2 px-3 pb-1.5">
+                                                <p className={`text-[10px] font-bold uppercase tracking-wider ${categoryStyle.color}`}>{category}</p>
+                                                <span className="text-[10px] text-[var(--text-muted)]">{items.length}</span>
+                                            </div>
+                                            {items.map(item => (
+                                                <button
+                                                    key={item.action}
+                                                    type="button"
+                                                    onClick={() => handleInsertAction(item.action)}
+                                                    className="group mx-1 flex w-[calc(100%-0.5rem)] items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-fuchsia-500/10"
+                                                >
+                                                    <span className={`mt-0.5 flex items-center justify-center w-8 h-8 rounded-lg shrink-0 text-[11px] font-semibold ${categoryStyle.bg} ${categoryStyle.color}`}>
+                                                        {item.icon}
+                                                    </span>
+                                                    <div className="min-w-0">
+                                                        <p className="text-sm font-medium text-[var(--text-primary)] group-hover:text-fuchsia-400 transition-colors">{item.title}</p>
+                                                        <p className="text-[11px] text-[var(--text-muted)] leading-tight mt-0.5">{item.desc}</p>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            <div className="border-t border-[var(--border-default)] bg-[var(--bg-elevated)] px-4 py-2 text-[10px] text-[var(--text-muted)]">
+                                Tip: tambien podes escribir <span className="font-semibold text-[var(--text-primary)]">/</span> dentro del editor para abrir estas mismas herramientas.
                             </div>
                         </div>
                     )}
@@ -1500,15 +1552,15 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                     </select>
                     <input
                         type="text"
-                        value={editor.getAttributes('codeBlock').filename || ''}
-                        onChange={e => editor.chain().focus().updateAttributes('codeBlock', { filename: e.target.value }).run()}
+                        value={codeBlockMeta.filename}
+                        onChange={e => updateCodeBlockMetadata({ filename: e.target.value })}
                         placeholder="archivo.ext"
                         className="h-7 min-w-[120px] rounded border border-[var(--border-color)] bg-[var(--bg-primary)] px-2 text-xs text-[var(--text-secondary)] outline-none focus:border-fuchsia-500/60"
                     />
                     <input
                         type="text"
-                        value={editor.getAttributes('codeBlock').title || ''}
-                        onChange={e => editor.chain().focus().updateAttributes('codeBlock', { title: e.target.value }).run()}
+                        value={codeBlockMeta.title}
+                        onChange={e => updateCodeBlockMetadata({ title: e.target.value })}
                         placeholder="Titulo opcional"
                         className="h-7 min-w-[160px] rounded border border-[var(--border-color)] bg-[var(--bg-primary)] px-2 text-xs text-[var(--text-secondary)] outline-none focus:border-fuchsia-500/60"
                     />

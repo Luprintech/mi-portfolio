@@ -13,6 +13,7 @@ export const CONTENT_PATH = process.env.CONTENT_PATH
 export const POSTS_DIR = path.join(CONTENT_PATH, 'posts');
 export const POSTS_INDEX = path.join(POSTS_DIR, 'index.json');
 export const PROJECTS_FILE = path.join(CONTENT_PATH, 'projects.json');
+export const CV_FILE = path.join(CONTENT_PATH, 'CV_Guadalupe_Cano.pdf');
 export const IMAGES_DIR = path.join(POSTS_DIR, 'images');
 export const DOCS_DIR = path.join(POSTS_DIR, 'documents');
 export const AUDIO_DIR = path.join(POSTS_DIR, 'audio');

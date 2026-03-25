@@ -3,7 +3,9 @@ import { Node, Extension, mergeAttributes } from '@tiptap/core';
 import { ReactNodeViewRenderer, NodeViewContent } from '@tiptap/react';
 import { useState, useRef } from 'react';
 import { useAuth } from '../../../context/AuthContext';
+import { cmsApi } from '../../../lib/cmsApi';
 import { normalizeContentLinkHref, resolveContentLinkAttributes } from '../../../lib/contentLinkUtils';
+import { validateImageFile } from '../../../lib/mediaUploadPolicy';
 import PdfPreview from '../../shared/PdfPreview';
 import RichBlockFrame from './RichBlockFrame';
 import {
@@ -55,6 +57,7 @@ function AccordionView({ node, updateAttributes, selected, deleteNode }) {
             <div className="border border-[var(--border-color)] rounded-xl overflow-hidden my-4">
                 <div
                     className="flex items-center gap-2 px-4 py-3 bg-[var(--bg-elevated)] cursor-pointer select-none"
+                    contentEditable={false}
                     onClick={() => { setOpen(!open); updateAttributes({ open: !open }); }}
                 >
                     <span className={`transition-transform duration-200 text-xs text-[var(--text-muted)] ${open ? 'rotate-90' : ''}`}>▶</span>
@@ -154,6 +157,27 @@ function loadButtonConfigs() {
 
 function saveButtonConfigs(configs) {
     localStorage.setItem(CTA_BUTTON_CONFIGS_KEY, JSON.stringify(configs));
+}
+
+function parseBooleanAttribute(value, fallback = false) {
+    if (value === null || value === undefined || value === '') return fallback;
+    if (typeof value === 'boolean') return value;
+
+    const normalized = String(value).toLowerCase();
+
+    if (['false', '0', 'no', 'off'].includes(normalized)) return false;
+    if (['true', '1', 'yes', 'on'].includes(normalized)) return true;
+
+    return fallback;
+}
+
+function parseIntegerAttribute(value, fallback) {
+    const parsed = Number.parseInt(value, 10);
+    return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function getStyleProperty(el, propertyName) {
+    return el?.style?.[propertyName] || '';
 }
 
 function buildButtonStyle(attrs) {
@@ -275,7 +299,7 @@ function ContentButtonView({ node, updateAttributes, selected, deleteNode }) {
             dragHandle
             frameClassName="inline-block"
         >
-            <div className={`group/cta relative inline-block ${selected ? 'ring-2 ring-fuchsia-500 ring-offset-2 ring-offset-transparent rounded-xl p-2' : ''}`}>
+            <div className={`group/cta relative inline-block ${selected ? 'ring-2 ring-fuchsia-500 ring-offset-2 ring-offset-transparent rounded-xl p-2' : ''}`} contentEditable={false}>
                 {/* Drag handle */}
                 <div
                     className="absolute -left-7 top-1/2 -translate-y-1/2 opacity-0 group-hover/cta:opacity-60 hover:!opacity-100 cursor-grab active:cursor-grabbing transition-opacity"
@@ -305,7 +329,8 @@ function ContentButtonView({ node, updateAttributes, selected, deleteNode }) {
                 </a>
 
                 {selected && (
-                    <div className="mt-3 p-4 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-2xl space-y-3 max-w-md"
+                    <div className="mt-3 max-w-md space-y-3 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-elevated)] p-4"
+                         contentEditable={false}
                          onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>
 
                         {/* Configs guardados */}
@@ -601,20 +626,76 @@ export const ContentButtonExtension = Node.create({
     draggable: true,
     addAttributes() {
         return {
-            text:      { default: 'Click aquí' },
-            href:      { default: '#' },
-            variant:   { default: 'primary' },
-            newTab:    { default: true },
-            bgColor:   { default: '' },
-            textColor: { default: '' },
-            bold:      { default: false },
-            italic:    { default: false },
-            underline: { default: false },
-            uppercase: { default: false },
-            fontSize:  { default: 14 },
-            rounded:   { default: 12 },
-            documentUrl:      { default: '' },
-            documentFilename: { default: '' },
+            text: {
+                default: 'Click aquí',
+                parseHTML: el => el.getAttribute('data-text') || el.textContent || 'Click aquí',
+                renderHTML: attrs => ({ 'data-text': attrs.text || 'Click aquí' }),
+            },
+            href: {
+                default: '#',
+                parseHTML: el => el.getAttribute('data-href') || el.getAttribute('href') || '#',
+                renderHTML: attrs => ({ 'data-href': attrs.href || '#' }),
+            },
+            variant: {
+                default: 'primary',
+                parseHTML: el => el.getAttribute('data-variant') || Array.from(el.classList).find(cls => cls.startsWith('content-button--'))?.replace('content-button--', '') || 'primary',
+                renderHTML: attrs => ({ 'data-variant': attrs.variant || 'primary' }),
+            },
+            newTab: {
+                default: true,
+                parseHTML: el => parseBooleanAttribute(el.getAttribute('data-new-tab'), el.getAttribute('target') === '_blank'),
+                renderHTML: attrs => ({ 'data-new-tab': String(attrs.newTab !== false) }),
+            },
+            bgColor: {
+                default: '',
+                parseHTML: el => el.getAttribute('data-bg-color') || getStyleProperty(el, 'background') || '',
+                renderHTML: attrs => attrs.bgColor ? { 'data-bg-color': attrs.bgColor } : {},
+            },
+            textColor: {
+                default: '',
+                parseHTML: el => el.getAttribute('data-text-color') || getStyleProperty(el, 'color') || '',
+                renderHTML: attrs => attrs.textColor ? { 'data-text-color': attrs.textColor } : {},
+            },
+            bold: {
+                default: false,
+                parseHTML: el => parseBooleanAttribute(el.getAttribute('data-bold'), ['bold', '700'].includes(getStyleProperty(el, 'fontWeight'))),
+                renderHTML: attrs => attrs.bold ? { 'data-bold': 'true' } : {},
+            },
+            italic: {
+                default: false,
+                parseHTML: el => parseBooleanAttribute(el.getAttribute('data-italic'), getStyleProperty(el, 'fontStyle') === 'italic'),
+                renderHTML: attrs => attrs.italic ? { 'data-italic': 'true' } : {},
+            },
+            underline: {
+                default: false,
+                parseHTML: el => parseBooleanAttribute(el.getAttribute('data-underline'), getStyleProperty(el, 'textDecoration').includes('underline')),
+                renderHTML: attrs => attrs.underline ? { 'data-underline': 'true' } : {},
+            },
+            uppercase: {
+                default: false,
+                parseHTML: el => parseBooleanAttribute(el.getAttribute('data-uppercase'), getStyleProperty(el, 'textTransform') === 'uppercase'),
+                renderHTML: attrs => attrs.uppercase ? { 'data-uppercase': 'true' } : {},
+            },
+            fontSize: {
+                default: 14,
+                parseHTML: el => parseIntegerAttribute(el.getAttribute('data-font-size') || getStyleProperty(el, 'fontSize'), 14),
+                renderHTML: attrs => ({ 'data-font-size': String(attrs.fontSize || 14) }),
+            },
+            rounded: {
+                default: 12,
+                parseHTML: el => parseIntegerAttribute(el.getAttribute('data-rounded') || getStyleProperty(el, 'borderRadius'), 12),
+                renderHTML: attrs => ({ 'data-rounded': String(attrs.rounded || 12) }),
+            },
+            documentUrl: {
+                default: '',
+                parseHTML: el => el.getAttribute('data-document-url') || '',
+                renderHTML: attrs => attrs.documentUrl ? { 'data-document-url': attrs.documentUrl } : {},
+            },
+            documentFilename: {
+                default: '',
+                parseHTML: el => el.getAttribute('data-document-filename') || el.getAttribute('download') || '',
+                renderHTML: attrs => attrs.documentFilename ? { 'data-document-filename': attrs.documentFilename } : {},
+            },
             textAlign: createRichBlockTextAlignAttribute(),
         };
     },
@@ -633,6 +714,20 @@ export const ContentButtonExtension = Node.create({
             'data-content-button': '',
             class: `content-button content-button--${node.attrs.variant || 'custom'}`,
             style: style.join(';'),
+            'data-text': node.attrs.text || 'Click aquí',
+            'data-href': node.attrs.href || '#',
+            'data-variant': node.attrs.variant || 'primary',
+            'data-new-tab': String(node.attrs.newTab !== false),
+            ...(node.attrs.bgColor ? { 'data-bg-color': node.attrs.bgColor } : {}),
+            ...(node.attrs.textColor ? { 'data-text-color': node.attrs.textColor } : {}),
+            ...(node.attrs.bold ? { 'data-bold': 'true' } : {}),
+            ...(node.attrs.italic ? { 'data-italic': 'true' } : {}),
+            ...(node.attrs.underline ? { 'data-underline': 'true' } : {}),
+            ...(node.attrs.uppercase ? { 'data-uppercase': 'true' } : {}),
+            'data-font-size': String(node.attrs.fontSize || 14),
+            'data-rounded': String(node.attrs.rounded || 12),
+            ...(node.attrs.documentUrl ? { 'data-document-url': node.attrs.documentUrl } : {}),
+            ...(node.attrs.documentFilename ? { 'data-document-filename': node.attrs.documentFilename } : {}),
             ...resolveContentLinkAttributes({
                 href: node.attrs.documentUrl || node.attrs.href,
                 target: node.attrs.documentUrl ? '_self' : (node.attrs.newTab ? '_blank' : '_self'),
@@ -714,6 +809,7 @@ function DocumentView({ node, updateAttributes, selected, deleteNode }) {
             <div
                 ref={wrapRef}
                 className={`relative group border border-[var(--border-color)] rounded-xl overflow-hidden ${selected ? 'ring-2 ring-fuchsia-500 ring-offset-2 ring-offset-transparent' : ''}`}
+                contentEditable={false}
                 style={{ width: embedWidth ? `${embedWidth}px` : '100%', maxWidth: '100%', cursor: resizing ? 'nwse-resize' : 'default' }}
             >
                 {/* Resize handles */}
@@ -767,6 +863,7 @@ function DocumentView({ node, updateAttributes, selected, deleteNode }) {
                 {/* Editing controls when selected */}
                 {selected && (
                     <div className="px-4 py-3 border-t border-[var(--border-color)] bg-[var(--bg-surface)] space-y-2"
+                         contentEditable={false}
                          onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>
                         {isPdf && (
                             <div>
@@ -927,17 +1024,15 @@ function ImageGridView({ node, updateAttributes, selected, deleteNode }) {
     async function handleFile(e) {
         const file = e.target.files?.[0];
         if (!file || !token) return;
+        const validationError = validateImageFile(file);
+        if (validationError) {
+            console.error(validationError);
+            e.target.value = '';
+            return;
+        }
         setUploading(true);
         try {
-            const fd = new FormData();
-            fd.append('image', file);
-            const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/bitacora/upload`, {
-                method: 'POST',
-                headers: { Authorization: `Bearer ${token}` },
-                body: fd,
-            });
-            if (!res.ok) throw new Error('Error al subir imagen');
-            const { url } = await res.json();
+            const { url } = await cmsApi.uploadImage(token, file);
             const next = [...images];
             if (uploadIdx !== null && uploadIdx < next.length) {
                 next[uploadIdx] = { ...next[uploadIdx], src: url };
@@ -962,7 +1057,7 @@ function ImageGridView({ node, updateAttributes, selected, deleteNode }) {
             wrapperClassName="my-6"
             frameClassName="w-full"
         >
-            <div className={`${selected ? 'ring-2 ring-fuchsia-500 ring-offset-2 ring-offset-transparent rounded-xl' : ''}`}>
+            <div className={`${selected ? 'ring-2 ring-fuchsia-500 ring-offset-2 ring-offset-transparent rounded-xl' : ''}`} contentEditable={false}>
                 {selected && (
                     <div className="flex items-center gap-2 mb-2">
                         <span className="text-[10px] uppercase text-[var(--text-muted)] tracking-wider">Columnas:</span>

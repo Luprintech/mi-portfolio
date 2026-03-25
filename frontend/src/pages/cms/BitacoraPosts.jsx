@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { cmsApi } from '../../lib/cmsApi';
-import { Copy, ExternalLink, Pencil, Trash2 } from 'lucide-react';
+import { ExternalLink, Pencil, Trash2 } from 'lucide-react';
 
 const formatDate = (dateString) => {
     if (!dateString) return '—';
@@ -25,12 +25,6 @@ export default function BitacoraPosts() {
     const [pendingDelete, setPendingDelete] = useState(null);
     const [deleteError,   setDeleteError]   = useState('');
     const [filter,        setFilter]        = useState('all'); // 'all' | 'draft' | 'published'
-    const [toast,         setToast]         = useState(null);
-
-    function showToast(message) {
-        setToast(message);
-        setTimeout(() => setToast(null), 3200);
-    }
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -65,10 +59,6 @@ export default function BitacoraPosts() {
         } finally {
             setDeleting(null);
         }
-    }
-
-    function handleDuplicate(post) {
-        showToast(`Duplicar "${post.title}" — funcionalidad disponible próximamente`);
     }
 
     const filtered = posts.filter(p => filter === 'all' || (p.status || 'published') === filter);
@@ -216,13 +206,6 @@ export default function BitacoraPosts() {
                                     </div>
                                 ) : (
                                     <>
-                                        <button
-                                            onClick={() => handleDuplicate(post)}
-                                            className="p-2 rounded-lg text-[var(--text-secondary)] hover:text-fuchsia-400 hover:bg-fuchsia-500/10 transition-all"
-                                            title="Duplicar post"
-                                        >
-                                            <Copy className="w-4 h-4" />
-                                        </button>
                                         <a
                                             href={`/blog/${post.slug}`}
                                             target="_blank"
@@ -251,13 +234,6 @@ export default function BitacoraPosts() {
                             </div>
                         </div>
                     ))}
-                </div>
-            )}
-
-            {/* ── Toast ──────────────────────────────────────────────────── */}
-            {toast && (
-                <div className="fixed bottom-6 right-6 z-50 max-w-sm rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)]/95 px-4 py-3 text-sm text-[var(--text-primary)] shadow-2xl backdrop-blur-sm">
-                    {toast}
                 </div>
             )}
         </div>

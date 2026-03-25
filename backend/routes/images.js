@@ -3,7 +3,7 @@ import path from 'path';
 import multer from 'multer';
 import fsExtra from 'fs-extra';
 import { logger } from '../lib/logger.js';
-import { AUDIO_DIR, DOCS_DIR, IMAGES_DIR } from '../config/paths.js';
+import { AUDIO_DIR, CV_FILE, DOCS_DIR, IMAGES_DIR } from '../config/paths.js';
 import { verifyCmsToken } from '../middleware/auth.js';
 import { createHttpError } from '../utils/httpErrors.js';
 
@@ -21,6 +21,7 @@ const ALLOWED_DOC_TYPES = new Map([
 const IMAGE_MAX_SIZE = 5 * 1024 * 1024;
 const DOCUMENT_MAX_SIZE = 20 * 1024 * 1024;
 const AUDIO_MAX_SIZE = 20 * 1024 * 1024;
+const CV_MAX_SIZE = 20 * 1024 * 1024;
 
 function createUploadErrorPayload({ type, message, field, maxSize, acceptedTypes, actualSize }) {
     return {
@@ -42,6 +43,7 @@ function sendUploadError(res, options, status = 400) {
 function getAcceptedTypes(kind) {
     if (kind === 'image') return [...ALLOWED_IMAGE_EXTENSIONS];
     if (kind === 'audio') return [...ALLOWED_AUDIO_EXTENSIONS];
+    if (kind === 'cv') return ['.pdf'];
     return [...ALLOWED_DOC_TYPES.keys()];
 }
 
@@ -144,6 +146,18 @@ const audioUpload = multer({
         const ext = path.extname(file.originalname).toLowerCase();
         if (!ALLOWED_AUDIO_EXTENSIONS.has(ext) || (file.mimetype && !file.mimetype.startsWith('audio/'))) {
             return cb(createValidationError('invalid-file-type', 'Formato de audio no permitido. Usa MP3, WAV, OGG, M4A, AAC, FLAC o WebM.'));
+        }
+        cb(null, true);
+    },
+});
+
+const cvUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: CV_MAX_SIZE },
+    fileFilter: (_req, file, cb) => {
+        const ext = path.extname(file.originalname).toLowerCase();
+        if (ext !== '.pdf' || file.mimetype !== 'application/pdf') {
+            return cb(createValidationError('invalid-file-type', 'El CV debe subirse en PDF.'));
         }
         cb(null, true);
     },
@@ -267,6 +281,47 @@ router.post('/upload-audio', verifyCmsToken, async (req, res, next) => {
         }
 
         next(createHttpError(500, 'Error subiendo el audio', { cause: error }));
+    }
+});
+
+router.post('/upload-cv', verifyCmsToken, async (req, res, next) => {
+    try {
+        await runUpload(req, res, cvUpload.single('cv'));
+        if (!req.file) {
+            return sendUploadError(res, {
+                type: 'missing-file',
+                message: 'No se recibio ningun CV.',
+                field: 'cv',
+                maxSize: CV_MAX_SIZE,
+                acceptedTypes: ['.pdf'],
+            });
+        }
+
+        await fsExtra.ensureDir(path.dirname(CV_FILE));
+        await fsExtra.writeFile(CV_FILE, req.file.buffer);
+
+        imagesLogger.info('CV uploaded', {
+            requestId: req.requestId,
+            filename: path.basename(CV_FILE),
+            size: req.file.size,
+            username: req.user?.username || null,
+        });
+
+        res.json({
+            ok: true,
+            file: {
+                url: '/CV_Guadalupe_Cano.pdf',
+                filename: path.basename(CV_FILE),
+                fileSize: req.file.size,
+            },
+        });
+    } catch (error) {
+        const normalized = normalizeUploadError(error, { field: 'cv', kind: 'cv', maxSize: CV_MAX_SIZE });
+        if (normalized) {
+            return res.status(normalized.status).json(normalized.payload);
+        }
+
+        next(createHttpError(500, 'Error subiendo el CV', { cause: error }));
     }
 });
 

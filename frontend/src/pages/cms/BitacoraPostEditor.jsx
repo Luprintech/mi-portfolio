@@ -466,7 +466,7 @@ export default function BitacoraPostEditor() {
             }
             if (statusOverride === 'draft') {
                 setForm(f => ({ ...f, status: 'draft' }));
-                setInitialForm(f => ({ ...f, status: 'draft' }));
+                setInitialForm({ ...form, status: 'draft' });
                 setAutosaveState('synced');
                 showToast('Borrador guardado correctamente');
                 return;

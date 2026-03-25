@@ -1,16 +1,22 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { cmsApi } from '../../lib/cmsApi';
 
 export default function BitacoraLogin() {
-    const { login } = useAuth();
+    const { login, isAuthenticated, authStatus } = useAuth();
     const navigate  = useNavigate();
 
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error,    setError]    = useState('');
     const [loading,  setLoading]  = useState(false);
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate('/bitacora/inicio', { replace: true });
+        }
+    }, [isAuthenticated, navigate]);
 
     async function handleSubmit(e) {
         e.preventDefault();
@@ -81,12 +87,18 @@ export default function BitacoraLogin() {
                         </p>
                     )}
 
+                    {authStatus === 'checking' && !loading && (
+                        <p className="text-xs text-[var(--text-secondary)] bg-[var(--bg-elevated)] border border-[var(--border-default)] rounded-lg px-3 py-2">
+                            Verificando sesion activa...
+                        </p>
+                    )}
+
                     <button
                         type="submit"
-                        disabled={loading}
+                        disabled={loading || authStatus === 'checking'}
                         className="w-full py-2.5 rounded-xl bg-gradient-to-r from-fuchsia-600 to-cyan-500 text-white font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed mt-2"
                     >
-                        {loading ? 'Verificando…' : 'Entrar'}
+                        {loading || authStatus === 'checking' ? 'Verificando…' : 'Entrar'}
                     </button>
                 </form>
             </div>

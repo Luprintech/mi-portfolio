@@ -1,52 +1,13 @@
 // ─── SlashMenu — menú de comandos rápidos tipo Notion ("/") ───────────────────
 import { useState, useEffect, useRef, useCallback } from 'react';
-
-const SLASH_ITEMS = [
-    { title: 'Título 1',         icon: 'H1',  desc: 'Título principal',            category: 'Bloques',   action: 'h1' },
-    { title: 'Título 2',         icon: 'H2',  desc: 'Subtítulo',                   category: 'Bloques',   action: 'h2' },
-    { title: 'Título 3',         icon: 'H3',  desc: 'Sección',                     category: 'Bloques',   action: 'h3' },
-    { title: 'Lista viñetas',    icon: '•',   desc: 'Lista no ordenada',           category: 'Bloques',   action: 'bulletList' },
-    { title: 'Lista numerada',   icon: '#',   desc: 'Lista ordenada',              category: 'Bloques',   action: 'orderedList' },
-    { title: 'Cita',             icon: '❝',   desc: 'Blockquote',                  category: 'Bloques',   action: 'blockquote' },
-    { title: 'Separador',        icon: '—',   desc: 'Línea horizontal',            category: 'Bloques',   action: 'hr' },
-    { title: 'Bloque de código', icon: '</>',  desc: 'Código con syntax highlight', category: 'Código',    action: 'codeBlock' },
-    { title: 'Código inline',    icon: '`c`', desc: 'Código dentro del texto',     category: 'Código',    action: 'code' },
-    { title: 'Terminal',         icon: '$_',  desc: 'Bloque de comandos',          category: 'Código',    action: 'terminal' },
-    { title: 'Imagen',           icon: '🖼',  desc: 'Subir una imagen',            category: 'Media',     action: 'image' },
-    { title: 'Grid de imágenes', icon: '▦',   desc: 'Varias imágenes en grid',     category: 'Media',     action: 'imageGrid' },
-    { title: 'YouTube',          icon: '▶',   desc: 'Vídeo de YouTube',            category: 'Media',     action: 'youtube' },
-    { title: 'Audio',            icon: '🎧',  desc: 'Archivo de audio',            category: 'Media',     action: 'audio' },
-    { title: 'PDF / Documento',  icon: '📎',  desc: 'Adjuntar PDF, ZIP o DOCX',    category: 'Media',     action: 'document' },
-    { title: 'Tabla',            icon: '▤',   desc: 'Tabla 3x3',                   category: 'Avanzado',  action: 'table' },
-    { title: 'Callout - Tip',    icon: '💡',  desc: 'Consejo destacado',           category: 'Avanzado',  action: 'callout-tip' },
-    { title: 'Callout - Warning',icon: '⚠️',  desc: 'Advertencia',                 category: 'Avanzado',  action: 'callout-warning' },
-    { title: 'Callout - Info',   icon: 'ℹ️',  desc: 'Nota informativa',            category: 'Avanzado',  action: 'callout-info' },
-    { title: 'Callout - Note',   icon: '📌',  desc: 'Nota general',                category: 'Avanzado',  action: 'callout-note' },
-    { title: 'Acordeón',         icon: '▼',   desc: 'Bloque colapsable',           category: 'Avanzado',  action: 'accordion' },
-    { title: 'Botón CTA',        icon: '🔘',  desc: 'Botón con enlace',            category: 'Avanzado',  action: 'contentButton' },
-    { title: 'Diagrama flujo',   icon: '📊',  desc: 'Mermaid flowchart',           category: 'Diagramas', action: 'mermaid-flowchart' },
-    { title: 'Mapa mental',      icon: '🌐',  desc: 'Mermaid mindmap',             category: 'Diagramas', action: 'mermaid-mindmap' },
-    { title: 'Secuencia',        icon: '↔',   desc: 'Mermaid sequence',            category: 'Diagramas', action: 'mermaid-sequence' },
-    { title: 'Emoji',            icon: '😀',  desc: 'Insertar emoji',              category: 'Extra',     action: 'emoji' },
-];
-
-const CATEGORY_ICONS = {
-    Bloques:   { color: 'text-violet-400', bg: 'bg-violet-500/15' },
-    Código:    { color: 'text-cyan-400',   bg: 'bg-cyan-500/15' },
-    Media:     { color: 'text-amber-400',  bg: 'bg-amber-500/15' },
-    Avanzado:  { color: 'text-emerald-400',bg: 'bg-emerald-500/15' },
-    Diagramas: { color: 'text-fuchsia-400',bg: 'bg-fuchsia-500/15' },
-    Extra:     { color: 'text-orange-400', bg: 'bg-orange-500/15' },
-};
+import { filterInsertMenuItems, groupInsertMenuItems, INSERT_MENU_CATEGORY_STYLES, INSERT_MENU_ITEMS, runInsertMenuEditorAction } from './insertMenuConfig';
 
 export default function SlashMenu({ editor, coords, query, onClose, onAction }) {
     const [selected, setSelected] = useState(0);
     const menuRef = useRef(null);
     const itemRefs = useRef([]);
 
-    const filtered = SLASH_ITEMS.filter(item =>
-        !query || item.title.toLowerCase().includes(query.toLowerCase()) || item.desc.toLowerCase().includes(query.toLowerCase())
-    );
+    const filtered = filterInsertMenuItems(INSERT_MENU_ITEMS, query);
 
     // Reset selection when filter changes
     useEffect(() => { setSelected(0); }, [query]);
@@ -85,30 +46,7 @@ export default function SlashMenu({ editor, coords, query, onClose, onAction }) 
         }
 
         // Execute the command
-        const actions = {
-            h1:           () => editor.chain().focus().setHeading({ level: 1 }).run(),
-            h2:           () => editor.chain().focus().setHeading({ level: 2 }).run(),
-            h3:           () => editor.chain().focus().setHeading({ level: 3 }).run(),
-            bulletList:   () => editor.chain().focus().toggleBulletList().run(),
-            orderedList:  () => editor.chain().focus().toggleOrderedList().run(),
-            blockquote:   () => editor.chain().focus().setBlockquote().run(),
-            hr:           () => editor.chain().focus().setHorizontalRule().run(),
-            codeBlock:    () => editor.chain().focus().setCodeBlock().run(),
-            code:         () => editor.chain().focus().toggleCode().run(),
-            terminal:     () => editor.chain().focus().setCodeBlock().updateAttributes('codeBlock', { language: 'bash', variant: 'terminal', filename: 'terminal', title: 'Comandos' }).run(),
-            table:        () => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
-            'callout-tip':     () => editor.chain().focus().insertCallout('tip').run(),
-            'callout-warning': () => editor.chain().focus().insertCallout('warning').run(),
-            'callout-info':    () => editor.chain().focus().insertCallout('info').run(),
-            'callout-note':    () => editor.chain().focus().insertCallout('note').run(),
-            accordion:    () => editor.chain().focus().insertAccordion().run(),
-            contentButton:() => editor.chain().focus().insertContentButton().run(),
-            imageGrid:    () => editor.chain().focus().insertImageGrid(2).run(),
-        };
-
-        if (actions[action]) {
-            actions[action]();
-        } else {
+        if (!runInsertMenuEditorAction(editor, action)) {
             // Delegate to parent for actions that need UI (image upload, youtube URL, etc.)
             onAction?.(action);
         }
@@ -139,11 +77,7 @@ export default function SlashMenu({ editor, coords, query, onClose, onAction }) 
     if (filtered.length === 0) return null;
 
     // Group by category
-    const grouped = {};
-    filtered.forEach((item, idx) => {
-        if (!grouped[item.category]) grouped[item.category] = [];
-        grouped[item.category].push({ ...item, globalIdx: idx });
-    });
+    const grouped = groupInsertMenuItems(filtered);
 
     let globalIdx = 0;
 
@@ -162,7 +96,7 @@ export default function SlashMenu({ editor, coords, query, onClose, onAction }) 
 
             <div className="p-1.5">
                 {Object.entries(grouped).map(([category, items]) => {
-                    const catStyle = CATEGORY_ICONS[category] || CATEGORY_ICONS.Extra;
+                    const catStyle = INSERT_MENU_CATEGORY_STYLES[category] || INSERT_MENU_CATEGORY_STYLES.Extra;
                     return (
                         <div key={category}>
                             <p className={`text-[10px] uppercase tracking-wider font-bold px-3 pt-2.5 pb-1 ${catStyle.color}`}>{category}</p>

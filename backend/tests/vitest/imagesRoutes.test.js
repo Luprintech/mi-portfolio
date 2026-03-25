@@ -70,4 +70,17 @@ describe('images routes', () => {
         expect(response.body.error.acceptedTypes).toContain('.pdf');
         expect(response.body.error.message).toContain('Solo PDF, ZIP, DOC y DOCX');
     });
+
+    it('reemplaza el CV publico desde Bitacora', async () => {
+        const response = await request(app)
+            .post('/api/bitacora/upload-cv')
+            .attach('cv', Buffer.from('%PDF-1.4 nuevo cv'), { filename: 'cv-guadalupe.pdf', contentType: 'application/pdf' });
+
+        expect(response.status).toBe(200);
+        expect(response.body.ok).toBe(true);
+        expect(response.body.file.url).toBe('/CV_Guadalupe_Cano.pdf');
+
+        const savedCv = await fs.readFile(path.join(tempRoot, 'CV_Guadalupe_Cano.pdf'), 'utf8');
+        expect(savedCv).toContain('nuevo cv');
+    });
 });
