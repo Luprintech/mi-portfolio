@@ -4,8 +4,10 @@ import { resolveContentLinkAttributes } from '../../../lib/contentLinkUtils';
 import { slugifyHeading } from '../markdownComponents';
 import DocumentBlock from './DocumentBlock';
 import ImageGridBlock from './ImageGridBlock';
+import VideoGalleryBlock from './VideoGalleryBlock';
 import CodeBlock from './CodeBlock';
 import { parseImageGridConfigFromElement, parseImageGridPayload } from './imageGridPayload';
+import { normalizeVideoGalleryConfig, normalizeVideoGalleryItems } from '../../../lib/videoGallery';
 import { normalizeRichBlockAlignment } from '../../cms/editor/blockAlignment';
 
 function joinClassNames(...values) {
@@ -150,6 +152,55 @@ function renderNode(node, path) {
           />
         </div>
       );
+  }
+
+  if (dataBlock === 'video-gallery' || node.hasAttribute('data-video-gallery')) {
+    const alignment = normalizeRichBlockAlignment(node.getAttribute('data-align'));
+    const config = normalizeVideoGalleryConfig({
+      layout: node.getAttribute('data-layout'),
+      columns: node.getAttribute('data-columns'),
+      aspectRatio: node.getAttribute('data-aspect-ratio'),
+      showTitles: node.getAttribute('data-show-titles'),
+      showDurations: node.getAttribute('data-show-durations'),
+    });
+    
+    return (
+      <div key={path} className={getBlockWrapperClassName(alignment)}>
+        <VideoGalleryBlock
+          videos={normalizeVideoGalleryItems(JSON.parse(node.getAttribute('data-videos') || '[]'))}
+          config={config}
+        />
+      </div>
+    );
+  }
+
+  if (dataBlock === 'gif' || node.hasAttribute('data-gif')) {
+    const alignment = normalizeRichBlockAlignment(node.getAttribute('data-align'));
+    const img = node.querySelector('img');
+    const figcaption = node.querySelector('figcaption');
+    
+    if (img) {
+      const width = parseInt(node.getAttribute('data-width')) || 400;
+      const autoplay = node.getAttribute('data-autoplay') !== 'false';
+      
+      return (
+        <div key={path} className={getBlockWrapperClassName(alignment)}>
+          <figure style={{ maxWidth: `${width}px`, margin: '1em auto' }}>
+            <img
+              src={img.src}
+              alt={img.alt || ''}
+              className="w-full rounded-xl"
+              style={{ imageRendering: autoplay ? 'auto' : 'pixelated' }}
+            />
+            {figcaption && (
+              <figcaption className="mt-2 text-center text-sm italic text-[var(--text-muted)]">
+                {figcaption.textContent}
+              </figcaption>
+            )}
+          </figure>
+        </div>
+      );
+    }
   }
 
   if (dataBlock === 'code') {

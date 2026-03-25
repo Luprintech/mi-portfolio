@@ -13,6 +13,8 @@ export const INSERT_MENU_ITEMS = [
     { title: 'Terminal', icon: '$_', desc: 'Bloque de comandos', category: 'Codigo', action: 'terminal', toolbar: 'overflow' },
     { title: 'Imagen', icon: 'IMG', desc: 'Subir una imagen', category: 'Media', action: 'image', toolbar: 'primary' },
     { title: 'Grid de imagenes', icon: '[]', desc: 'Varias imagenes en grid', category: 'Media', action: 'imageGrid', toolbar: 'overflow' },
+    { title: 'Galeria de videos', icon: 'VID', desc: 'Galeria de YouTube/Vimeo', category: 'Media', action: 'videoGallery', toolbar: 'overflow' },
+    { title: 'GIF animado', icon: 'GIF', desc: 'Imagen GIF con controles', category: 'Media', action: 'gif', toolbar: 'overflow' },
     { title: 'YouTube', icon: 'YT', desc: 'Video de YouTube', category: 'Media', action: 'youtube', toolbar: 'primary' },
     { title: 'Audio', icon: 'AU', desc: 'Archivo de audio', category: 'Media', action: 'audio', toolbar: 'primary' },
     { title: 'PDF / Documento', icon: 'DOC', desc: 'Adjuntar PDF, ZIP o DOCX', category: 'Media', action: 'document', toolbar: 'overflow' },
@@ -92,6 +94,8 @@ export function runInsertMenuEditorActionWithOptions(editor, action, options = {
         accordion: currentChain => currentChain.insertAccordion(),
         contentButton: currentChain => currentChain.insertContentButton(),
         imageGrid: currentChain => currentChain.insertImageGrid(2),
+        videoGallery: currentChain => currentChain.insertVideoGallery(),
+        gif: currentChain => currentChain.insertGif(),
         ...(mermaidTemplate ? {
             [action]: currentChain => currentChain.insertMermaid(mermaidTemplate),
         } : {}),
