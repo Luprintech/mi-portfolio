@@ -12,8 +12,8 @@ function buildRichHtml(title) {
   return [
     `<h2>${title}</h2>`,
     '<p>Validamos el pipeline editorial completo con HTML-first real desde el CMS.</p>',
-    `<div data-block="image-grid" data-columns="2" data-images='[{"src":"${SHARED_IMAGE_ONE}","alt":"Panel principal","caption":"Panel principal"},{"src":"${SHARED_IMAGE_TWO}","alt":"Captura secundaria","caption":"Captura secundaria"}]'></div>`,
-    `<div data-block="document" data-src="${SHARED_DOCUMENT}" data-title="Guia operativa" data-filename="guia-operativa.pdf" data-file-type="pdf" data-display="embed"></div>`,
+    `<div data-block="image-grid" data-align="center" data-columns="2" data-images='[{"src":"${SHARED_IMAGE_ONE}","alt":"Panel principal","caption":"Panel principal"},{"src":"${SHARED_IMAGE_TWO}","alt":"Captura secundaria","caption":"Captura secundaria"}]'></div>`,
+    `<div data-block="document" data-align="right" data-src="${SHARED_DOCUMENT}" data-title="Guia operativa" data-filename="guia-operativa.pdf" data-file-type="pdf" data-display="embed"></div>`,
     '<pre data-block="code" data-language="bash" data-filename="deploy.sh" data-title="Deploy" data-variant="terminal"><code>npm run lint\nnpm run test</code></pre>',
   ].join('');
 }
@@ -32,6 +32,8 @@ async function assertRichBlocks(page, postTitle) {
   await expect(page.locator('[data-rendered-block="image-grid"] img')).toHaveCount(2);
   await expect(page.locator('[data-rendered-block="document"]')).toHaveCount(1);
   await expect(page.locator('[data-rendered-block="document"] iframe')).toHaveCount(1);
+  await expect(page.locator('[data-rendered-block="image-grid"]').locator('xpath=..')).toHaveClass(/justify-center/);
+  await expect(page.locator('[data-rendered-block="document"]').locator('xpath=..')).toHaveClass(/justify-end/);
   await expect(page.locator('[data-rendered-block="code"]')).toHaveCount(1);
   await expect(page.getByText('npm run lint')).toBeVisible();
   await expect(page.locator('[data-rendered-block="code"]').getByRole('button', { name: /^copiar$/i })).toBeVisible();

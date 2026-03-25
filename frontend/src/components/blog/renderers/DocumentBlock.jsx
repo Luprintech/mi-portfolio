@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import PdfPreview from '../../shared/PdfPreview';
 
 const FILE_LABELS = {
   pdf: 'PDF',
@@ -25,6 +26,10 @@ function useIsMobileDocument() {
   return isMobile;
 }
 
+function clampEmbedHeight(value) {
+  return Math.min(920, Math.max(480, Number(value) || 560));
+}
+
 export default function DocumentBlock({
   src = '',
   title = '',
@@ -32,6 +37,7 @@ export default function DocumentBlock({
   fileType = '',
   display = 'embed',
   embedHeight = 560,
+  embedWidth = null,
 }) {
   const isMobile = useIsMobileDocument();
   const normalizedType = String(fileType || '').toLowerCase();
@@ -39,25 +45,24 @@ export default function DocumentBlock({
   const shouldEmbed = isPdf && display === 'embed' && !isMobile;
   const resolvedName = title || filename || 'Documento adjunto';
   const label = FILE_LABELS[normalizedType] || 'FILE';
+  const resolvedHeight = clampEmbedHeight(embedHeight);
   const description = isPdf
     ? isMobile
       ? 'Abrilo o descargalo en una pestaña aparte para verlo con comodidad.'
-      : 'Vista previa disponible aqui y acceso directo al archivo completo.'
+      : 'Vista previa paginada para escritorio y acceso directo al archivo completo.'
     : `Archivo ${label} disponible para descarga.`;
 
   if (!src) return null;
 
   return (
-    <section className="my-10 overflow-hidden rounded-[1.5rem] border border-[var(--border-default)] bg-[var(--bg-elevated)]/80 shadow-[0_22px_60px_rgba(15,23,42,0.14)]" data-rendered-block="document">
+    <section
+      className="my-10 overflow-hidden rounded-[1.5rem] border border-[var(--border-default)] bg-[var(--bg-elevated)]/80 shadow-[0_22px_60px_rgba(15,23,42,0.14)]"
+      data-rendered-block="document"
+      style={embedWidth ? { width: `${embedWidth}px`, maxWidth: '100%' } : undefined}
+    >
       {shouldEmbed && (
         <div className="border-b border-[var(--border-default)] bg-[var(--bg-primary)]/75 p-2 md:p-3">
-          <iframe
-            src={src}
-            title={resolvedName}
-            loading="lazy"
-            className="block w-full rounded-[1rem] border-0 bg-white"
-            style={{ height: `${Math.max(360, Number(embedHeight) || 560)}px` }}
-          />
+          <PdfPreview src={src} title={resolvedName} height={resolvedHeight} />
         </div>
       )}
 

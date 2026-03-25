@@ -6,14 +6,10 @@ import DocumentBlock from './DocumentBlock';
 import ImageGridBlock from './ImageGridBlock';
 import CodeBlock from './CodeBlock';
 import { parseImageGridPayload } from './imageGridPayload';
+import { normalizeRichBlockAlignment } from '../../cms/editor/blockAlignment';
 
 function joinClassNames(...values) {
   return values.filter(Boolean).join(' ');
-}
-
-function normalizeBlockAlignment(value = '') {
-  if (value === 'center' || value === 'right') return value;
-  return 'left';
 }
 
 function parseStyle(styleText = '') {
@@ -23,7 +19,31 @@ function parseStyle(styleText = '') {
     const key = rawKey.trim().replace(/-([a-z])/g, (_, char) => char.toUpperCase());
     const value = rawValue.trim();
     if (!key || !value) return acc;
-    if (['textAlign', 'background', 'backgroundColor', 'borderColor', 'color', 'fontWeight', 'fontStyle', 'textDecoration', 'textTransform', 'fontSize', 'borderRadius', 'boxShadow'].includes(key)) {
+    if ([
+      'textAlign',
+      'background',
+      'backgroundColor',
+      'border',
+      'borderColor',
+      'borderStyle',
+      'borderWidth',
+      'borderTopColor',
+      'borderRightColor',
+      'borderBottomColor',
+      'borderLeftColor',
+      'color',
+      'fontWeight',
+      'fontStyle',
+      'textDecoration',
+      'textTransform',
+      'fontSize',
+      'borderRadius',
+      'boxShadow',
+      'width',
+      'minWidth',
+      'maxWidth',
+      'verticalAlign',
+    ].includes(key)) {
       acc[key] = value;
     }
     return acc;
@@ -83,7 +103,7 @@ function renderNode(node, path) {
   const dataBlock = node.getAttribute('data-block');
 
   if (dataBlock === 'document' || node.hasAttribute('data-document')) {
-    const alignment = normalizeBlockAlignment(node.getAttribute('data-align'));
+    const alignment = normalizeRichBlockAlignment(node.getAttribute('data-align'));
     return (
       <div key={path} className={getBlockWrapperClassName(alignment)}>
         <DocumentBlock
@@ -93,18 +113,21 @@ function renderNode(node, path) {
           fileType={node.getAttribute('data-file-type') || ''}
           display={node.getAttribute('data-display') || node.getAttribute('data-display-mode') || 'embed'}
           embedHeight={node.getAttribute('data-embed-height') || 560}
+          embedWidth={node.getAttribute('data-embed-width') || null}
         />
       </div>
     );
   }
 
   if (dataBlock === 'image-grid' || node.hasAttribute('data-image-grid')) {
+    const alignment = normalizeRichBlockAlignment(node.getAttribute('data-align'));
     return (
-      <ImageGridBlock
-        key={path}
-        columns={Number(node.getAttribute('data-columns') || node.getAttribute('data-cols')) || 2}
-        images={parseImageGridPayload(node.getAttribute('data-images') || '[]')}
-      />
+      <div key={path} className={getBlockWrapperClassName(alignment)}>
+        <ImageGridBlock
+          columns={Number(node.getAttribute('data-columns') || node.getAttribute('data-cols')) || 2}
+          images={parseImageGridPayload(node.getAttribute('data-images') || '[]')}
+        />
+      </div>
     );
   }
 
@@ -135,12 +158,17 @@ function renderNode(node, path) {
 
   if (tagName === 'img') {
     const alt = node.getAttribute('alt') || '';
-    return (
+    const alignment = normalizeRichBlockAlignment(node.getAttribute('data-align') || node.style?.textAlign || '');
+    const figure = (
       <figure key={path} className="my-10">
         <img src={node.getAttribute('src') || ''} alt={alt} loading={node.getAttribute('loading') || 'lazy'} className="w-full rounded-[1.5rem] border border-[var(--border-default)] bg-[var(--bg-surface)] object-cover" />
         {alt ? <figcaption className="mt-3 text-center text-sm italic text-[var(--text-muted)]">{alt}</figcaption> : null}
       </figure>
     );
+
+    if (!getBlockWrapperClassName(alignment)) return figure;
+
+    return <div key={`${path}-wrap`} className={getBlockWrapperClassName(alignment)}>{figure}</div>;
   }
 
   if (tagName === 'a' && node.hasAttribute('data-content-button')) {
@@ -150,7 +178,7 @@ function renderNode(node, path) {
       target: node.getAttribute('target') || '',
       rel: node.getAttribute('rel') || '',
     });
-    const alignment = normalizeBlockAlignment(
+    const alignment = normalizeRichBlockAlignment(
       node.getAttribute('data-align') || elementProps.style?.textAlign || ''
     );
 
@@ -185,10 +213,31 @@ function renderNode(node, path) {
   if (tagName === 'ol') return <ol key={path} className="mb-8 ml-6 list-decimal space-y-3 text-justify text-[1.02rem] leading-8 text-[var(--text-secondary)]">{renderChildren(node, path)}</ol>;
   if (tagName === 'li') return <li key={path} className="pl-2 text-justify">{renderChildren(node, path)}</li>;
   if (tagName === 'hr') return <hr key={path} className="my-10 border-0 border-t border-[var(--border-default)]" />;
-  if (tagName === 'table') return <div key={path} className="my-8 overflow-x-auto rounded-[1.2rem] border border-[var(--border-default)]"><table className="min-w-full border-collapse text-left">{renderChildren(node, path)}</table></div>;
-  if (tagName === 'thead') return <thead key={path} className="bg-[var(--bg-surface)]/85">{renderChildren(node, path)}</thead>;
-  if (tagName === 'th') return <th key={path} {...getElementProps(node, { key: path })} className="border-b border-[var(--border-default)] px-4 py-3 text-sm font-semibold text-[var(--text-primary)]">{renderChildren(node, path)}</th>;
-  if (tagName === 'td') return <td key={path} {...getElementProps(node, { key: path })} className="border-b border-[var(--border-default)] px-4 py-3 text-justify text-sm leading-7 text-[var(--text-secondary)]">{renderChildren(node, path)}</td>;
+  if (tagName === 'table') {
+    const elementProps = getElementProps(node, { key: path });
+    return (
+      <div key={path} className="my-8 overflow-x-auto rounded-[1.2rem] border border-[var(--border-default)] bg-[var(--bg-primary)]/55 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+        <table
+          {...elementProps}
+          className={joinClassNames('min-w-full border-collapse text-left', elementProps.className)}
+        >
+          {renderChildren(node, path)}
+        </table>
+      </div>
+    );
+  }
+  if (tagName === 'thead') {
+    const elementProps = getElementProps(node, { key: path });
+    return <thead {...elementProps} className={joinClassNames('bg-[var(--bg-surface)]/85', elementProps.className)}>{renderChildren(node, path)}</thead>;
+  }
+  if (tagName === 'th') {
+    const elementProps = getElementProps(node, { key: path });
+    return <th {...elementProps} className={joinClassNames('border border-[var(--border-default)] px-4 py-3 text-sm font-semibold text-[var(--text-primary)] align-top', elementProps.className)}>{renderChildren(node, path)}</th>;
+  }
+  if (tagName === 'td') {
+    const elementProps = getElementProps(node, { key: path });
+    return <td {...elementProps} className={joinClassNames('border border-[var(--border-default)] px-4 py-3 text-justify text-sm leading-7 text-[var(--text-secondary)] align-top', elementProps.className)}>{renderChildren(node, path)}</td>;
+  }
   if (tagName === 'pre') return <CodeBlock key={path} {...buildCodeBlockProps(node)} />;
   if (tagName === 'code') {
     if (node.parentElement?.tagName?.toLowerCase() === 'pre') return <code key={path} className={`${node.getAttribute('class') || ''} block font-mono text-sm leading-7`}>{node.textContent}</code>;

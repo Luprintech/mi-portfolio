@@ -1,4 +1,4 @@
-import { useEditor, EditorContent, ReactNodeViewRenderer, NodeViewWrapper, NodeViewContent } from '@tiptap/react';
+import { useEditor, EditorContent, ReactNodeViewRenderer, NodeViewContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
@@ -87,6 +87,13 @@ import 'highlight.js/styles/github-dark.css';
 import mermaid from 'mermaid';
 import { useCallback, useRef, useEffect, useState } from 'react';
 import { LineHeight, AccordionExtension, ContentButtonExtension, DocumentAttachmentExtension, ImageGridExtension } from './editor/extensions';
+import RichBlockFrame from './editor/RichBlockFrame';
+import {
+    canUseJustifyAlignment,
+    createRichBlockTextAlignAttribute,
+    getRichBlockHtmlAttributes,
+    isRichBlockNodeActive,
+} from './editor/blockAlignment';
 import { createTechnicalCodeBlockExtension } from './editor/technicalCodeBlockExtension';
 import EmojiPicker from './editor/EmojiPicker';
 import SlashMenu from './editor/SlashMenu';
@@ -106,7 +113,7 @@ const lowlight = createLowlight(common);
 mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
 
 // ─── ResizableImage — nodo React con handles de resize ────────────────────────
-function ResizableImageView({ node, updateAttributes, selected }) {
+function ResizableImageView({ node, updateAttributes, selected, deleteNode }) {
     const containerRef = useRef(null);
     const [resizing, setResizing]   = useState(false);
     const startData = useRef(null);
@@ -168,7 +175,14 @@ function ResizableImageView({ node, updateAttributes, selected }) {
     const handleStyle = 'absolute w-3 h-3 bg-fuchsia-500 border-2 border-white rounded-full z-10 cursor-nwse-resize';
 
     return (
-        <NodeViewWrapper className="inline-block relative my-4 mx-auto block" data-drag-handle style={node.attrs.textAlign && node.attrs.textAlign !== 'left' ? { display: 'flex', justifyContent: node.attrs.textAlign === 'center' ? 'center' : 'flex-end' } : undefined}>
+        <RichBlockFrame
+            alignment={node.attrs.textAlign}
+            selected={selected}
+            onRemove={deleteNode}
+            wrapperClassName="my-4"
+            dragHandle
+            frameClassName="inline-block"
+        >
             <div
                 ref={containerRef}
                 className={`relative inline-block group ${selected ? 'ring-2 ring-fuchsia-500 ring-offset-2 ring-offset-transparent' : ''}`}
@@ -198,12 +212,12 @@ function ResizableImageView({ node, updateAttributes, selected }) {
                     <p className="text-xs text-center text-gray-500 mt-2 italic">{node.attrs.alt}</p>
                 )}
             </div>
-        </NodeViewWrapper>
+        </RichBlockFrame>
     );
 }
 
 // ─── ResizableYoutube — nodo React con handles de resize ─────────────────────
-function ResizableYoutubeView({ node, updateAttributes, selected }) {
+function ResizableYoutubeView({ node, updateAttributes, selected, deleteNode }) {
     const containerRef = useRef(null);
     const startData = useRef(null);
 
@@ -252,7 +266,14 @@ function ResizableYoutubeView({ node, updateAttributes, selected }) {
     }
 
     return (
-        <NodeViewWrapper className="my-4 block" data-drag-handle style={node.attrs.textAlign && node.attrs.textAlign !== 'left' ? { display: 'flex', justifyContent: node.attrs.textAlign === 'center' ? 'center' : 'flex-end' } : undefined}>
+        <RichBlockFrame
+            alignment={node.attrs.textAlign}
+            selected={selected}
+            onRemove={deleteNode}
+            wrapperClassName="my-4"
+            dragHandle
+            frameClassName="inline-block"
+        >
             <div
                 ref={containerRef}
                 className={`relative group rounded-xl overflow-hidden ${selected ? 'ring-2 ring-fuchsia-500' : ''}`}
@@ -278,7 +299,7 @@ function ResizableYoutubeView({ node, updateAttributes, selected }) {
                     </svg>
                 </div>
             </div>
-        </NodeViewWrapper>
+        </RichBlockFrame>
     );
 }
 
@@ -289,7 +310,11 @@ const ResizableImageExtension = Image.extend({
             ...this.parent?.(),
             width:  { default: null },
             height: { default: null },
+            textAlign: createRichBlockTextAlignAttribute(),
         };
+    },
+    renderHTML({ HTMLAttributes }) {
+        return ['img', mergeAttributes(getRichBlockHtmlAttributes(HTMLAttributes, HTMLAttributes.textAlign))];
     },
     addNodeView() {
         return ReactNodeViewRenderer(ResizableImageView);
@@ -298,6 +323,12 @@ const ResizableImageExtension = Image.extend({
 
 // ─── Extensión Youtube con NodeView React ─────────────────────────────────────
 const ResizableYoutubeExtension = Youtube.extend({
+    addAttributes() {
+        return {
+            ...this.parent?.(),
+            textAlign: createRichBlockTextAlignAttribute(),
+        };
+    },
     addNodeView() {
         return ReactNodeViewRenderer(ResizableYoutubeView);
     },
@@ -312,29 +343,15 @@ const AudioNode = Node.create({
         return {
             src:   { default: null },
             title: { default: null },
+            textAlign: createRichBlockTextAlignAttribute(),
         };
     },
     parseHTML() { return [{ tag: 'audio' }]; },
-    renderHTML({ HTMLAttributes }) {
-        return ['audio', mergeAttributes({ controls: true, class: 'w-full my-4 rounded-lg' }, HTMLAttributes)];
+    renderHTML({ node, HTMLAttributes }) {
+        return ['audio', mergeAttributes(getRichBlockHtmlAttributes(HTMLAttributes, node.attrs.textAlign, { controls: true, class: 'w-full my-4 rounded-lg' }))];
     },
     addNodeView() {
-        return ({ node }) => {
-            const dom = document.createElement('div');
-            dom.className = 'my-4';
-            const audio = document.createElement('audio');
-            audio.controls = true;
-            audio.className = 'w-full rounded-lg';
-            audio.src = node.attrs.src || '';
-            dom.appendChild(audio);
-            if (node.attrs.title) {
-                const cap = document.createElement('p');
-                cap.className = 'text-sm text-center text-gray-500 mt-1 italic';
-                cap.textContent = node.attrs.title;
-                dom.appendChild(cap);
-            }
-            return { dom };
-        };
+        return ReactNodeViewRenderer(AudioView);
     },
     addCommands() {
         return {
@@ -344,6 +361,25 @@ const AudioNode = Node.create({
     },
 });
 
+function AudioView({ node, selected, deleteNode }) {
+    return (
+        <RichBlockFrame
+            alignment={node.attrs.textAlign}
+            selected={selected}
+            onRemove={deleteNode}
+            wrapperClassName="my-4"
+            frameClassName="w-full"
+        >
+            <div className={`${selected ? 'rounded-xl ring-2 ring-fuchsia-500 ring-offset-2 ring-offset-transparent' : ''}`}>
+                <audio controls className="w-full rounded-lg" src={node.attrs.src || ''} />
+                {node.attrs.title ? (
+                    <p className="mt-1 text-center text-sm italic text-gray-500">{node.attrs.title}</p>
+                ) : null}
+            </div>
+        </RichBlockFrame>
+    );
+}
+
 // ─── Callout — TIP / NOTE / WARNING / INFO ────────────────────────────────────
 const CALLOUT_CONFIG = {
     tip:     { icon: '💡', label: 'TIP',     border: '#22c55e', bg: 'rgba(34,197,94,0.08)'  },
@@ -352,10 +388,15 @@ const CALLOUT_CONFIG = {
     info:    { icon: '📌', label: 'INFO',    border: '#8b5cf6', bg: 'rgba(139,92,246,0.08)' },
 };
 
-function CalloutView({ node, updateAttributes }) {
+function CalloutView({ node, updateAttributes, selected, deleteNode }) {
     const cfg = CALLOUT_CONFIG[node.attrs.type] || CALLOUT_CONFIG.tip;
     return (
-        <NodeViewWrapper>
+        <RichBlockFrame
+            alignment={node.attrs.textAlign}
+            selected={selected}
+            onRemove={deleteNode}
+            frameClassName="w-full"
+        >
             <div style={{
                 borderLeft: `4px solid ${cfg.border}`,
                 background: cfg.bg,
@@ -380,7 +421,7 @@ function CalloutView({ node, updateAttributes }) {
                 </div>
                 <NodeViewContent style={{ margin: 0 }} />
             </div>
-        </NodeViewWrapper>
+        </RichBlockFrame>
     );
 }
 
@@ -396,11 +437,12 @@ const CalloutExtension = Node.create({
                 parseHTML: el => el.getAttribute('data-callout-type') || 'tip',
                 renderHTML: attrs => ({ 'data-callout-type': attrs.type }),
             },
+            textAlign: createRichBlockTextAlignAttribute(),
         };
     },
     parseHTML() { return [{ tag: 'div[data-callout]' }]; },
     renderHTML({ node, HTMLAttributes }) {
-        return ['div', mergeAttributes(HTMLAttributes, { 'data-callout': '', ...(node.attrs.textAlign && { 'data-align': node.attrs.textAlign }) }), 0];
+        return ['div', mergeAttributes(getRichBlockHtmlAttributes(HTMLAttributes, node.attrs.textAlign, { 'data-callout': '' })), 0];
     },
     addNodeView() {
         return ReactNodeViewRenderer(CalloutView);
@@ -443,7 +485,7 @@ const MERMAID_BG_COLORS = [
 
 let mermaidCounter = 0;
 
-function MermaidView({ node, updateAttributes, selected }) {
+function MermaidView({ node, updateAttributes, selected, deleteNode }) {
     const [editing, setEditing]     = useState(false);
     const [settings, setSettings]   = useState(false);
     const [localCode, setLocalCode] = useState(node.attrs.code || '');
@@ -488,7 +530,13 @@ function MermaidView({ node, updateAttributes, selected }) {
     }
 
     return (
-        <NodeViewWrapper className="my-4" style={node.attrs.textAlign && node.attrs.textAlign !== 'left' ? { display: 'flex', justifyContent: node.attrs.textAlign === 'center' ? 'center' : 'flex-end' } : undefined}>
+        <RichBlockFrame
+            alignment={node.attrs.textAlign}
+            selected={selected}
+            onRemove={deleteNode}
+            wrapperClassName="my-4"
+            frameClassName="w-full"
+        >
             <div className={`border rounded-xl overflow-hidden ${selected ? 'ring-2 ring-fuchsia-500 ring-offset-2 ring-offset-transparent' : ''}`}
                  style={{ borderColor: borderColor || 'var(--border-color)' }}>
 
@@ -633,7 +681,7 @@ function MermaidView({ node, updateAttributes, selected }) {
                     }
                 </div>
             </div>
-        </NodeViewWrapper>
+        </RichBlockFrame>
     );
 }
 
@@ -668,11 +716,12 @@ const MermaidNode = Node.create({
                 parseHTML: el => el.getAttribute('data-mermaid-title') || '',
                 renderHTML: attrs => attrs.title ? { 'data-mermaid-title': attrs.title } : {},
             },
+            textAlign: createRichBlockTextAlignAttribute(),
         };
     },
     parseHTML() { return [{ tag: 'div[data-mermaid-code]' }]; },
     renderHTML({ node, HTMLAttributes }) {
-        return ['div', mergeAttributes(HTMLAttributes, { class: 'mermaid-block', ...(node.attrs.textAlign && { 'data-align': node.attrs.textAlign }) }), 0];
+        return ['div', mergeAttributes(getRichBlockHtmlAttributes(HTMLAttributes, node.attrs.textAlign, { class: 'mermaid-block' })), 0];
     },
     addNodeView() { return ReactNodeViewRenderer(MermaidView); },
     addCommands() {
@@ -822,7 +871,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             ResizableImageExtension.configure({ allowBase64: false }),
             ResizableYoutubeExtension,
             AudioNode,
-            Table.configure({ resizable: false }),
+            Table.configure({ resizable: true }),
             TableRow,
             CustomTableHeader,
             CustomTableCell,
@@ -1059,6 +1108,8 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
     const wordCount = editor.storage.characterCount?.words?.() ?? 0;
     const charCount = editor.storage.characterCount?.characters?.() ?? 0;
     const readMin   = Math.max(1, Math.ceil(wordCount / 200));
+    const richBlockAlignmentActive = isRichBlockNodeActive(editor);
+    const justifyEnabled = canUseJustifyAlignment(editor);
 
     return (
         <div className={`flex flex-col rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)]
@@ -1194,7 +1245,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                 <ToolBtn onClick={() => editor.chain().focus().setTextAlign('left').run()}    active={editor.isActive({ textAlign: 'left' })}    title="Izquierda"><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg></ToolBtn>
                 <ToolBtn onClick={() => editor.chain().focus().setTextAlign('center').run()}  active={editor.isActive({ textAlign: 'center' })}  title="Centrar"><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg></ToolBtn>
                 <ToolBtn onClick={() => editor.chain().focus().setTextAlign('right').run()}   active={editor.isActive({ textAlign: 'right' })}   title="Derecha"><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/></svg></ToolBtn>
-                <ToolBtn onClick={() => editor.chain().focus().setTextAlign('justify').run()} active={editor.isActive({ textAlign: 'justify' })} title="Justificar"><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></ToolBtn>
+                <ToolBtn onClick={() => editor.chain().focus().setTextAlign('justify').run()} active={!richBlockAlignmentActive && editor.isActive({ textAlign: 'justify' })} disabled={!justifyEnabled} title={justifyEnabled ? 'Justificar' : 'Justificar solo para párrafos y títulos'}><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></ToolBtn>
 
                 <Divider />
 
@@ -1582,9 +1633,13 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                     [&_.tiptap_hr]:border-[var(--border-color)] [&_.tiptap_hr]:my-10
                     [&_.tiptap_a]:text-fuchsia-500 [&_.tiptap_a]:underline [&_.tiptap_a:hover]:text-fuchsia-400
                     [&_.tiptap_img]:rounded-xl [&_.tiptap_img]:shadow-2xl [&_.tiptap_img]:my-4
+                    [&_.tiptap_.tableWrapper]:my-6 [&_.tiptap_.tableWrapper]:overflow-x-auto
                     [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:my-6
                     [&_.tiptap_td]:border [&_.tiptap_td]:border-[var(--border-color)] [&_.tiptap_td]:p-3 [&_.tiptap_td]:text-[var(--text-secondary)]
                     [&_.tiptap_th]:border [&_.tiptap_th]:border-[var(--border-color)] [&_.tiptap_th]:p-3 [&_.tiptap_th]:bg-[var(--bg-elevated)] [&_.tiptap_th]:font-semibold [&_.tiptap_th]:text-[var(--text-primary)]
+                    [&_.tiptap_.column-resize-handle]:w-1 [&_.tiptap_.column-resize-handle]:bg-fuchsia-500/70
+                    [&_.tiptap_.selectedCell]:relative [&_.tiptap_.selectedCell]:after:absolute [&_.tiptap_.selectedCell]:after:inset-0 [&_.tiptap_.selectedCell]:after:pointer-events-none [&_.tiptap_.selectedCell]:after:ring-2 [&_.tiptap_.selectedCell]:after:ring-fuchsia-500/35
+                    [&_.resize-cursor]:cursor-col-resize
                     [&_.tiptap_p.is-editor-empty:first-child::before]:text-[var(--text-muted)]
                     [&_.tiptap_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)]
                     [&_.tiptap_p.is-editor-empty:first-child::before]:float-left

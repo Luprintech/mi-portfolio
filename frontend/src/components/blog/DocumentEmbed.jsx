@@ -1,6 +1,6 @@
 import DocumentBlock from './renderers/DocumentBlock';
 
-export default function DocumentEmbed({ src, filename, fileType, displayMode, embedHeight }) {
+export default function DocumentEmbed({ src, filename, fileType, displayMode, embedHeight, embedWidth }) {
   return (
     <DocumentBlock
       src={src}
@@ -8,6 +8,7 @@ export default function DocumentEmbed({ src, filename, fileType, displayMode, em
       fileType={fileType}
       display={displayMode}
       embedHeight={embedHeight}
+      embedWidth={embedWidth}
     />
   );
 }

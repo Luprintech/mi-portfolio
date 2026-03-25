@@ -1,9 +1,14 @@
 // ─── Extensiones TipTap avanzadas para el editor del CMS ─────────────────────
 import { Node, Extension, mergeAttributes } from '@tiptap/core';
-import { ReactNodeViewRenderer, NodeViewWrapper, NodeViewContent } from '@tiptap/react';
+import { ReactNodeViewRenderer, NodeViewContent } from '@tiptap/react';
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { normalizeContentLinkHref, resolveContentLinkAttributes } from '../../../lib/contentLinkUtils';
+import RichBlockFrame from './RichBlockFrame';
+import {
+    createRichBlockTextAlignAttribute,
+    getRichBlockHtmlAttributes,
+} from './blockAlignment';
 
 // ─── LineHeight — control de interlineado ─────────────────────────────────────
 export const LineHeight = Extension.create({
@@ -37,10 +42,15 @@ export const LineHeight = Extension.create({
 });
 
 // ─── Accordion — bloques colapsables ──────────────────────────────────────────
-function AccordionView({ node, updateAttributes }) {
+function AccordionView({ node, updateAttributes, selected, deleteNode }) {
     const [open, setOpen] = useState(node.attrs.open !== false);
     return (
-        <NodeViewWrapper style={node.attrs.textAlign && node.attrs.textAlign !== 'left' ? { display: 'flex', justifyContent: node.attrs.textAlign === 'center' ? 'center' : 'flex-end' } : undefined}>
+        <RichBlockFrame
+            alignment={node.attrs.textAlign}
+            selected={selected}
+            onRemove={deleteNode}
+            frameClassName="w-full"
+        >
             <div className="border border-[var(--border-color)] rounded-xl overflow-hidden my-4">
                 <div
                     className="flex items-center gap-2 px-4 py-3 bg-[var(--bg-elevated)] cursor-pointer select-none"
@@ -62,7 +72,7 @@ function AccordionView({ node, updateAttributes }) {
                     </div>
                 )}
             </div>
-        </NodeViewWrapper>
+        </RichBlockFrame>
     );
 }
 
@@ -83,11 +93,12 @@ export const AccordionExtension = Node.create({
                 parseHTML: el => el.getAttribute('data-open') !== 'false',
                 renderHTML: attrs => ({ 'data-open': String(attrs.open) }),
             },
+            textAlign: createRichBlockTextAlignAttribute(),
         };
     },
     parseHTML() { return [{ tag: 'div[data-accordion]' }]; },
     renderHTML({ node, HTMLAttributes }) {
-        return ['div', mergeAttributes(HTMLAttributes, { 'data-accordion': '', ...(node.attrs.textAlign && { 'data-align': node.attrs.textAlign }) }), 0];
+        return ['div', mergeAttributes(getRichBlockHtmlAttributes(HTMLAttributes, node.attrs.textAlign, { 'data-accordion': '' })), 0];
     },
     addNodeView() { return ReactNodeViewRenderer(AccordionView); },
     addCommands() {
@@ -160,13 +171,7 @@ function buildButtonStyle(attrs) {
     return style;
 }
 
-function resolveFloatingBlockAlignment(value) {
-    if (value === 'center') return { display: 'flex', justifyContent: 'center' };
-    if (value === 'right') return { display: 'flex', justifyContent: 'flex-end' };
-    return undefined;
-}
-
-function ContentButtonView({ node, updateAttributes, selected }) {
+function ContentButtonView({ node, updateAttributes, selected, deleteNode }) {
     const hasCustomColor = !!node.attrs.bgColor;
     const variantClass = hasCustomColor ? '' : (VARIANT_STYLES[node.attrs.variant] || VARIANT_STYLES.primary);
     const customStyle = buildButtonStyle(node.attrs);
@@ -262,7 +267,13 @@ function ContentButtonView({ node, updateAttributes, selected }) {
     } : {};
 
     return (
-        <NodeViewWrapper className="my-4" data-drag-handle style={resolveFloatingBlockAlignment(node.attrs.textAlign)}>
+        <RichBlockFrame
+            alignment={node.attrs.textAlign}
+            selected={selected}
+            onRemove={deleteNode}
+            dragHandle
+            frameClassName="inline-block"
+        >
             <div className={`group/cta relative inline-block ${selected ? 'ring-2 ring-fuchsia-500 ring-offset-2 ring-offset-transparent rounded-xl p-2' : ''}`}>
                 {/* Drag handle */}
                 <div
@@ -578,7 +589,7 @@ function ContentButtonView({ node, updateAttributes, selected }) {
                     </div>
                 )}
             </div>
-        </NodeViewWrapper>
+        </RichBlockFrame>
     );
 }
 
@@ -603,6 +614,7 @@ export const ContentButtonExtension = Node.create({
             rounded:   { default: 12 },
             documentUrl:      { default: '' },
             documentFilename: { default: '' },
+            textAlign: createRichBlockTextAlignAttribute(),
         };
     },
     parseHTML() { return [{ tag: 'a[data-content-button]' }]; },
@@ -626,9 +638,8 @@ export const ContentButtonExtension = Node.create({
                 rel: 'noopener noreferrer',
             }),
         };
-        if (node.attrs.textAlign) htmlAttrs['data-align'] = node.attrs.textAlign;
         if (node.attrs.documentUrl) htmlAttrs.download = node.attrs.documentFilename || '';
-        return ['a', mergeAttributes(HTMLAttributes, htmlAttrs), node.attrs.text];
+        return ['a', mergeAttributes(getRichBlockHtmlAttributes(HTMLAttributes, node.attrs.textAlign, htmlAttrs)), node.attrs.text];
     },
     addNodeView() { return ReactNodeViewRenderer(ContentButtonView); },
     addCommands() {
@@ -772,7 +783,7 @@ function PdfCarousel({ src, height }) {
     );
 }
 
-function DocumentView({ node, updateAttributes, selected }) {
+function DocumentView({ node, updateAttributes, selected, deleteNode }) {
     const isPdf = node.attrs.fileType === 'pdf';
     const mode = node.attrs.displayMode || (isPdf ? 'embed' : 'link');
     const ICONS = { pdf: '📄', zip: '📦', docx: '📝' };
@@ -816,7 +827,12 @@ function DocumentView({ node, updateAttributes, selected }) {
     const handleCls = 'absolute w-3 h-3 bg-fuchsia-500 border-2 border-white rounded-full z-10';
 
     return (
-        <NodeViewWrapper className="my-4" style={node.attrs.textAlign && node.attrs.textAlign !== 'left' ? { display: 'flex', justifyContent: node.attrs.textAlign === 'center' ? 'center' : 'flex-end' } : undefined}>
+        <RichBlockFrame
+            alignment={node.attrs.textAlign}
+            selected={selected}
+            onRemove={deleteNode}
+            frameClassName="w-full"
+        >
             <div
                 ref={wrapRef}
                 className={`relative group border border-[var(--border-color)] rounded-xl overflow-hidden ${selected ? 'ring-2 ring-fuchsia-500 ring-offset-2 ring-offset-transparent' : ''}`}
@@ -902,7 +918,7 @@ function DocumentView({ node, updateAttributes, selected }) {
                     </div>
                 )}
             </div>
-        </NodeViewWrapper>
+        </RichBlockFrame>
     );
 }
 
@@ -943,6 +959,7 @@ export const DocumentAttachmentExtension = Node.create({
                     return v ? parseInt(v) : null;
                 },
             },
+            textAlign: createRichBlockTextAlignAttribute(),
         };
     },
     parseHTML() { return [{ tag: 'div[data-document]' }, { tag: 'div[data-block="document"]' }]; },
@@ -962,7 +979,7 @@ export const DocumentAttachmentExtension = Node.create({
             width ? `width:${width}px;max-width:100%` : '',
         ].filter(Boolean).join(';');
 
-        const containerAttrs = mergeAttributes(HTMLAttributes, {
+        const containerAttrs = mergeAttributes(getRichBlockHtmlAttributes(HTMLAttributes, node.attrs.textAlign, {
             'data-block': 'document',
             'data-version': '1',
             'data-document': '',
@@ -973,9 +990,8 @@ export const DocumentAttachmentExtension = Node.create({
             'data-display': mode,
             'data-display-mode': mode,
             'data-embed-height': String(height),
-            ...(node.attrs.textAlign && { 'data-align': node.attrs.textAlign }),
             style: containerStyle,
-        });
+        }));
 
         const barStyle = 'display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--bg-elevated,rgba(15,15,30,0.8))';
         const nameStyle = 'font-size:14px;font-weight:500;color:var(--text-primary,#e2e8f0);margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
@@ -1042,7 +1058,7 @@ function normalizeImageGridItems(items) {
     return items.map(normalizeImageGridItem).filter(item => item.src);
 }
 
-function ImageGridView({ node, updateAttributes, selected }) {
+function ImageGridView({ node, updateAttributes, selected, deleteNode }) {
     const cols = node.attrs.cols || 2;
     const images = normalizeImageGridItems(node.attrs.images);
     const { token } = useAuth();
@@ -1086,7 +1102,13 @@ function ImageGridView({ node, updateAttributes, selected }) {
     }
 
     return (
-        <NodeViewWrapper className="my-6" data-image-grid="" style={node.attrs.textAlign && node.attrs.textAlign !== 'left' ? { display: 'flex', justifyContent: node.attrs.textAlign === 'center' ? 'center' : 'flex-end' } : undefined}>
+        <RichBlockFrame
+            alignment={node.attrs.textAlign}
+            selected={selected}
+            onRemove={deleteNode}
+            wrapperClassName="my-6"
+            frameClassName="w-full"
+        >
             <div className={`${selected ? 'ring-2 ring-fuchsia-500 ring-offset-2 ring-offset-transparent rounded-xl' : ''}`}>
                 {selected && (
                     <div className="flex items-center gap-2 mb-2">
@@ -1163,7 +1185,7 @@ function ImageGridView({ node, updateAttributes, selected }) {
                     </div>
                 )}
             </div>
-        </NodeViewWrapper>
+        </RichBlockFrame>
     );
 }
 
@@ -1187,6 +1209,7 @@ export const ImageGridExtension = Node.create({
                 },
                 renderHTML: attrs => ({ 'data-images': JSON.stringify(normalizeImageGridItems(attrs.images)) }),
             },
+            textAlign: createRichBlockTextAlignAttribute(),
         };
     },
     parseHTML() { return [{ tag: 'div[data-image-grid]' }, { tag: 'div[data-block="image-grid"]' }]; },
@@ -1198,15 +1221,14 @@ export const ImageGridExtension = Node.create({
             ['img', { src: image.src, alt: image.alt || '', style: 'width:100%;height:100%;object-fit:cover', loading: 'lazy' }],
             image.caption || image.alt ? ['figcaption', { style: 'padding:8px 10px;font-size:12px;line-height:1.5;color:var(--text-muted,#94a3b8);border-top:1px solid rgba(148,163,184,0.18)' }, image.caption || image.alt] : null,
         ].filter(Boolean));
-        return ['div', mergeAttributes(HTMLAttributes, {
+        return ['div', mergeAttributes(getRichBlockHtmlAttributes(HTMLAttributes, node.attrs.textAlign, {
             'data-block': 'image-grid',
             'data-version': '1',
             'data-image-grid': '',
             'data-columns': cols,
             'data-images': JSON.stringify(images),
             style: gridStyle,
-            ...(node.attrs.textAlign && { 'data-align': node.attrs.textAlign }),
-        }), ...children];
+        })), ...children];
     },
     addNodeView() { return ReactNodeViewRenderer(ImageGridView); },
     addCommands() {

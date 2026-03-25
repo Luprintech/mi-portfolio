@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+
+vi.mock('../../shared/PdfPreview', () => ({
+  default: ({ title }) => <div data-rendered-pdf-preview="true">{title}</div>,
+}));
+
 import HtmlContentRenderer from './HtmlContentRenderer';
 
 const richHtmlFixture = `
@@ -40,11 +45,35 @@ describe('HtmlContentRenderer', () => {
     expect(screen.getByRole('heading', { name: 'Contrato editorial' })).toBeInTheDocument();
     expect(screen.getByAltText('Captura uno')).toBeInTheDocument();
     expect(screen.getByText('Caption dos')).toBeInTheDocument();
-    expect(screen.getByTitle('Guia editorial')).toBeInTheDocument();
+    expect(screen.getAllByText('Guia editorial').length).toBeGreaterThan(0);
     expect(screen.getByText('deploy.sh')).toBeInTheDocument();
     expect(container.querySelectorAll('[data-rendered-block="image-grid"]')).toHaveLength(1);
     expect(container.querySelectorAll('[data-rendered-block="document"]')).toHaveLength(1);
+    expect(container.querySelectorAll('[data-rendered-pdf-preview="true"]')).toHaveLength(1);
     expect(container.querySelectorAll('[data-rendered-block="code"]')).toHaveLength(1);
+  });
+
+  it('mantiene la paridad publica de alineacion para documentos, grillas e imagenes', () => {
+    const { container } = render(
+      <HtmlContentRenderer
+        content={`
+          <div data-block="document" data-align="right" data-src="/posts/documents/guia.pdf" data-title="Guia editorial" data-filename="guia.pdf" data-file-type="pdf" data-display="embed"></div>
+          <div data-block="image-grid" data-align="center" data-columns="2" data-images='[{"src":"/posts/images/uno.webp","alt":"Captura uno"}]'></div>
+          <img src="/posts/images/solo.webp" alt="Hero alineado" data-align="center" />
+          <div data-block="document" data-align="justify" data-src="/posts/documents/fallback.pdf" data-title="Fallback" data-filename="fallback.pdf" data-file-type="pdf" data-display="embed"></div>
+        `}
+      />
+    );
+
+    const renderedDocument = container.querySelector('[data-rendered-block="document"]');
+    const renderedGrid = container.querySelector('[data-rendered-block="image-grid"]');
+    const centeredFigure = screen.getByAltText('Hero alineado').closest('figure');
+    const fallbackDocument = screen.getAllByText('Fallback')[0].closest('[data-rendered-block="document"]');
+
+    expect(renderedDocument?.parentElement).toHaveClass('justify-end');
+    expect(renderedGrid?.parentElement).toHaveClass('justify-center');
+    expect(centeredFigure?.parentElement).toHaveClass('justify-center');
+    expect(fallbackDocument?.parentElement?.className || '').not.toContain('justify-');
   });
 
   it('sanea script tags y javascript urls antes de renderizar', () => {
@@ -97,14 +126,17 @@ describe('HtmlContentRenderer', () => {
     expect(screen.getByRole('link', { name: 'Ver demo' })).toHaveAttribute('href', 'https://www.example.com/demo');
   });
 
-  it('preserva estilos semanticos y colores de tablas publicadas', () => {
-    render(
+  it('preserva colores y widths utiles de tablas publicadas', () => {
+    const { container } = render(
       <HtmlContentRenderer
         content={`
-          <table>
+          <table style="min-width:720px">
+            <colgroup>
+              <col style="width:240px;min-width:240px" />
+            </colgroup>
             <thead>
               <tr>
-                <th style="background-color:#dbeafe;border-color:#2563eb">Plan</th>
+                <th style="background-color:#dbeafe;border-color:#2563eb;width:240px">Plan</th>
               </tr>
             </thead>
             <tbody>
@@ -125,5 +157,8 @@ describe('HtmlContentRenderer', () => {
       backgroundColor: 'rgb(239, 246, 255)',
       borderColor: '#60a5fa',
     });
+    expect(screen.getByRole('columnheader', { name: 'Plan' }).className).toContain('border');
+    expect(container.querySelector('table')).toHaveStyle({ minWidth: '720px' });
+    expect(container.querySelector('col')).toHaveStyle({ width: '240px', minWidth: '240px' });
   });
 });
