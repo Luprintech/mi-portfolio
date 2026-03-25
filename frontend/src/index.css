@@ -811,3 +811,40 @@ a[data-content-button][data-align="right"]  { display: block; margin: 16px 0 16p
   object-fit: contain;
   pointer-events: none;
 }
+
+/* ── Tech marquee (Home — services section) ───────────────── */
+@keyframes tech-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.tech-track {
+  animation: tech-marquee 28s linear infinite;
+}
+
+.tech-track:hover {
+  animation-play-state: paused;
+}
+
+/* ── CTA pulse glows (Home — contact section) ─────────────── */
+@keyframes cta-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%       { opacity: 0.85; transform: scale(1.06); }
+}
+
+@keyframes cta-pulse2 {
+  0%, 100% { opacity: 0.45; transform: scale(1); }
+  50%       { opacity: 0.70; transform: scale(1.08); }
+}
+
+.cta-glow-a { animation: cta-pulse  8s  ease-in-out infinite; }
+.cta-glow-b { animation: cta-pulse2 11s ease-in-out infinite; }
+.cta-glow-c { animation: cta-pulse  14s ease-in-out infinite 3s; }
+
+/* ── Contact section grid background ─────────────────────── */
+.cta-grid-bg {
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 1) 1px, transparent 1px);
+  background-size: 52px 52px;
+}

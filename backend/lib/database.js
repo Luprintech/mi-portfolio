@@ -28,12 +28,18 @@ function getPoolConfig() {
         };
     }
 
+    if (!process.env.PGUSER || !process.env.PGPASSWORD || !process.env.PGDATABASE) {
+        throw new Error(
+            'Missing required PostgreSQL environment variables: PGUSER, PGPASSWORD and PGDATABASE must be set.'
+        );
+    }
+
     return {
         host: process.env.PGHOST || '127.0.0.1',
         port: Number(process.env.PGPORT) || 5432,
-        user: process.env.PGUSER || 'portfolio',
-        password: process.env.PGPASSWORD || 'portfolio',
-        database: process.env.PGDATABASE || 'portfolio_cms',
+        user: process.env.PGUSER,
+        password: process.env.PGPASSWORD,
+        database: process.env.PGDATABASE,
         ssl: parseSslConfig(),
     };
 }

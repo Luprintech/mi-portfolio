@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { body, validationResult } from 'express-validator';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { SYSTEM_PROMPT } from '../data/systemPrompt.js';
+import { getGeminiModel } from '../lib/gemini.js';
 import { logger } from '../lib/logger.js';
 import { chatLimiter } from '../middleware/rateLimiters.js';
 import { matchFaq } from '../utils/faqMatcher.js';
@@ -71,7 +70,8 @@ router.post('/', chatLimiter, validators, async (req, res, next) => {
         return res.status(200).json({ reply: cached });
     }
 
-    if (!process.env.GEMINI_API_KEY) {
+    const model = getGeminiModel();
+    if (!model) {
         chatLogger.warn('Gemini API key is missing', {
             requestId: req.requestId,
         });
@@ -82,12 +82,6 @@ router.post('/', chatLimiter, validators, async (req, res, next) => {
     }
 
     try {
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({
-            model: 'gemini-2.5-flash',
-            systemInstruction: SYSTEM_PROMPT,
-        });
-
         const trimmedHistory = history.slice(-10).map(entry => ({
             role: entry.role,
             parts: [{ text: entry.content }],

@@ -35,4 +35,29 @@ export default defineConfig([
       'react-refresh/only-export-components': 'off',
     },
   },
+  // Test files: allow vitest globals and relax some rules
+  {
+    files: ['src/**/*.test.{js,jsx}', 'src/test/**/*.{js,jsx}'],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        describe: 'readonly',
+        it: 'readonly',
+        expect: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        beforeAll: 'readonly',
+        afterAll: 'readonly',
+        vi: 'readonly',
+        test: 'readonly',
+      },
+    },
+    rules: {
+      'react-refresh/only-export-components': 'off',
+      'no-unused-vars': ['error', {
+        varsIgnorePattern: '^[A-Z_]|^motion$',
+        argsIgnorePattern: '^_|^node$|^[A-Z]',
+      }],
+    },
+  },
 ])

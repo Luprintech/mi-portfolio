@@ -22,7 +22,7 @@ El archivo `frontend/public/projects.json` queda como contenido legacy de arranq
 
 - Si quieres cambiar los proyectos del portfolio, usa el CMS.
 - Si necesitas una migración manual, revisa primero `backend/lib/contentRepository.js` y `backend/lib/database.js`.
-- Antes de tocar `src/data/webProjects.js`, comprueba si sigue siendo material legado o de referencia interna.
+- `src/data/webProjects.js` fue eliminado (legado) — no usar.
 
 ## Contrato esperado
 

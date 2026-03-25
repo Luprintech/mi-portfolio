@@ -42,7 +42,31 @@ export async function createApp() {
 
     app.use(attachRequestContext);
     app.use(requestLogger);
-    app.use(helmet({ crossOriginResourcePolicy: false }));
+    app.use(helmet({
+        crossOriginResourcePolicy: false,
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc:     ["'self'"],
+                scriptSrc:      ["'self'"],
+                styleSrc:       ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+                fontSrc:        ["'self'", 'https://fonts.gstatic.com'],
+                imgSrc:         [
+                    "'self'",
+                    'data:',
+                    'blob:',
+                    'https://cdn.jsdelivr.net',
+                    'https://cdn.simpleicons.org',
+                ],
+                connectSrc:     ["'self'"],
+                mediaSrc:       ["'self'", 'blob:'],
+                objectSrc:      ["'none'"],
+                frameSrc:       ["'none'"],
+                workerSrc:      ["'self'", 'blob:', 'https://cdn.jsdelivr.net'],
+                upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null,
+            },
+            reportOnly: false,
+        },
+    }));
     app.use(cors(corsOptions));
     app.use(express.json({ limit: '1mb' }));
     app.use(express.urlencoded({ extended: true, limit: '1mb' }));

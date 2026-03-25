@@ -165,11 +165,6 @@ export default function Home() {
             <ServicesGrid services={getFeaturedServices()} showLinks={false} compact />
 
             <div id="tech" className="w-full overflow-hidden [mask-image:linear-gradient(to_right,transparent_0%,black_12%,black_88%,transparent_100%)]">
-              <style>{`
-                @keyframes tech-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-                .tech-track { animation: tech-marquee 28s linear infinite; }
-                .tech-track:hover { animation-play-state: paused; }
-              `}</style>
               <div className="tech-track flex w-max items-center gap-10">
                 {[...techs, ...techs].map((tech, i) => (
                   <div
@@ -321,15 +316,6 @@ export default function Home() {
 
       {/* ========== SECTION 10: FINAL CTA — CONTACTO ========== */}
       <section id="contact" className="snap-page overflow-hidden">
-        {/* Keyframes pulso glow */}
-        <style>{`
-          @keyframes cta-pulse { 0%,100% { opacity:0.55; transform:scale(1); } 50% { opacity:0.85; transform:scale(1.06); } }
-          @keyframes cta-pulse2 { 0%,100% { opacity:0.45; transform:scale(1); } 50% { opacity:0.70; transform:scale(1.08); } }
-          .cta-glow-a { animation: cta-pulse 8s ease-in-out infinite; }
-          .cta-glow-b { animation: cta-pulse2 11s ease-in-out infinite; }
-          .cta-glow-c { animation: cta-pulse 14s ease-in-out infinite 3s; }
-        `}</style>
-
         {/* Fondo oscuro base */}
         <div className="pointer-events-none absolute inset-0 bg-[var(--bg-primary)]" />
 
@@ -338,14 +324,8 @@ export default function Home() {
         <div className="cta-glow-b pointer-events-none absolute -left-[10%] bottom-[10%] h-[55vh] w-[55vh] rounded-full bg-indigo-600/12 blur-[90px]" />
         <div className="cta-glow-c pointer-events-none absolute -right-[8%] top-[12%] h-[50vh] w-[50vh] rounded-full bg-cyan-600/10 blur-[85px]" />
 
-        {/* Grid super sutil */}
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.028]"
-          style={{
-            backgroundImage: "linear-gradient(rgba(148,163,184,1) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,1) 1px,transparent 1px)",
-            backgroundSize: "52px 52px",
-          }}
-        />
+        {/* Grid sutil */}
+        <div className="cta-grid-bg pointer-events-none absolute inset-0 opacity-[0.028]" />
 
         <SectionViewport width="narrow">
           <motion.div
