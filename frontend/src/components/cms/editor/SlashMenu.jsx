@@ -1,6 +1,12 @@
 // ─── SlashMenu — menú de comandos rápidos tipo Notion ("/") ───────────────────
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { filterInsertMenuItems, groupInsertMenuItems, INSERT_MENU_CATEGORY_STYLES, INSERT_MENU_ITEMS, runInsertMenuEditorAction } from './insertMenuConfig';
+import {
+    filterInsertMenuItems,
+    groupInsertMenuItems,
+    INSERT_MENU_CATEGORY_STYLES,
+    INSERT_MENU_ITEMS,
+    runInsertMenuEditorActionWithOptions,
+} from './insertMenuConfig';
 
 export default function SlashMenu({ editor, coords, query, onClose, onAction }) {
     const [selected, setSelected] = useState(0);
@@ -34,20 +40,18 @@ export default function SlashMenu({ editor, coords, query, onClose, onAction }) 
     const executeAction = useCallback((action) => {
         if (!editor) return;
 
-        // Delete the slash command text first
         const { state } = editor;
         const { $from } = state.selection;
         const textBefore = $from.parent.textBetween(0, $from.parentOffset);
         const slashIndex = textBefore.lastIndexOf('/');
-        if (slashIndex >= 0) {
-            const deleteFrom = $from.start() + slashIndex;
-            const deleteTo = $from.pos;
-            editor.chain().focus().deleteRange({ from: deleteFrom, to: deleteTo }).run();
-        }
+        const slashRange = slashIndex >= 0
+            ? { from: $from.start() + slashIndex, to: $from.pos }
+            : null;
 
-        // Execute the command
-        if (!runInsertMenuEditorAction(editor, action)) {
-            // Delegate to parent for actions that need UI (image upload, youtube URL, etc.)
+        if (!runInsertMenuEditorActionWithOptions(editor, action, { range: slashRange })) {
+            if (slashRange) {
+                editor.chain().focus().deleteRange(slashRange).run();
+            }
             onAction?.(action);
         }
         onClose();

@@ -74,16 +74,47 @@ describe('rich blocks', () => {
   it('renderiza imageGrid con caption y alt explicitos', () => {
     render(
       <ImageGridBlock
-        columns={2}
         images={[
-          { src: '/img/uno.webp', alt: 'Captura uno', caption: 'Caption uno' },
+          { src: '/img/uno.webp', alt: 'Captura uno', caption: 'Caption uno', href: 'https://example.com/demo', openInNewTab: true },
           { src: '/img/dos.webp', alt: 'Captura dos', caption: 'Caption dos' },
         ]}
+        config={{
+          columns: 2,
+          mobileColumns: 2,
+          captionMode: 'overlay',
+          aspectRatio: 'square',
+          imageFit: 'contain',
+          layoutStyle: 'mosaic',
+        }}
       />
     );
 
     expect(screen.getByAltText('Captura uno')).toBeInTheDocument();
     expect(screen.getByText('Caption dos')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Captura uno' })).toHaveAttribute('target', '_blank');
+  });
+
+  it('aplica variantes de tamano sin romper payloads existentes', () => {
+    const { container } = render(
+      <ImageGridBlock
+        images={[
+          { src: '/img/uno.webp', alt: 'Captura uno', size: 'wide' },
+          { src: '/img/dos.webp', alt: 'Captura dos', size: 'hero' },
+        ]}
+        config={{
+          columns: 3,
+          mobileColumns: 2,
+          layoutStyle: 'mosaic',
+        }}
+      />
+    );
+
+    const wideItem = container.querySelector('[data-image-grid-item-size="wide"]');
+    const heroItem = container.querySelector('[data-image-grid-item-size="hero"]');
+
+    expect(container.querySelector('[data-rendered-block="image-grid"]')).toHaveAttribute('data-image-grid-layout', 'mosaic');
+    expect(wideItem?.className).toContain('lg:col-span-2');
+    expect(heroItem?.textContent).toContain('Hero');
   });
 
   it('degrada el PDF a CTA responsive en mobile', () => {

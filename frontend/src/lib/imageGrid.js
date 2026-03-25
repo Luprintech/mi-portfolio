@@ -8,6 +8,8 @@ const IMAGE_GRID_WIDTHS = ['content', 'wide', 'full'];
 const IMAGE_GRID_IMAGE_FITS = ['cover', 'contain'];
 const IMAGE_GRID_LAYOUT_STYLES = ['uniform', 'mosaic'];
 const IMAGE_GRID_ITEM_SIZES = ['standard', 'wide', 'tall', 'hero'];
+const IMAGE_GRID_HOVER_EFFECTS = ['none', 'zoom', 'overlay', 'blur', 'lift'];
+const IMAGE_GRID_LOADING_MODES = ['eager', 'lazy', 'progressive'];
 
 export const IMAGE_GRID_DEFAULTS = {
   columns: 2,
@@ -19,6 +21,9 @@ export const IMAGE_GRID_DEFAULTS = {
   width: 'wide',
   imageFit: 'cover',
   layoutStyle: 'uniform',
+  hoverEffect: 'none',
+  enableLightbox: false,
+  loadingMode: 'lazy',
 };
 
 function normalizeInteger(value, fallback, allowedValues) {
@@ -46,9 +51,15 @@ function normalizeBoolean(value, fallback = false) {
   return fallback;
 }
 
+function normalizeStringArray(value) {
+  if (Array.isArray(value)) return value.filter(v => typeof v === 'string' && v.trim()).map(v => v.trim());
+  if (typeof value === 'string') return value.split(',').map(v => v.trim()).filter(Boolean);
+  return [];
+}
+
 export function normalizeImageGridItem(item) {
   if (typeof item === 'string') {
-    return { src: item, alt: '', caption: '', href: '', openInNewTab: false, size: 'standard' };
+    return { src: item, alt: '', caption: '', href: '', openInNewTab: false, size: 'standard', tags: [] };
   }
 
   if (item && typeof item === 'object') {
@@ -59,10 +70,11 @@ export function normalizeImageGridItem(item) {
       href: normalizeText(item.href),
       openInNewTab: normalizeBoolean(item.openInNewTab, false),
       size: normalizeEnum(item.size, 'standard', IMAGE_GRID_ITEM_SIZES),
+      tags: normalizeStringArray(item.tags),
     };
   }
 
-  return { src: '', alt: '', caption: '', href: '', openInNewTab: false, size: 'standard' };
+  return { src: '', alt: '', caption: '', href: '', openInNewTab: false, size: 'standard', tags: [] };
 }
 
 export function normalizeImageGridItems(items) {
@@ -98,6 +110,9 @@ export function normalizeImageGridConfig(config = {}) {
     width: normalizeEnum(config.width, IMAGE_GRID_DEFAULTS.width, IMAGE_GRID_WIDTHS),
     imageFit: normalizeEnum(config.imageFit, IMAGE_GRID_DEFAULTS.imageFit, IMAGE_GRID_IMAGE_FITS),
     layoutStyle: normalizeEnum(config.layoutStyle, IMAGE_GRID_DEFAULTS.layoutStyle, IMAGE_GRID_LAYOUT_STYLES),
+    hoverEffect: normalizeEnum(config.hoverEffect, IMAGE_GRID_DEFAULTS.hoverEffect, IMAGE_GRID_HOVER_EFFECTS),
+    enableLightbox: normalizeBoolean(config.enableLightbox, IMAGE_GRID_DEFAULTS.enableLightbox),
+    loadingMode: normalizeEnum(config.loadingMode, IMAGE_GRID_DEFAULTS.loadingMode, IMAGE_GRID_LOADING_MODES),
   };
 }
 
@@ -112,6 +127,9 @@ export function parseImageGridConfigFromElement(element) {
     width: element?.getAttribute('data-width'),
     imageFit: element?.getAttribute('data-image-fit'),
     layoutStyle: element?.getAttribute('data-layout'),
+    hoverEffect: element?.getAttribute('data-hover-effect'),
+    enableLightbox: element?.getAttribute('data-enable-lightbox'),
+    loadingMode: element?.getAttribute('data-loading-mode'),
   });
 }
 
@@ -228,7 +246,53 @@ export function shouldRenderImageGridCaption(captionMode, image) {
     && Boolean(image?.caption || image?.alt);
 }
 
+export function getImageGridHoverEffectClass(hoverEffect = IMAGE_GRID_DEFAULTS.hoverEffect) {
+  switch (normalizeEnum(hoverEffect, IMAGE_GRID_DEFAULTS.hoverEffect, IMAGE_GRID_HOVER_EFFECTS)) {
+    case 'zoom':
+      return 'hover:scale-105 transition-transform duration-300';
+    case 'overlay':
+      return 'relative group';
+    case 'blur':
+      return 'hover:blur-[2px] transition-all duration-300';
+    case 'lift':
+      return 'hover:-translate-y-1 hover:shadow-2xl transition-all duration-300';
+    default:
+      return '';
+  }
+}
+
+export function getImageGridLoadingStrategy(loadingMode = IMAGE_GRID_DEFAULTS.loadingMode) {
+  const normalized = normalizeEnum(loadingMode, IMAGE_GRID_DEFAULTS.loadingMode, IMAGE_GRID_LOADING_MODES);
+  
+  if (normalized === 'eager') return { loading: 'eager', decoding: 'auto' };
+  if (normalized === 'progressive') return { loading: 'lazy', decoding: 'async' };
+  
+  return { loading: 'lazy', decoding: 'auto' };
+}
+
+export function collectImageGridTags(items = []) {
+  const tagSet = new Set();
+  normalizeImageGridItems(items).forEach(item => {
+    item.tags.forEach(tag => tagSet.add(tag));
+  });
+  return Array.from(tagSet).sort();
+}
+
+export function filterImageGridItems(items = [], activeTags = []) {
+  if (!activeTags || activeTags.length === 0) return normalizeImageGridItems(items);
+  
+  const normalizedTags = activeTags.map(t => String(t).trim().toLowerCase()).filter(Boolean);
+  if (normalizedTags.length === 0) return normalizeImageGridItems(items);
+  
+  return normalizeImageGridItems(items).filter(item => {
+    const itemTags = item.tags.map(t => t.toLowerCase());
+    return normalizedTags.some(tag => itemTags.includes(tag));
+  });
+}
+
 export {
   IMAGE_GRID_ITEM_SIZES,
   IMAGE_GRID_LAYOUT_STYLES,
+  IMAGE_GRID_HOVER_EFFECTS,
+  IMAGE_GRID_LOADING_MODES,
 };

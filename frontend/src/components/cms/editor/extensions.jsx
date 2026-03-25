@@ -1083,6 +1083,18 @@ const IMAGE_GRID_SELECT_OPTIONS = {
         { value: 'tall', label: 'Vertical' },
         { value: 'hero', label: 'Hero' },
     ],
+    hoverEffect: [
+        { value: 'none', label: 'Ninguno' },
+        { value: 'zoom', label: 'Zoom' },
+        { value: 'overlay', label: 'Overlay oscuro' },
+        { value: 'blur', label: 'Blur suave' },
+        { value: 'lift', label: 'Elevación' },
+    ],
+    loadingMode: [
+        { value: 'lazy', label: 'Lazy (recomendado)' },
+        { value: 'eager', label: 'Inmediato' },
+        { value: 'progressive', label: 'Progresivo' },
+    ],
 };
 
 function joinClassNames(...values) {
@@ -1344,7 +1356,18 @@ function ImageGridView({ node, updateAttributes, selected, deleteNode }) {
                                 <ImageGridSelectField label="Ancho" value={config.width} options={IMAGE_GRID_SELECT_OPTIONS.width} onChange={(event) => setGridAttributes({ width: event.target.value })} />
                                 <ImageGridSelectField label="Ajuste imagen" value={config.imageFit} options={IMAGE_GRID_SELECT_OPTIONS.imageFit} onChange={(event) => setGridAttributes({ imageFit: event.target.value })} />
                                 <ImageGridSelectField label="Estilo del bloque" value={config.layoutStyle} options={IMAGE_GRID_SELECT_OPTIONS.layoutStyle} onChange={(event) => setGridAttributes({ layoutStyle: event.target.value })} />
+                                <ImageGridSelectField label="Efecto hover" value={config.hoverEffect || 'none'} options={IMAGE_GRID_SELECT_OPTIONS.hoverEffect} onChange={(event) => setGridAttributes({ hoverEffect: event.target.value })} />
+                                <ImageGridSelectField label="Modo de carga" value={config.loadingMode || 'lazy'} options={IMAGE_GRID_SELECT_OPTIONS.loadingMode} onChange={(event) => setGridAttributes({ loadingMode: event.target.value })} />
                             </div>
+                            <label className="flex items-center gap-3 rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)]/70 px-3 py-2.5 text-sm text-[var(--text-secondary)] transition-colors hover:border-fuchsia-500/40">
+                                <input
+                                    type="checkbox"
+                                    checked={Boolean(config.enableLightbox)}
+                                    onChange={(event) => setGridAttributes({ enableLightbox: event.target.checked })}
+                                    className="h-4 w-4 rounded border-[var(--border-color)] bg-[var(--bg-primary)] text-fuchsia-500 focus:ring-2 focus:ring-fuchsia-500/50"
+                                />
+                                <span>Habilitar lightbox al hacer click (solo si no tiene enlace)</span>
+                            </label>
                         </div>
 
                         <div className="space-y-3 rounded-[1.4rem] border border-[var(--border-color)] bg-[var(--bg-elevated)]/65 p-4">
@@ -1433,6 +1456,17 @@ function ImageGridView({ node, updateAttributes, selected, deleteNode }) {
                                                     Nueva pestaña
                                                 </label>
                                             </div>
+
+                                            <div>
+                                                <input
+                                                    type="text"
+                                                    value={(image.tags || []).join(', ')}
+                                                    onChange={(event) => updateImageItem(index, { tags: event.target.value.split(',').map(t => t.trim()).filter(Boolean) })}
+                                                    placeholder="Tags separados por comas (ej: naturaleza, paisaje)"
+                                                    className="w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)]/80 px-3 py-2 text-xs text-[var(--text-primary)] outline-none focus:border-fuchsia-500"
+                                                />
+                                                <p className="mt-1.5 text-[10px] leading-4 text-[var(--text-muted)]">Los tags permiten filtrar la galería desde la vista pública</p>
+                                            </div>
                                         </div>
                                     </div>
                                 </article>
@@ -1497,6 +1531,21 @@ export const ImageGridExtension = Node.create({
                 parseHTML: el => el.getAttribute('data-layout') || 'uniform',
                 renderHTML: attrs => ({ 'data-layout': attrs.layoutStyle }),
             },
+            hoverEffect: {
+                default: 'none',
+                parseHTML: el => el.getAttribute('data-hover-effect') || 'none',
+                renderHTML: attrs => ({ 'data-hover-effect': attrs.hoverEffect }),
+            },
+            enableLightbox: {
+                default: false,
+                parseHTML: el => el.getAttribute('data-enable-lightbox') === 'true',
+                renderHTML: attrs => ({ 'data-enable-lightbox': attrs.enableLightbox ? 'true' : 'false' }),
+            },
+            loadingMode: {
+                default: 'lazy',
+                parseHTML: el => el.getAttribute('data-loading-mode') || 'lazy',
+                renderHTML: attrs => ({ 'data-loading-mode': attrs.loadingMode }),
+            },
             images: {
                 default: [],
                 parseHTML: el => {
@@ -1538,7 +1587,7 @@ export const ImageGridExtension = Node.create({
         ].filter(Boolean));
         return ['div', mergeAttributes(getRichBlockHtmlAttributes(HTMLAttributes, node.attrs.textAlign, {
             'data-block': 'image-grid',
-            'data-version': '2',
+            'data-version': '3',
             'data-image-grid': '',
             'data-columns': config.columns,
             'data-mobile-columns': config.mobileColumns,
@@ -1549,6 +1598,9 @@ export const ImageGridExtension = Node.create({
             'data-width': config.width,
             'data-image-fit': config.imageFit,
             'data-layout': config.layoutStyle,
+            'data-hover-effect': config.hoverEffect,
+            'data-enable-lightbox': config.enableLightbox ? 'true' : 'false',
+            'data-loading-mode': config.loadingMode,
             'data-images': JSON.stringify(images),
             style: gridStyle,
         })), ...children];

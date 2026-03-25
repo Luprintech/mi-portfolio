@@ -14,7 +14,14 @@ const richHtmlFixture = `
   <div
     data-block="image-grid"
     data-columns="3"
-    data-images='[{"src":"/posts/images/uno.webp","alt":"Captura uno","caption":"Caption uno"},{"src":"/posts/images/dos.webp","alt":"Captura dos","caption":"Caption dos"}]'
+    data-mobile-columns="2"
+    data-gap="loose"
+    data-aspect="square"
+    data-caption-mode="overlay"
+    data-corner-style="pill"
+    data-width="wide"
+    data-image-fit="cover"
+    data-images='[{"src":"/posts/images/uno.webp","alt":"Captura uno","caption":"Caption uno","href":"https://example.com/uno","openInNewTab":true},{"src":"/posts/images/dos.webp","alt":"Captura dos","caption":"Caption dos"}]'
   ></div>
   <div
     data-block="document"
@@ -47,6 +54,7 @@ describe('HtmlContentRenderer', () => {
     expect(screen.getByRole('heading', { name: 'Contrato editorial' })).toBeInTheDocument();
     expect(screen.getByAltText('Captura uno')).toBeInTheDocument();
     expect(screen.getByText('Caption dos')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Captura uno' })).toHaveAttribute('href', 'https://example.com/uno');
     expect(screen.getAllByText('Guia editorial').length).toBeGreaterThan(0);
     expect(screen.getByText('deploy.sh')).toBeInTheDocument();
     expect(container.querySelectorAll('[data-rendered-block="image-grid"]')).toHaveLength(1);
@@ -104,6 +112,40 @@ describe('HtmlContentRenderer', () => {
     expect(renderedGrid?.parentElement).toHaveClass('justify-center');
     expect(centeredFigure?.parentElement).toHaveClass('justify-center');
     expect(fallbackDocument?.parentElement?.className || '').not.toContain('justify-');
+  });
+
+  it('rehidrata la configuracion avanzada del image grid publicado', () => {
+    const { container } = render(
+      <HtmlContentRenderer
+        content={`
+          <div
+            data-block="image-grid"
+            data-columns="4"
+            data-mobile-columns="2"
+            data-gap="tight"
+            data-aspect="portrait"
+            data-caption-mode="hidden"
+            data-corner-style="soft"
+            data-width="content"
+            data-image-fit="contain"
+            data-layout="mosaic"
+            data-images='[{"src":"/posts/images/uno.webp","alt":"Captura uno","size":"wide"}]'
+          ></div>
+        `}
+      />
+    );
+
+    const renderedGrid = container.querySelector('[data-rendered-block="image-grid"]');
+    const renderedImage = screen.getByAltText('Captura uno');
+    const renderedItem = container.querySelector('[data-image-grid-item-size="wide"]');
+
+    expect(renderedGrid).toHaveAttribute('data-image-grid-layout', 'mosaic');
+    expect(renderedGrid).toHaveAttribute('data-image-grid-width', 'content');
+    expect(renderedGrid).toHaveAttribute('data-image-grid-caption-mode', 'hidden');
+    expect(renderedItem?.className).toContain('lg:col-span-2');
+    expect(renderedImage.className).toContain('object-contain');
+    expect(renderedImage.className).toContain('aspect-[16/9]');
+    expect(container.querySelector('figcaption')).toBeNull();
   });
 
   it('sanea script tags y javascript urls antes de renderizar', () => {
