@@ -1,6 +1,5 @@
 import { Node, mergeAttributes } from '@tiptap/core';
 import { ReactNodeViewRenderer } from '@tiptap/react';
-import { useState } from 'react';
 import RichBlockFrame from '../RichBlockFrame';
 import { createRichBlockTextAlignAttribute, getRichBlockHtmlAttributes } from '../blockAlignment';
 

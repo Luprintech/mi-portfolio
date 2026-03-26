@@ -23,11 +23,17 @@ import {
     getVideoGalleryColumnsClass,
     normalizeVideoGalleryConfig,
     normalizeVideoGalleryItems,
-    getVideoEmbedUrl,
 } from '../../../lib/videoGallery';
 import GifPicker from './GifPicker';
 import { validateImageFile } from '../../../lib/mediaUploadPolicy';
 import PdfPreview from '../../shared/PdfPreview';
+import { QuoteCardExtension } from './blocks/QuoteCard';
+import { StatsCounterExtension } from './blocks/StatsCounter';
+import { TimelineExtension } from './blocks/Timeline';
+import { ComparisonSliderExtension } from './blocks/ComparisonSlider';
+import { SpotifyEmbedExtension } from './blocks/SpotifyEmbed';
+import { ProgressBarsExtension } from './blocks/ProgressBars';
+import { CountdownTimerExtension } from './blocks/CountdownTimer';
 import RichBlockFrame from './RichBlockFrame';
 import {
     createRichBlockTextAlignAttribute,
@@ -1669,7 +1675,7 @@ function VideoGallerySelectField({ label, value, options, onChange }) {
 }
 
 function VideoGalleryView({ node, updateAttributes, selected, deleteNode }) {
-    const { isAuthenticated } = useAuth();
+    useAuth(); // Auth context needed for form behavior
     const videos = normalizeVideoGalleryItems(node.attrs.videos || []);
     const config = normalizeVideoGalleryConfig(node.attrs);
     const [isAddingVideo, setIsAddingVideo] = useState(false);
@@ -2265,3 +2271,6 @@ export const GifExtension = Node.create({
         };
     },
 });
+
+// ─── Export new extensions ────────────────────────────────────────────────────
+export { QuoteCardExtension, StatsCounterExtension, ProgressBarsExtension, TimelineExtension, CountdownTimerExtension, ComparisonSliderExtension, SpotifyEmbedExtension };

@@ -1,6 +1,5 @@
 import { Node, mergeAttributes } from '@tiptap/core';
 import { ReactNodeViewRenderer } from '@tiptap/react';
-import { useState } from 'react';
 import RichBlockFrame from '../RichBlockFrame';
 import { createRichBlockTextAlignAttribute, getRichBlockHtmlAttributes } from '../blockAlignment';
 
@@ -131,7 +130,7 @@ export const QuoteCardExtension = Node.create({
       'data-quote-card': '',
       'data-style': style,
       style: `margin:1.5em 0;padding:1.5rem;border-radius:1rem;border:1px solid rgba(255,255,255,0.1);${bgClass}`,
-    })), 
+    })), ...[
       ['blockquote', { style: 'font-size:1.25rem;font-style:italic;margin-bottom:1rem;color:var(--text-primary,#f1f5f9)' }, quote],
       author ? ['div', { style: 'display:flex;align-items:center;gap:0.75rem;border-top:1px solid rgba(255,255,255,0.1);padding-top:1rem;' },
         ['div', { style: 'width:3rem;height:3rem;border-radius:9999px;background:linear-gradient(to bottom right,#e879f9,#22d3ee);display:flex;align-items:center;justify-content:center;font-weight:700;color:white;' }, author[0]?.toUpperCase()],

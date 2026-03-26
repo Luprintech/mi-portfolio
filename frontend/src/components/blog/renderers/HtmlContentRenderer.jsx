@@ -6,6 +6,13 @@ import DocumentBlock from './DocumentBlock';
 import ImageGridBlock from './ImageGridBlock';
 import VideoGalleryBlock from './VideoGalleryBlock';
 import CodeBlock from './CodeBlock';
+import QuoteCardBlock from './QuoteCardBlock';
+import StatsCounterBlock from './StatsCounterBlock';
+import TimelineBlock from './TimelineBlock';
+import ComparisonSliderBlock from './ComparisonSliderBlock';
+import CountdownTimerBlock from './CountdownTimerBlock';
+import ProgressBarsBlock from './ProgressBarsBlock';
+import SpotifyEmbedBlock from './SpotifyEmbedBlock';
 import { parseImageGridConfigFromElement, parseImageGridPayload } from './imageGridPayload';
 import { normalizeVideoGalleryConfig, normalizeVideoGalleryItems } from '../../../lib/videoGallery';
 import { normalizeRichBlockAlignment } from '../../cms/editor/blockAlignment';
@@ -201,6 +208,139 @@ function renderNode(node, path) {
         </div>
       );
     }
+  }
+
+  if (dataBlock === 'quote-card' || node.hasAttribute('data-quote-card')) {
+    const alignment = normalizeRichBlockAlignment(node.getAttribute('data-align'));
+    const quote = node.querySelector('blockquote')?.textContent || '';
+    const authorDiv = node.querySelector('div[style*="display:flex"]');
+    let author = '';
+    let role = '';
+    
+    if (authorDiv) {
+      const textDivs = authorDiv.querySelectorAll('p');
+      if (textDivs.length > 0) author = textDivs[0]?.textContent || '';
+      if (textDivs.length > 1) role = textDivs[1]?.textContent || '';
+    }
+    
+    return (
+      <div key={path} className={getBlockWrapperClassName(alignment)}>
+        <QuoteCardBlock
+          quote={quote}
+          author={author}
+          role={role}
+          style={node.getAttribute('data-style') || 'modern'}
+        />
+      </div>
+    );
+  }
+
+  if (dataBlock === 'stats-counter' || node.hasAttribute('data-stats-counter')) {
+    const alignment = normalizeRichBlockAlignment(node.getAttribute('data-align'));
+    const statsData = node.getAttribute('data-stats') || '[]';
+    let stats = [];
+    
+    try {
+      stats = JSON.parse(statsData);
+    } catch (e) {
+      console.error('Failed to parse stats data:', e);
+    }
+    
+    return (
+      <div key={path} className={getBlockWrapperClassName(alignment)}>
+        <StatsCounterBlock
+          stats={stats}
+          layout={node.getAttribute('data-layout') || 'grid'}
+        />
+      </div>
+    );
+  }
+
+  if (dataBlock === 'timeline' || node.hasAttribute('data-timeline')) {
+    const alignment = normalizeRichBlockAlignment(node.getAttribute('data-align'));
+    const eventsData = node.getAttribute('data-events') || '[]';
+    let events = [];
+    
+    try {
+      events = JSON.parse(eventsData);
+    } catch (e) {
+      console.error('Failed to parse timeline events data:', e);
+    }
+    
+    return (
+      <div key={path} className={getBlockWrapperClassName(alignment)}>
+        <TimelineBlock
+          events={events}
+          layout={node.getAttribute('data-layout') || 'vertical'}
+          theme={node.getAttribute('data-theme') || 'default'}
+        />
+      </div>
+    );
+  }
+
+  if (dataBlock === 'countdown-timer' || node.hasAttribute('data-countdown-timer')) {
+    const alignment = normalizeRichBlockAlignment(node.getAttribute('data-align'));
+    return (
+      <div key={path} className={getBlockWrapperClassName(alignment)}>
+        <CountdownTimerBlock
+          targetDate={node.getAttribute('data-target-date') || ''}
+          title={node.getAttribute('data-title') || 'Event Countdown'}
+          description={node.getAttribute('data-description') || ''}
+          theme={node.getAttribute('data-theme') || 'default'}
+        />
+      </div>
+    );
+  }
+
+  if (dataBlock === 'progress-bars' || node.hasAttribute('data-progress-bars')) {
+    const alignment = normalizeRichBlockAlignment(node.getAttribute('data-align'));
+    const barsData = node.getAttribute('data-bars') || '[]';
+    let bars = [];
+    
+    try {
+      bars = JSON.parse(barsData);
+    } catch (e) {
+      console.error('Failed to parse progress bars data:', e);
+    }
+    
+    return (
+      <div key={path} className={getBlockWrapperClassName(alignment)}>
+        <ProgressBarsBlock
+          bars={bars}
+          theme={node.getAttribute('data-theme') || 'default'}
+          animated={node.getAttribute('data-animated') !== 'false'}
+        />
+      </div>
+    );
+  }
+
+  if (dataBlock === 'spotify-embed' || node.hasAttribute('data-spotify-embed')) {
+    const alignment = normalizeRichBlockAlignment(node.getAttribute('data-align'));
+    return (
+      <div key={path} className={getBlockWrapperClassName(alignment)}>
+        <SpotifyEmbedBlock
+          url={node.getAttribute('data-url') || ''}
+          type={node.getAttribute('data-type') || 'track'}
+          theme={node.getAttribute('data-theme') || 'dark'}
+          height={parseInt(node.getAttribute('data-height') || '152', 10)}
+        />
+      </div>
+    );
+  }
+
+  if (dataBlock === 'comparison-slider' || node.hasAttribute('data-comparison-slider')) {
+    const alignment = normalizeRichBlockAlignment(node.getAttribute('data-align'));
+    return (
+      <div key={path} className={getBlockWrapperClassName(alignment)}>
+        <ComparisonSliderBlock
+          beforeImage={node.getAttribute('data-before-image') || ''}
+          afterImage={node.getAttribute('data-after-image') || ''}
+          beforeLabel={node.getAttribute('data-before-label') || 'Antes'}
+          afterLabel={node.getAttribute('data-after-label') || 'Después'}
+          initialPosition={parseInt(node.getAttribute('data-initial-position') || '50', 10)}
+        />
+      </div>
+    );
   }
 
   if (dataBlock === 'code') {

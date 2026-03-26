@@ -86,7 +86,7 @@ import Subscript from '@tiptap/extension-subscript';
 import 'highlight.js/styles/github-dark.css';
 import mermaid from 'mermaid';
 import { useCallback, useRef, useEffect, useState } from 'react';
-import { LineHeight, AccordionExtension, ContentButtonExtension, DocumentAttachmentExtension, ImageGridExtension, VideoGalleryExtension, GifExtension } from './editor/extensions';
+import { LineHeight, AccordionExtension, ContentButtonExtension, DocumentAttachmentExtension, ImageGridExtension, VideoGalleryExtension, GifExtension, QuoteCardExtension, StatsCounterExtension, TimelineExtension, ComparisonSliderExtension, CountdownTimerExtension, SpotifyEmbedExtension, ProgressBarsExtension } from './editor/extensions';
 import RichBlockFrame from './editor/RichBlockFrame';
 import {
     canUseJustifyAlignment,
@@ -939,6 +939,13 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             ImageGridExtension,
             VideoGalleryExtension,
             GifExtension,
+            QuoteCardExtension,
+            StatsCounterExtension,
+            TimelineExtension,
+            ComparisonSliderExtension,
+            CountdownTimerExtension,
+            ProgressBarsExtension,
+            SpotifyEmbedExtension,
             Placeholder.configure({ placeholder: 'Escribe aquí… Usa "/" para insertar bloques' }),
             CharacterCount,
         ],
