@@ -3,7 +3,6 @@ import { useState, useEffect, useRef } from 'react';
 // GIPHY API Key - Configurable via entorno VITE_GIPHY_API_KEY
 // Obtener de https://developers.giphy.com/
 const GIPHY_API_KEY = import.meta.env.VITE_GIPHY_API_KEY || '';
-const GIPHY_API_BASE = 'https://api.giphy.com/v1/gifs';
 
 // Verificar si hay API key configurada
 const hasGiphyKey = Boolean(GIPHY_API_KEY);
@@ -15,7 +14,15 @@ export default function GifPicker({ onSelect, onClose }) {
   const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('trending');
   const [error, setError] = useState(null);
+  const [contentType, setContentType] = useState('gifs'); // 'gifs' | 'stickers' | 'clips'
   const searchTimeoutRef = useRef(null);
+
+  // Dynamic API base depending on content type
+  const getApiBase = () => {
+    if (contentType === 'stickers') return 'https://api.giphy.com/v1/stickers';
+    if (contentType === 'clips') return 'https://api.giphy.com/v1/clips';
+    return 'https://api.giphy.com/v1/gifs';
+  };
 
   const categories = [
     { id: 'trending', label: 'Trending', emoji: '🔥' },
@@ -58,7 +65,7 @@ export default function GifPicker({ onSelect, onClose }) {
     setLoading(true);
     try {
       const response = await fetch(
-        `${GIPHY_API_BASE}/trending?api_key=${GIPHY_API_KEY}&limit=30&rating=g`
+        `${getApiBase()}/trending?api_key=${GIPHY_API_KEY}&limit=30&rating=g`
       );
       const data = await response.json();
       setTrending(data.data || []);
@@ -75,7 +82,7 @@ export default function GifPicker({ onSelect, onClose }) {
     setLoading(true);
     try {
       const response = await fetch(
-        `${GIPHY_API_BASE}/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(query)}&limit=30&rating=g`
+        `${getApiBase()}/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(query)}&limit=30&rating=g`
       );
       const data = await response.json();
       setGifs(data.data || []);
@@ -95,7 +102,7 @@ export default function GifPicker({ onSelect, onClose }) {
     setLoading(true);
     try {
       const response = await fetch(
-        `${GIPHY_API_BASE}/search?api_key=${GIPHY_API_KEY}&q=${category}&limit=30&rating=g`
+        `${getApiBase()}/search?api_key=${GIPHY_API_KEY}&q=${category}&limit=30&rating=g`
       );
       const data = await response.json();
       setGifs(data.data || []);
@@ -112,13 +119,39 @@ export default function GifPicker({ onSelect, onClose }) {
     fetchByCategory(categoryId);
   }
 
+  function handleContentTypeSwitch(type) {
+    setContentType(type);
+    setSelectedCategory('trending');
+    setSearchQuery('');
+    setGifs([]);
+    setTrending([]);
+    // fetchTrending uses getApiBase(), but state update is async,
+    // so we build the URL directly here for the switch.
+    const apiBase =
+      type === 'stickers'
+        ? 'https://api.giphy.com/v1/stickers'
+        : type === 'clips'
+          ? 'https://api.giphy.com/v1/clips'
+          : 'https://api.giphy.com/v1/gifs';
+    setLoading(true);
+    fetch(`${apiBase}/trending?api_key=${GIPHY_API_KEY}&limit=30&rating=g`)
+      .then((r) => r.json())
+      .then((data) => {
+        setTrending(data.data || []);
+        setError(null);
+      })
+      .catch(() => setError('Error al cargar contenido'))
+      .finally(() => setLoading(false));
+  }
+
   function handleGifClick(gif) {
     // Usar la URL del GIF en tamaño original
     const gifUrl = gif.images.original.url;
     onSelect(gifUrl, gif.title || 'GIF animado');
   }
 
-  const displayGifs = searchQuery.trim() ? gifs : trending;
+  // FIX 1: show category results when a non-trending category is selected
+  const displayGifs = (searchQuery.trim() || selectedCategory !== 'trending') ? gifs : trending;
 
   // Mostrar mensaje de error si no hay API key
   if (!hasGiphyKey) {
@@ -175,6 +208,43 @@ export default function GifPicker({ onSelect, onClose }) {
           </button>
         </div>
 
+        {/* GIFs / Stickers toggle */}
+        <div className="flex gap-2 border-b border-[var(--border-color)] px-6 py-3">
+          <button
+            type="button"
+            onClick={() => handleContentTypeSwitch('gifs')}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+              contentType === 'gifs'
+                ? 'bg-fuchsia-600 text-white'
+                : 'bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]'
+            }`}
+          >
+            GIFs
+          </button>
+          <button
+            type="button"
+            onClick={() => handleContentTypeSwitch('stickers')}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+              contentType === 'stickers'
+                ? 'bg-fuchsia-600 text-white'
+                : 'bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]'
+            }`}
+          >
+            Stickers
+          </button>
+          <button
+            type="button"
+            onClick={() => handleContentTypeSwitch('clips')}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+              contentType === 'clips'
+                ? 'bg-fuchsia-600 text-white'
+                : 'bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]'
+            }`}
+          >
+            Clips
+          </button>
+        </div>
+
         {/* Search Bar */}
         <div className="border-b border-[var(--border-color)] px-6 py-4">
           <div className="relative">
@@ -182,7 +252,7 @@ export default function GifPicker({ onSelect, onClose }) {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar GIFs... (ej: feliz, triste, celebrar)"
+              placeholder={`Buscar ${contentType === 'stickers' ? 'Stickers' : contentType === 'clips' ? 'Clips' : 'GIFs'}... (ej: feliz, triste, celebrar)`}
               className="w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg-elevated)] px-4 py-3 pl-12 text-[var(--text-primary)] outline-none focus:border-fuchsia-500"
               autoFocus
             />
@@ -222,7 +292,12 @@ export default function GifPicker({ onSelect, onClose }) {
 
         {/* GIF Grid */}
         <div className="flex-1 overflow-y-auto p-6">
-          {loading ? (
+          {error ? (
+            <div className="flex h-full flex-col items-center justify-center gap-3 text-red-400">
+              <span className="text-5xl">⚠️</span>
+              <p className="text-base font-medium">{error}</p>
+            </div>
+          ) : loading ? (
             <div className="flex h-full items-center justify-center">
               <div className="h-12 w-12 animate-spin rounded-full border-4 border-[var(--border-color)] border-t-fuchsia-500" />
             </div>
@@ -230,7 +305,7 @@ export default function GifPicker({ onSelect, onClose }) {
             <div className="flex h-full flex-col items-center justify-center gap-3 text-[var(--text-muted)]">
               <span className="text-6xl">🔍</span>
               <p className="text-lg font-medium">
-                {searchQuery.trim() ? 'No se encontraron GIFs' : 'Busca o selecciona una categoría'}
+                {searchQuery.trim() ? `No se encontraron ${contentType === 'stickers' ? 'stickers' : contentType === 'clips' ? 'clips' : 'GIFs'}` : 'Busca o selecciona una categoría'}
               </p>
             </div>
           ) : (
@@ -257,7 +332,7 @@ export default function GifPicker({ onSelect, onClose }) {
         {/* Footer */}
         <div className="border-t border-[var(--border-color)] px-6 py-3">
           <p className="text-center text-xs text-[var(--text-muted)]">
-            GIFs proporcionados por{' '}
+            {contentType === 'stickers' ? 'Stickers' : contentType === 'clips' ? 'Clips' : 'GIFs'} proporcionados por{' '}
             <a
               href="https://giphy.com"
               target="_blank"
