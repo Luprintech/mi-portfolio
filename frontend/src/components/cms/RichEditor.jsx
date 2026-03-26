@@ -954,7 +954,6 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             ToggleExtension,
             QuizExtension,
             PollExtension,
-            TabsExtension,
             Placeholder.configure({ placeholder: 'Escribe aquí… Usa "/" para insertar bloques' }),
             CharacterCount,
         ],
