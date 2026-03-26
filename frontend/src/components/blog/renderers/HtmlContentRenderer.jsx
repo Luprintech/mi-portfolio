@@ -1,4 +1,5 @@
-import { createElement, Fragment, useMemo } from 'react';
+import { createElement, Fragment, useMemo, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { sanitizePostContent } from '../../../lib/postContentSanitizer';
 import { resolveContentLinkAttributes } from '../../../lib/contentLinkUtils';
 import { slugifyHeading } from '../markdownComponents';
@@ -13,12 +14,191 @@ import ComparisonSliderBlock from './ComparisonSliderBlock';
 import CountdownTimerBlock from './CountdownTimerBlock';
 import ProgressBarsBlock from './ProgressBarsBlock';
 import SpotifyEmbedBlock from './SpotifyEmbedBlock';
+import QuizBlock from './QuizBlock';
+import PollBlock from './PollBlock';
+import SocialShareBlock from './SocialShareBlock';
+import ToggleBlock from './ToggleBlock';
+import TabsBlock from './TabsBlock';
 import { parseImageGridConfigFromElement, parseImageGridPayload } from './imageGridPayload';
 import { normalizeVideoGalleryConfig, normalizeVideoGalleryItems } from '../../../lib/videoGallery';
 import { normalizeRichBlockAlignment } from '../../cms/editor/blockAlignment';
 
 function joinClassNames(...values) {
   return values.filter(Boolean).join(' ');
+}
+
+// ─── TooltipWrapper — componente de tooltip flotante ──────────────────────────
+function TooltipWrapper({ children, text, position = 'top', theme = 'dark' }) {
+  const [isHovered, setIsHovered] = useState(false);
+  const [tooltipStyle, setTooltipStyle] = useState({});
+  const [arrowStyle, setArrowStyle] = useState({});
+  const triggerRef = useRef(null);
+
+  const themeStyles = {
+    dark: {
+      background: 'rgba(15, 23, 42, 0.95)',
+      color: '#e2e8f0',
+      border: '1px solid rgba(148, 163, 184, 0.2)',
+      boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+    },
+    light: {
+      background: 'rgba(248, 250, 252, 0.98)',
+      color: '#1e293b',
+      border: '1px solid rgba(148, 163, 184, 0.3)',
+      boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+    },
+    info: {
+      background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.95), rgba(37, 99, 235, 0.95))',
+      color: '#ffffff',
+      border: '1px solid rgba(96, 165, 250, 0.4)',
+      boxShadow: '0 10px 40px rgba(59, 130, 246, 0.4), 0 0 0 1px rgba(147, 197, 253, 0.2)',
+    },
+    warning: {
+      background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.95), rgba(217, 119, 6, 0.95))',
+      color: '#ffffff',
+      border: '1px solid rgba(251, 191, 36, 0.4)',
+      boxShadow: '0 10px 40px rgba(245, 158, 11, 0.4), 0 0 0 1px rgba(252, 211, 77, 0.2)',
+    },
+  };
+
+  const currentTheme = themeStyles[theme] || themeStyles.dark;
+
+  const handleMouseEnter = (e) => {
+    setIsHovered(true);
+    const rect = e.currentTarget.getBoundingClientRect();
+    const tooltipWidth = 280;
+    const tooltipHeight = 60;
+    const gap = 12;
+    const arrowSize = 6;
+
+    let top, left, arrowTop, arrowLeft, arrowTransform;
+
+    switch (position) {
+      case 'top':
+        top = rect.top - tooltipHeight - gap;
+        left = rect.left + rect.width / 2 - tooltipWidth / 2;
+        arrowTop = tooltipHeight - 1;
+        arrowLeft = tooltipWidth / 2 - arrowSize;
+        arrowTransform = 'rotate(45deg)';
+        break;
+      case 'bottom':
+        top = rect.bottom + gap;
+        left = rect.left + rect.width / 2 - tooltipWidth / 2;
+        arrowTop = -arrowSize;
+        arrowLeft = tooltipWidth / 2 - arrowSize;
+        arrowTransform = 'rotate(45deg)';
+        break;
+      case 'left':
+        top = rect.top + rect.height / 2 - tooltipHeight / 2;
+        left = rect.left - tooltipWidth - gap;
+        arrowTop = tooltipHeight / 2 - arrowSize;
+        arrowLeft = tooltipWidth - 1;
+        arrowTransform = 'rotate(45deg)';
+        break;
+      case 'right':
+        top = rect.top + rect.height / 2 - tooltipHeight / 2;
+        left = rect.right + gap;
+        arrowTop = tooltipHeight / 2 - arrowSize;
+        arrowLeft = -arrowSize;
+        arrowTransform = 'rotate(45deg)';
+        break;
+      default:
+        top = rect.top - tooltipHeight - gap;
+        left = rect.left + rect.width / 2 - tooltipWidth / 2;
+        arrowTop = tooltipHeight - 1;
+        arrowLeft = tooltipWidth / 2 - arrowSize;
+        arrowTransform = 'rotate(45deg)';
+    }
+
+    // Ajuste de viewport
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    if (left < 8) left = 8;
+    if (left + tooltipWidth > viewportWidth - 8) left = viewportWidth - tooltipWidth - 8;
+    if (top < 8) top = rect.bottom + gap;
+    if (top + tooltipHeight > viewportHeight - 8) top = rect.top - tooltipHeight - gap;
+
+    setTooltipStyle({
+      position: 'fixed',
+      top: `${top}px`,
+      left: `${left}px`,
+      width: `${tooltipWidth}px`,
+      minHeight: `${tooltipHeight}px`,
+      zIndex: 9999,
+      pointerEvents: 'none',
+      ...currentTheme,
+      backdropFilter: 'blur(8px)',
+      WebkitBackdropFilter: 'blur(8px)',
+      borderRadius: '12px',
+      padding: '10px 14px',
+      fontSize: '13px',
+      lineHeight: '1.6',
+      fontWeight: '500',
+      opacity: 0,
+      transform: 'translateY(-4px)',
+      transition: 'opacity 0.2s ease-out, transform 0.2s ease-out',
+    });
+
+    setArrowStyle({
+      position: 'absolute',
+      top: `${arrowTop}px`,
+      left: `${arrowLeft}px`,
+      width: `${arrowSize * 2}px`,
+      height: `${arrowSize * 2}px`,
+      background: currentTheme.background,
+      border: currentTheme.border,
+      transform: arrowTransform,
+      borderRight: 'none',
+      borderBottom: 'none',
+    });
+
+    setTimeout(() => {
+      setTooltipStyle((prev) => ({
+        ...prev,
+        opacity: 1,
+        transform: 'translateY(0)',
+      }));
+    }, 10);
+  };
+
+  const handleMouseLeave = () => {
+    setTooltipStyle((prev) => ({
+      ...prev,
+      opacity: 0,
+      transform: 'translateY(-4px)',
+    }));
+    setTimeout(() => setIsHovered(false), 200);
+  };
+
+  return (
+    <>
+      <span
+        ref={triggerRef}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        style={{
+          textDecoration: 'underline',
+          textDecorationStyle: 'dotted',
+          textDecorationColor: theme === 'warning' ? '#f59e0b' : theme === 'info' ? '#3b82f6' : '#a78bfa',
+          textUnderlineOffset: '3px',
+          cursor: 'help',
+          position: 'relative',
+        }}
+      >
+        {children}
+      </span>
+      {isHovered &&
+        typeof window !== 'undefined' &&
+        createPortal(
+          <div style={tooltipStyle}>
+            <div style={arrowStyle} />
+            {text}
+          </div>,
+          document.body
+        )}
+    </>
+  );
 }
 
 function parseStyle(styleText = '') {
@@ -131,6 +311,19 @@ function renderNode(node, path) {
 
   const tagName = node.tagName.toLowerCase();
   const dataBlock = node.getAttribute('data-block');
+
+  // ─── Tooltip detection ─────────────────────────────────────────────────────
+  if (tagName === 'span' && node.hasAttribute('data-tooltip')) {
+    const tooltipText = node.getAttribute('data-tooltip');
+    const position = node.getAttribute('data-tooltip-position') || 'top';
+    const theme = node.getAttribute('data-tooltip-theme') || 'dark';
+    
+    return (
+      <TooltipWrapper key={path} text={tooltipText} position={position} theme={theme}>
+        {renderChildren(node, path)}
+      </TooltipWrapper>
+    );
+  }
 
   if (dataBlock === 'document' || node.hasAttribute('data-document')) {
     const alignment = normalizeRichBlockAlignment(node.getAttribute('data-align'));
@@ -321,8 +514,101 @@ function renderNode(node, path) {
         <SpotifyEmbedBlock
           url={node.getAttribute('data-url') || ''}
           type={node.getAttribute('data-type') || 'track'}
-          theme={node.getAttribute('data-theme') || 'dark'}
-          height={parseInt(node.getAttribute('data-height') || '152', 10)}
+        />
+      </div>
+    );
+  }
+
+  if (node.hasAttribute('data-quiz')) {
+    const alignment = normalizeRichBlockAlignment(node.getAttribute('data-align'));
+    const quizData = node.getAttribute('data-quiz') || '{}';
+    let quizObj = {};
+    
+    try {
+      quizObj = JSON.parse(quizData);
+    } catch (e) {
+      console.error('Failed to parse quiz data:', e);
+    }
+    
+    return (
+      <div key={path} className={getBlockWrapperClassName(alignment)}>
+        <QuizBlock
+          question={quizObj.question || ''}
+          options={quizObj.options || []}
+          explanation={quizObj.explanation || ''}
+          style={quizObj.style || 'cards'}
+        />
+      </div>
+    );
+  }
+
+  if (node.hasAttribute('data-poll')) {
+    const alignment = normalizeRichBlockAlignment(node.getAttribute('data-align'));
+    const pollData = node.getAttribute('data-poll') || '{}';
+    let pollObj = {};
+    
+    try {
+      pollObj = JSON.parse(pollData);
+    } catch (e) {
+      console.error('Failed to parse poll data:', e);
+    }
+    
+    return (
+      <div key={path} className={getBlockWrapperClassName(alignment)}>
+        <PollBlock
+          question={pollObj.question || ''}
+          options={pollObj.options || []}
+          style={pollObj.style || 'cards'}
+        />
+      </div>
+    );
+  }
+
+  if (node.hasAttribute('data-social-share')) {
+    const alignment = normalizeRichBlockAlignment(node.getAttribute('data-align'));
+    return (
+      <div key={path} className={getBlockWrapperClassName(alignment)}>
+        <SocialShareBlock element={node} />
+      </div>
+    );
+  }
+
+  if (node.hasAttribute('data-tabs')) {
+    const alignment = normalizeRichBlockAlignment(node.getAttribute('data-align'));
+    const tabsData = node.getAttribute('data-tabs') || '[]';
+    let tabs = [];
+    
+    try {
+      tabs = JSON.parse(tabsData);
+    } catch (e) {
+      console.error('Failed to parse tabs data:', e);
+    }
+    
+    return (
+      <div key={path} className={getBlockWrapperClassName(alignment)}>
+        <TabsBlock
+          tabs={tabs}
+          style={node.getAttribute('data-style') || 'underline'}
+          alignment={node.getAttribute('data-alignment') || 'left'}
+        />
+      </div>
+    );
+  }
+
+  if (dataBlock === 'toggle' || node.hasAttribute('data-toggle')) {
+    const alignment = normalizeRichBlockAlignment(node.getAttribute('data-align'));
+    // Extraer el contenido HTML interno
+    const contentHtml = node.innerHTML || '';
+    
+    return (
+      <div key={path} className={getBlockWrapperClassName(alignment)}>
+        <ToggleBlock
+          title={node.getAttribute('data-title') || 'Toggle'}
+          icon={node.getAttribute('data-icon') || ''}
+          content={contentHtml}
+          defaultOpen={node.getAttribute('data-default-open') !== 'false'}
+          style={node.getAttribute('data-style') || 'clean'}
+          accentColor={node.getAttribute('data-accent-color') || 'blue'}
         />
       </div>
     );

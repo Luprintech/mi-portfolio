@@ -86,8 +86,10 @@ import Subscript from '@tiptap/extension-subscript';
 import 'highlight.js/styles/github-dark.css';
 import mermaid from 'mermaid';
 import { useCallback, useRef, useEffect, useState } from 'react';
-import { LineHeight, AccordionExtension, ContentButtonExtension, DocumentAttachmentExtension, ImageGridExtension, VideoGalleryExtension, GifExtension, QuoteCardExtension, StatsCounterExtension, TimelineExtension, ComparisonSliderExtension, CountdownTimerExtension, SpotifyEmbedExtension, ProgressBarsExtension } from './editor/extensions';
+import { LineHeight, AccordionExtension, ContentButtonExtension, DocumentAttachmentExtension, ImageGridExtension, VideoGalleryExtension, GifExtension, QuoteCardExtension, StatsCounterExtension, TimelineExtension, ComparisonSliderExtension, CountdownTimerExtension, SpotifyEmbedExtension, ProgressBarsExtension, SocialShareExtension, TabsExtension, ToggleExtension, QuizExtension, PollExtension } from './editor/extensions';
 import RichBlockFrame from './editor/RichBlockFrame';
+import { TooltipMark } from './editor/extensions/tooltipMark';
+import BubbleMenuTooltip from './editor/BubbleMenuTooltip';
 import {
     canUseJustifyAlignment,
     createRichBlockTextAlignAttribute,
@@ -916,6 +918,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             Underline,
             TextStyleKit,
             Highlight.configure({ multicolor: true }),
+            TooltipMark,
             TextAlign.configure({ types: ['heading', 'paragraph', 'image', 'youtube', 'audio', 'callout', 'mermaid', 'accordion', 'contentButton', 'documentAttachment', 'imageGrid'] }),
             Link.configure({
                 openOnClick: false,
@@ -946,6 +949,12 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             CountdownTimerExtension,
             ProgressBarsExtension,
             SpotifyEmbedExtension,
+            SocialShareExtension,
+            TabsExtension,
+            ToggleExtension,
+            QuizExtension,
+            PollExtension,
+            TabsExtension,
             Placeholder.configure({ placeholder: 'Escribe aquí… Usa "/" para insertar bloques' }),
             CharacterCount,
         ],
@@ -1742,9 +1751,10 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                     [&_.tiptap_p.is-editor-empty:first-child::before]:text-[var(--text-muted)]
                     [&_.tiptap_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)]
                     [&_.tiptap_p.is-editor-empty:first-child::before]:float-left
-                    [&_.tiptap_p.is-editor-empty:first-child::before]:pointer-events-none
+                     [&_.tiptap_p.is-editor-empty:first-child::before]:pointer-events-none
                 `}>
                     <EditorContent editor={editor} />
+                    <BubbleMenuTooltip editor={editor} />
                 </div>
             </div>
 

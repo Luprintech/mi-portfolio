@@ -34,6 +34,11 @@ import { ComparisonSliderExtension } from './blocks/ComparisonSlider';
 import { SpotifyEmbedExtension } from './blocks/SpotifyEmbed';
 import { ProgressBarsExtension } from './blocks/ProgressBars';
 import { CountdownTimerExtension } from './blocks/CountdownTimer';
+import { SocialShareExtension } from './blocks/SocialShare';
+import { TabsExtension } from './blocks/Tabs';
+import { ToggleExtension } from './blocks/Toggle';
+import { QuizExtension } from './blocks/Quiz';
+import { PollExtension } from './blocks/Poll';
 import RichBlockFrame from './RichBlockFrame';
 import {
     createRichBlockTextAlignAttribute,
@@ -2273,4 +2278,4 @@ export const GifExtension = Node.create({
 });
 
 // ─── Export new extensions ────────────────────────────────────────────────────
-export { QuoteCardExtension, StatsCounterExtension, ProgressBarsExtension, TimelineExtension, CountdownTimerExtension, ComparisonSliderExtension, SpotifyEmbedExtension };
+export { QuoteCardExtension, StatsCounterExtension, ProgressBarsExtension, TimelineExtension, CountdownTimerExtension, ComparisonSliderExtension, SpotifyEmbedExtension, SocialShareExtension, TabsExtension, ToggleExtension, QuizExtension, PollExtension };
