@@ -14,15 +14,14 @@ export default function GifPicker({ onSelect, onClose }) {
   const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('trending');
   const [error, setError] = useState(null);
-  const [contentType, setContentType] = useState('gifs'); // 'gifs' | 'stickers' | 'clips'
+  const [contentType, setContentType] = useState('gifs'); // 'gifs' | 'stickers'
   const searchTimeoutRef = useRef(null);
 
   // Dynamic API base depending on content type
-  const getApiBase = () => {
-    if (contentType === 'stickers') return 'https://api.giphy.com/v1/stickers';
-    if (contentType === 'clips') return 'https://api.giphy.com/v1/clips';
-    return 'https://api.giphy.com/v1/gifs';
-  };
+  const getApiBase = () =>
+    contentType === 'stickers'
+      ? 'https://api.giphy.com/v1/stickers'
+      : 'https://api.giphy.com/v1/gifs';
 
   const categories = [
     { id: 'trending', label: 'Trending', emoji: '🔥' },
@@ -130,9 +129,7 @@ export default function GifPicker({ onSelect, onClose }) {
     const apiBase =
       type === 'stickers'
         ? 'https://api.giphy.com/v1/stickers'
-        : type === 'clips'
-          ? 'https://api.giphy.com/v1/clips'
-          : 'https://api.giphy.com/v1/gifs';
+        : 'https://api.giphy.com/v1/gifs';
     setLoading(true);
     fetch(`${apiBase}/trending?api_key=${GIPHY_API_KEY}&limit=30&rating=g`)
       .then((r) => r.json())
@@ -232,17 +229,6 @@ export default function GifPicker({ onSelect, onClose }) {
           >
             Stickers
           </button>
-          <button
-            type="button"
-            onClick={() => handleContentTypeSwitch('clips')}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-              contentType === 'clips'
-                ? 'bg-fuchsia-600 text-white'
-                : 'bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]'
-            }`}
-          >
-            Clips
-          </button>
         </div>
 
         {/* Search Bar */}
@@ -252,7 +238,7 @@ export default function GifPicker({ onSelect, onClose }) {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={`Buscar ${contentType === 'stickers' ? 'Stickers' : contentType === 'clips' ? 'Clips' : 'GIFs'}... (ej: feliz, triste, celebrar)`}
+              placeholder={`Buscar ${contentType === 'stickers' ? 'Stickers' : 'GIFs'}... (ej: feliz, triste, celebrar)`}
               className="w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg-elevated)] px-4 py-3 pl-12 text-[var(--text-primary)] outline-none focus:border-fuchsia-500"
               autoFocus
             />
@@ -305,7 +291,7 @@ export default function GifPicker({ onSelect, onClose }) {
             <div className="flex h-full flex-col items-center justify-center gap-3 text-[var(--text-muted)]">
               <span className="text-6xl">🔍</span>
               <p className="text-lg font-medium">
-                {searchQuery.trim() ? `No se encontraron ${contentType === 'stickers' ? 'stickers' : contentType === 'clips' ? 'clips' : 'GIFs'}` : 'Busca o selecciona una categoría'}
+                {searchQuery.trim() ? `No se encontraron ${contentType === 'stickers' ? 'stickers' : 'GIFs'}` : 'Busca o selecciona una categoría'}
               </p>
             </div>
           ) : (
@@ -332,7 +318,7 @@ export default function GifPicker({ onSelect, onClose }) {
         {/* Footer */}
         <div className="border-t border-[var(--border-color)] px-6 py-3">
           <p className="text-center text-xs text-[var(--text-muted)]">
-            {contentType === 'stickers' ? 'Stickers' : contentType === 'clips' ? 'Clips' : 'GIFs'} proporcionados por{' '}
+            {contentType === 'stickers' ? 'Stickers' : 'GIFs'} proporcionados por{' '}
             <a
               href="https://giphy.com"
               target="_blank"
