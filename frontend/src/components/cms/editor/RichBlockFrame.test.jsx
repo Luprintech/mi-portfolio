@@ -22,4 +22,31 @@ describe('RichBlockFrame', () => {
       justifyContent: 'flex-end',
     });
   });
+
+  it('permite una accion secundaria separada del borrado', async () => {
+    const user = userEvent.setup();
+    const onRemove = vi.fn();
+    const onSecondaryAction = vi.fn();
+
+    render(
+      <RichBlockFrame
+        selected
+        onRemove={onRemove}
+        onSecondaryAction={onSecondaryAction}
+        secondaryActionLabel="Colapsar panel"
+        renderSecondaryIcon={() => (
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M6 12h12" />
+          </svg>
+        )}
+      >
+        <div>Bloque enriquecido</div>
+      </RichBlockFrame>
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Colapsar panel' }));
+
+    expect(onSecondaryAction).toHaveBeenCalledTimes(1);
+    expect(onRemove).not.toHaveBeenCalled();
+  });
 });

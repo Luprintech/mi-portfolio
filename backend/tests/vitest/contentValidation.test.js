@@ -146,6 +146,61 @@ describe('sanitizePostInput', () => {
         expect(errors).toContain('El bloque imageGrid tiene un data-images invalido.');
     });
 
+    it('acepta imageGrid con configuracion avanzada y enlaces por item', () => {
+        const { errors, data } = sanitizePostInput({
+            title: 'Mi post',
+            slug: 'mi-post',
+            format: 'html',
+            contentHtml: '<div data-block="image-grid" data-columns="4" data-mobile-columns="2" data-gap="tight" data-aspect="portrait" data-caption-mode="overlay" data-corner-style="pill" data-width="wide" data-image-fit="contain" data-layout="mosaic" data-images="[{&quot;src&quot;:&quot;/posts/images/uno.webp&quot;,&quot;alt&quot;:&quot;Uno&quot;,&quot;href&quot;:&quot;https://example.com/demo&quot;,&quot;openInNewTab&quot;:true,&quot;size&quot;:&quot;wide&quot;}]"></div>',
+            status: 'draft',
+            date: '2026-03-12',
+        });
+
+        expect(errors).toEqual([]);
+        expect(data.contentHtml).toContain('data-caption-mode="overlay"');
+        expect(data.contentHtml).toContain('data-image-fit="contain"');
+        expect(data.contentHtml).toContain('data-layout="mosaic"');
+    });
+
+    it('rechaza imageGrid con enlaces invalidos en sus items', () => {
+        const { errors } = sanitizePostInput({
+            title: 'Mi post',
+            slug: 'mi-post',
+            format: 'html',
+            contentHtml: '<div data-block="image-grid" data-columns="2" data-images="[{&quot;src&quot;:&quot;/posts/images/uno.webp&quot;,&quot;href&quot;:&quot;javascript:alert(1)&quot;}]"></div>',
+            status: 'draft',
+            date: '2026-03-12',
+        });
+
+        expect(errors).toContain('El bloque imageGrid contiene imagenes o enlaces invalidos.');
+    });
+
+    it('rechaza imageGrid con layout o variantes de item invalidas', () => {
+        const { errors } = sanitizePostInput({
+            title: 'Mi post',
+            slug: 'mi-post',
+            format: 'html',
+            contentHtml: '<div data-block="image-grid" data-columns="2" data-images="[{&quot;src&quot;:&quot;/posts/images/uno.webp&quot;,&quot;size&quot;:&quot;cinema&quot;}]"></div>',
+            status: 'draft',
+            date: '2026-03-12',
+        });
+
+        expect(errors).toContain('El bloque imageGrid contiene imagenes o enlaces invalidos.');
+    });
+
+    it('rechaza imageGrid con layout invalido', () => {
+        const { errors } = sanitizePostInput({
+            title: 'Mi post',
+            slug: 'mi-post',
+            format: 'html',
+            contentHtml: '<div data-block="image-grid" data-columns="2" data-layout="freeform" data-images="[{&quot;src&quot;:&quot;/posts/images/uno.webp&quot;}]"></div>',
+            status: 'draft',
+            date: '2026-03-12',
+        });
+
+        expect(errors).toContain('El bloque imageGrid tiene un layout invalido.');
+    });
+
     it('rechaza documentos sin metadata minima requerida', () => {
         const { errors } = sanitizePostInput({
             title: 'Mi post',

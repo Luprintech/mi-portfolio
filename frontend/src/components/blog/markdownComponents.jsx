@@ -5,7 +5,7 @@
 
 import DocumentEmbed from './DocumentEmbed';
 import ImageGridBlock from './renderers/ImageGridBlock';
-import { parseImageGridPayload } from './renderers/imageGridPayload';
+import { normalizeImageGridConfig, parseImageGridPayload } from './renderers/imageGridPayload';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -159,8 +159,18 @@ function buildMarkdownComponents() {
 
         const grid = (
           <ImageGridBlock
-            columns={Number(props['data-columns'] || props['data-cols']) || 2}
             images={parseImageGridPayload(props['data-images'])}
+            config={normalizeImageGridConfig({
+              columns: props['data-columns'] || props['data-cols'],
+              mobileColumns: props['data-mobile-columns'],
+              gap: props['data-gap'],
+              aspectRatio: props['data-aspect'],
+              captionMode: props['data-caption-mode'],
+              cornerStyle: props['data-corner-style'],
+              width: props['data-width'],
+              imageFit: props['data-image-fit'],
+              layoutStyle: props['data-layout'],
+            })}
           />
         );
 

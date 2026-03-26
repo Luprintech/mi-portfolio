@@ -881,3 +881,115 @@ a[data-content-button][data-align="right"]  { display: block; margin: 16px 0 16p
     linear-gradient(90deg, rgba(148, 163, 184, 1) 1px, transparent 1px);
   background-size: 52px 52px;
 }
+
+/* ============================================================
+   TABLAS TipTap — Estilos profesionales para editor y público
+   ============================================================ */
+
+.ProseMirror table,
+article table,
+.post-content table {
+  width: 100%;
+  margin: 1.5em 0;
+  border-collapse: collapse;
+  border-spacing: 0;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  background: var(--bg-surface, #1e293b);
+}
+
+.ProseMirror td,
+.ProseMirror th,
+article td,
+article th,
+.post-content td,
+.post-content th {
+  min-width: 1em;
+  border: 1px solid var(--border-default, rgba(255, 255, 255, 0.08));
+  padding: 0.75rem 1rem;
+  vertical-align: top;
+  box-sizing: border-box;
+  position: relative;
+  text-align: left;
+}
+
+.ProseMirror th,
+article th,
+.post-content th {
+  font-weight: 600;
+  text-align: left;
+  background: var(--bg-elevated, #111827);
+  color: var(--text-primary, #f1f5f9);
+  border-bottom: 2px solid var(--accent-primary, #e879f9);
+}
+
+.ProseMirror td,
+article td,
+.post-content td {
+  color: var(--text-secondary, #94a3b8);
+}
+
+/* Editor mode: Celdas seleccionadas */
+.ProseMirror .selectedCell {
+  background: rgba(232, 121, 249, 0.1);
+  border-color: rgba(232, 121, 249, 0.3);
+}
+
+.ProseMirror .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background-color: rgba(232, 121, 249, 0.5);
+  pointer-events: none;
+  cursor: col-resize;
+}
+
+/* Editor mode: Handle visible al hover */
+.ProseMirror table:hover .column-resize-handle {
+  opacity: 1;
+}
+
+/* Zebra striping para mejor legibilidad */
+.ProseMirror tbody tr:nth-child(even),
+article tbody tr:nth-child(even),
+.post-content tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Hover en filas (solo en vista pública) */
+article tbody tr:hover,
+.post-content tbody tr:hover {
+  background: rgba(232, 121, 249, 0.05);
+  transition: background 0.2s ease;
+}
+
+/* Scrollable tables en móvil */
+@media (max-width: 768px) {
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .ProseMirror table,
+  article table,
+  .post-content table {
+    min-width: 600px;
+  }
+}
+
+/* Estilos de colores custom desde el editor */
+.ProseMirror td[style*="background"],
+.ProseMirror th[style*="background"] {
+  /* Los estilos inline toman precedencia */
+}
+
+/* Mejora visual: Primera celda en negrita en tablas sin header */
+.ProseMirror tbody tr td:first-child,
+article tbody tr td:first-child,
+.post-content tbody tr td:first-child {
+  font-weight: 500;
+  color: var(--text-primary, #f1f5f9);
+}

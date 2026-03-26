@@ -86,8 +86,10 @@ import Subscript from '@tiptap/extension-subscript';
 import 'highlight.js/styles/github-dark.css';
 import mermaid from 'mermaid';
 import { useCallback, useRef, useEffect, useState } from 'react';
-import { LineHeight, AccordionExtension, ContentButtonExtension, DocumentAttachmentExtension, ImageGridExtension } from './editor/extensions';
+import { LineHeight, AccordionExtension, ContentButtonExtension, DocumentAttachmentExtension, ImageGridExtension, VideoGalleryExtension, GifExtension, QuoteCardExtension, StatsCounterExtension, TimelineExtension, ComparisonSliderExtension, CountdownTimerExtension, SpotifyEmbedExtension, ProgressBarsExtension, SocialShareExtension, TabsExtension, ToggleExtension, QuizExtension, PollExtension } from './editor/extensions';
 import RichBlockFrame from './editor/RichBlockFrame';
+import { TooltipMark } from './editor/extensions/tooltipMark';
+import BubbleMenuTooltip from './editor/BubbleMenuTooltip';
 import {
     canUseJustifyAlignment,
     createRichBlockTextAlignAttribute,
@@ -102,8 +104,18 @@ import {
     groupInsertMenuItems,
     INSERT_MENU_CATEGORY_STYLES,
     PLUS_MENU_ITEMS,
+    PINNED_TOOLS,
+    savePinnedTools,
     runInsertMenuEditorAction,
 } from './editor/insertMenuConfig';
+import {
+    MERMAID_BG_COLORS,
+    MERMAID_PADDING_OPTIONS,
+    MERMAID_SIZE_OPTIONS,
+    MERMAID_TEMPLATE_OPTIONS,
+    MERMAID_TEMPLATES,
+    MERMAID_THEMES,
+} from './editor/diagramConfig';
 import {
     AUDIO_INPUT_ACCEPT,
     DOCUMENT_INPUT_ACCEPT,
@@ -466,30 +478,6 @@ const CalloutExtension = Node.create({
     },
 });
 
-// ─── Mermaid — diagramas y mapas conceptuales ─────────────────────────────────
-const MERMAID_TEMPLATES = {
-    flowchart: `flowchart LR\n  A[Inicio] --> B{¿Condición?}\n  B -- Sí --> C[Proceso A]\n  B -- No --> D[Proceso B]\n  C --> E[Fin]\n  D --> E`,
-    mindmap:   `mindmap\n  root((Idea Principal))\n    Rama 1\n      Subnodo 1\n      Subnodo 2\n    Rama 2\n      Subnodo 3\n    Rama 3`,
-    sequence:  `sequenceDiagram\n  actor Usuario\n  participant App\n  participant API\n  Usuario->>App: Acción\n  App->>API: Request\n  API-->>App: Respuesta\n  App-->>Usuario: Resultado`,
-    graph:     `graph TD\n  A[Concepto Central] --> B[Idea 1]\n  A --> C[Idea 2]\n  A --> D[Idea 3]\n  B --> E[Detalle]\n  C --> F[Detalle]`,
-};
-
-const MERMAID_THEMES = [
-    { label: 'Dark',     value: 'dark' },
-    { label: 'Default',  value: 'default' },
-    { label: 'Forest',   value: 'forest' },
-    { label: 'Neutral',  value: 'neutral' },
-];
-
-const MERMAID_BG_COLORS = [
-    { label: 'Slate',   value: '#0f172a' },
-    { label: 'Negro',   value: '#000000' },
-    { label: 'Grafito', value: '#1e1e2e' },
-    { label: 'Oceano',  value: '#0c1222' },
-    { label: 'Blanco',  value: '#ffffff' },
-    { label: 'Crema',   value: '#fefce8' },
-];
-
 let mermaidCounter = 0;
 
 function MermaidView({ node, updateAttributes, selected, deleteNode }) {
@@ -504,6 +492,11 @@ function MermaidView({ node, updateAttributes, selected, deleteNode }) {
     const bgColor = node.attrs.bgColor || '#0f172a';
     const borderColor = node.attrs.borderColor || '';
     const title = node.attrs.title || '';
+    const caption = node.attrs.caption || '';
+    const size = node.attrs.size || 'standard';
+    const padding = node.attrs.padding || 'md';
+    const sizeConfig = MERMAID_SIZE_OPTIONS.find(option => option.value === size) || MERMAID_SIZE_OPTIONS[1];
+    const paddingConfig = MERMAID_PADDING_OPTIONS.find(option => option.value === padding) || MERMAID_PADDING_OPTIONS[1];
 
     useEffect(() => {
         renderDiagram(node.attrs.code || '', node.attrs.theme || 'dark');
@@ -544,9 +537,9 @@ function MermaidView({ node, updateAttributes, selected, deleteNode }) {
             wrapperClassName="my-4"
             frameClassName="w-full"
         >
-            <div className={`border rounded-xl overflow-hidden ${selected ? 'ring-2 ring-fuchsia-500 ring-offset-2 ring-offset-transparent' : ''}`}
+            <div className={`mx-auto border rounded-xl overflow-hidden ${selected ? 'ring-2 ring-fuchsia-500 ring-offset-2 ring-offset-transparent' : ''}`}
                  contentEditable={false}
-                 style={{ borderColor: borderColor || 'var(--border-color)' }}>
+                 style={{ borderColor: borderColor || 'var(--border-color)', width: '100%', maxWidth: sizeConfig.maxWidth }}>
 
                 {/* Header bar */}
                 <div className="flex items-center justify-between px-4 py-2" style={{ background: bgColor, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
@@ -581,6 +574,16 @@ function MermaidView({ node, updateAttributes, selected, deleteNode }) {
                                 value={title}
                                 onChange={e => updateAttributes({ title: e.target.value })}
                                 placeholder="Ej: Arquitectura del sistema"
+                                className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-sm text-[var(--text-primary)] outline-none focus:border-fuchsia-500/60"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="text-[10px] uppercase text-[var(--text-muted)] tracking-wider block mb-1">Caption</label>
+                            <input
+                                value={caption}
+                                onChange={e => updateAttributes({ caption: e.target.value })}
+                                placeholder="Texto de apoyo o contexto breve"
                                 className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-sm text-[var(--text-primary)] outline-none focus:border-fuchsia-500/60"
                             />
                         </div>
@@ -637,20 +640,42 @@ function MermaidView({ node, updateAttributes, selected, deleteNode }) {
                             )}
                         </div>
 
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <div>
+                                <label className="text-[10px] uppercase text-[var(--text-muted)] tracking-wider block mb-1">Tamano del bloque</label>
+                                <select
+                                    value={size}
+                                    onChange={e => updateAttributes({ size: e.target.value })}
+                                    className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-sm text-[var(--text-primary)] outline-none focus:border-fuchsia-500/60"
+                                >
+                                    {MERMAID_SIZE_OPTIONS.map(option => (
+                                        <option key={option.value} value={option.value}>{option.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-[10px] uppercase text-[var(--text-muted)] tracking-wider block mb-1">Espaciado interno</label>
+                                <select
+                                    value={padding}
+                                    onChange={e => updateAttributes({ padding: e.target.value })}
+                                    className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-sm text-[var(--text-primary)] outline-none focus:border-fuchsia-500/60"
+                                >
+                                    {MERMAID_PADDING_OPTIONS.map(option => (
+                                        <option key={option.value} value={option.value}>{option.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
                         {/* Quick templates */}
                         <div>
                             <label className="text-[10px] uppercase text-[var(--text-muted)] tracking-wider block mb-1.5">Plantillas rápidas</label>
                             <div className="flex gap-1.5 flex-wrap">
-                                {[
-                                    { key: 'flowchart', icon: '📊', label: 'Flujo' },
-                                    { key: 'mindmap',   icon: '🌐', label: 'Mental' },
-                                    { key: 'sequence',  icon: '↔',  label: 'Secuencia' },
-                                    { key: 'graph',     icon: '🔗', label: 'Conceptual' },
-                                ].map(t => (
+                                {MERMAID_TEMPLATE_OPTIONS.map(t => (
                                     <button key={t.key} type="button"
                                         onClick={() => insertTemplate(t.key)}
                                         className="px-3 py-1.5 rounded-lg text-xs bg-white/5 border border-white/10 text-[var(--text-secondary)] hover:border-fuchsia-500/50 hover:text-fuchsia-400 transition-all flex items-center gap-1.5">
-                                        <span>{t.icon}</span> {t.label}
+                                        <span>{t.icon}</span> {t.shortLabel}
                                     </button>
                                 ))}
                             </div>
@@ -681,7 +706,7 @@ function MermaidView({ node, updateAttributes, selected, deleteNode }) {
                 )}
 
                 {/* Diagram render */}
-                <div style={{ padding: '20px', background: bgColor, display: 'flex', justifyContent: 'center', minHeight: 80 }}>
+                <div style={{ padding: paddingConfig.padding, background: bgColor, display: 'flex', justifyContent: 'center', minHeight: 80 }}>
                     {error
                         ? <p style={{ color: '#f87171', fontSize: 13, fontFamily: 'monospace' }}>{error}</p>
                         : svg
@@ -689,6 +714,11 @@ function MermaidView({ node, updateAttributes, selected, deleteNode }) {
                             : <p style={{ color: '#475569', fontSize: 12 }}>Cargando diagrama…</p>
                     }
                 </div>
+                {caption ? (
+                    <div className="border-t border-white/8 px-4 py-3 text-sm text-[var(--text-muted)]" style={{ background: bgColor }}>
+                        {caption}
+                    </div>
+                ) : null}
             </div>
         </RichBlockFrame>
     );
@@ -724,6 +754,21 @@ const MermaidNode = Node.create({
                 default: '',
                 parseHTML: el => el.getAttribute('data-mermaid-title') || '',
                 renderHTML: attrs => attrs.title ? { 'data-mermaid-title': attrs.title } : {},
+            },
+            caption: {
+                default: '',
+                parseHTML: el => el.getAttribute('data-mermaid-caption') || '',
+                renderHTML: attrs => attrs.caption ? { 'data-mermaid-caption': attrs.caption } : {},
+            },
+            size: {
+                default: 'standard',
+                parseHTML: el => el.getAttribute('data-mermaid-size') || 'standard',
+                renderHTML: attrs => ({ 'data-mermaid-size': attrs.size || 'standard' }),
+            },
+            padding: {
+                default: 'md',
+                parseHTML: el => el.getAttribute('data-mermaid-padding') || 'md',
+                renderHTML: attrs => ({ 'data-mermaid-padding': attrs.padding || 'md' }),
             },
             textAlign: createRichBlockTextAlignAttribute(),
         };
@@ -849,6 +894,25 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
     // Slash commands
     const [slashMenu, setSlashMenu] = useState({ open: false, query: '', coords: { top: 0, left: 0 } });
 
+    // Herramientas fijadas por el usuario
+    const [pinnedTools, setPinnedTools] = useState(PINNED_TOOLS);
+
+    // Función para añadir herramienta a la barra de herramientas
+    const handlePinTool = (tool) => {
+        if (!pinnedTools.find(t => t.action === tool.action)) {
+            const newPinned = [...pinnedTools, tool];
+            setPinnedTools(newPinned);
+            savePinnedTools(newPinned);
+        }
+    };
+
+    // Función para quitar herramienta de la barra de herramientas
+    const handleUnpinTool = (action) => {
+        const newPinned = pinnedTools.filter(t => t.action !== action);
+        setPinnedTools(newPinned);
+        savePinnedTools(newPinned);
+    };
+
     // Cerrar popups al hacer clic fuera
     useEffect(() => {
         function close() {
@@ -875,6 +939,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             Underline,
             TextStyleKit,
             Highlight.configure({ multicolor: true }),
+            TooltipMark,
             TextAlign.configure({ types: ['heading', 'paragraph', 'image', 'youtube', 'audio', 'callout', 'mermaid', 'accordion', 'contentButton', 'documentAttachment', 'imageGrid'] }),
             Link.configure({
                 openOnClick: false,
@@ -896,6 +961,20 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             ContentButtonExtension,
             DocumentAttachmentExtension,
             ImageGridExtension,
+            VideoGalleryExtension,
+            GifExtension,
+            QuoteCardExtension,
+            StatsCounterExtension,
+            TimelineExtension,
+            ComparisonSliderExtension,
+            CountdownTimerExtension,
+            ProgressBarsExtension,
+            SpotifyEmbedExtension,
+            SocialShareExtension,
+            TabsExtension,
+            ToggleExtension,
+            QuizExtension,
+            PollExtension,
             Placeholder.configure({ placeholder: 'Escribe aquí… Usa "/" para insertar bloques' }),
             CharacterCount,
         ],
@@ -1115,11 +1194,6 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
         else if (action === 'audio') setShowAudioMenu(true);
         else if (action === 'document') setTimeout(() => docInputRef.current?.click(), 0);
         else if (action === 'emoji') setShowEmojiPicker(true);
-        else if (action.startsWith('mermaid-')) {
-            const type = action.replace('mermaid-', '');
-            const templates = { flowchart: MERMAID_TEMPLATES.flowchart, mindmap: MERMAID_TEMPLATES.mindmap, sequence: MERMAID_TEMPLATES.sequence };
-            editor?.chain().focus().insertMermaid(templates[type] || MERMAID_TEMPLATES.flowchart).run();
-        }
     }
 
     function handleInsertAction(action) {
@@ -1403,10 +1477,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                     {showMermaidMenu && (
                         <div className="absolute top-10 left-0 z-50 p-2 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl flex flex-col gap-1 w-48" onMouseDown={e => e.stopPropagation()}>
                             {[
-                                { key: 'flowchart', icon: '→', label: 'Diagrama de flujo' },
-                                { key: 'mindmap',   icon: '🌐', label: 'Mapa mental' },
-                                { key: 'sequence',  icon: '↔', label: 'Secuencia' },
-                                { key: 'graph',     icon: '◎', label: 'Mapa conceptual' },
+                                ...MERMAID_TEMPLATE_OPTIONS,
                             ].map(({ key, icon, label }) => (
                                 <button key={key} type="button"
                                     onClick={() => { editor.chain().focus().insertMermaid(MERMAID_TEMPLATES[key]).run(); setShowMermaidMenu(false); }}
@@ -1426,6 +1497,37 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                 <ToolBtn onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()} title="Limpiar formato"><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7l4-4 10 10-4 4L4 7z"/><path d="M14 6l4 4"/><line x1="2" y1="22" x2="22" y2="22"/></svg></ToolBtn>
 
                 <Divider />
+
+                <Divider />
+
+                {/* Herramientas fijadas por el usuario */}
+                {pinnedTools.length > 0 && (
+                    <>
+                        {pinnedTools.map(tool => {
+                            const toolItem = PLUS_MENU_ITEMS.find(item => item.action === tool.action) || INSERT_MENU_ITEMS.find(item => item.action === tool.action);
+                            if (!toolItem) return null;
+                            return (
+                                <div key={tool.action} className="relative group" onMouseDown={e => e.stopPropagation()}>
+                                    <ToolBtn 
+                                        onClick={() => handleInsertAction(tool.action)} 
+                                        title={`${toolItem.title} (fijado)`}
+                                    >
+                                        <span className="text-[10px] font-semibold">{toolItem.icon}</span>
+                                    </ToolBtn>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleUnpinTool(tool.action)}
+                                        className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                                        title="Quitar de barra"
+                                    >
+                                        <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                    </button>
+                                </div>
+                            );
+                        })}
+                        <Divider />
+                    </>
+                )}
 
                 {/* Emoji */}
                 <div className="relative" onMouseDown={e => e.stopPropagation()}>
@@ -1490,22 +1592,37 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                                                 <p className={`text-[10px] font-bold uppercase tracking-wider ${categoryStyle.color}`}>{category}</p>
                                                 <span className="text-[10px] text-[var(--text-muted)]">{items.length}</span>
                                             </div>
-                                            {items.map(item => (
+                                            {items.map(item => {
+                                                const isPinned = pinnedTools.some(t => t.action === item.action);
+                                                return (
                                                 <button
                                                     key={item.action}
                                                     type="button"
                                                     onClick={() => handleInsertAction(item.action)}
-                                                    className="group mx-1 flex w-[calc(100%-0.5rem)] items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-fuchsia-500/10"
+                                                    className="group mx-1 flex w-[calc(100%-0.5rem)] items-start gap-2 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-fuchsia-500/10"
                                                 >
                                                     <span className={`mt-0.5 flex items-center justify-center w-8 h-8 rounded-lg shrink-0 text-[11px] font-semibold ${categoryStyle.bg} ${categoryStyle.color}`}>
                                                         {item.icon}
                                                     </span>
-                                                    <div className="min-w-0">
+                                                    <div className="min-w-0 flex-1">
                                                         <p className="text-sm font-medium text-[var(--text-primary)] group-hover:text-fuchsia-400 transition-colors">{item.title}</p>
                                                         <p className="text-[11px] text-[var(--text-muted)] leading-tight mt-0.5">{item.desc}</p>
                                                     </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            isPinned ? handleUnpinTool(item.action) : handlePinTool(item);
+                                                        }}
+                                                        className={`shrink-0 p-1 rounded-md transition-colors ${isPinned ? 'text-fuchsia-400 bg-fuchsia-500/20' : 'text-[var(--text-muted)] hover:text-fuchsia-400 hover:bg-fuchsia-500/10'}`}
+                                                        title={isPinned ? 'Quitar de barra de herramientas' : 'Fijar en barra de herramientas'}
+                                                    >
+                                                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill={isPinned ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+                                                            <path d="M12 2L9.5 9.5 2 12l6.5 2.5L12 22l2.5-7.5L22 12l-6.5-2.5L12 2z"/>
+                                                        </svg>
+                                                    </button>
                                                 </button>
-                                            ))}
+                                            )})}
                                         </div>
                                     );
                                 })}
@@ -1700,9 +1817,10 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                     [&_.tiptap_p.is-editor-empty:first-child::before]:text-[var(--text-muted)]
                     [&_.tiptap_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)]
                     [&_.tiptap_p.is-editor-empty:first-child::before]:float-left
-                    [&_.tiptap_p.is-editor-empty:first-child::before]:pointer-events-none
+                     [&_.tiptap_p.is-editor-empty:first-child::before]:pointer-events-none
                 `}>
                     <EditorContent editor={editor} />
+                    <BubbleMenuTooltip editor={editor} />
                 </div>
             </div>
 

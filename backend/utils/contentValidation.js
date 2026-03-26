@@ -20,6 +20,14 @@ function collectBlockValidationErrors(content, errors) {
         const tag = match[0];
         const imagesRaw = tag.match(/data-images="([^"]*)"/i)?.[1] || '[]';
         const columnsRaw = tag.match(/data-columns="([^"]*)"/i)?.[1] || tag.match(/data-cols="([^"]*)"/i)?.[1] || '2';
+        const mobileColumnsRaw = tag.match(/data-mobile-columns="([^"]*)"/i)?.[1] || '';
+        const gapRaw = tag.match(/data-gap="([^"]*)"/i)?.[1] || '';
+        const aspectRaw = tag.match(/data-aspect="([^"]*)"/i)?.[1] || '';
+        const captionModeRaw = tag.match(/data-caption-mode="([^"]*)"/i)?.[1] || '';
+        const cornerStyleRaw = tag.match(/data-corner-style="([^"]*)"/i)?.[1] || '';
+        const widthRaw = tag.match(/data-width="([^"]*)"/i)?.[1] || '';
+        const imageFitRaw = tag.match(/data-image-fit="([^"]*)"/i)?.[1] || '';
+        const layoutRaw = tag.match(/data-layout="([^"]*)"/i)?.[1] || '';
 
         try {
             const parsed = JSON.parse(imagesRaw.replace(/&quot;/g, '"'));
@@ -27,13 +35,84 @@ function collectBlockValidationErrors(content, errors) {
                 errors.push('El bloque imageGrid debe incluir una lista valida de imagenes.');
                 break;
             }
+
+            const hasInvalidImage = parsed.some((item) => {
+                if (typeof item === 'string') {
+                    return normalizeUrl(item) === null || !normalizeUrl(item);
+                }
+
+                if (!isPlainObject(item)) return true;
+
+                const src = normalizeUrl(item.src);
+                if (src === null || !src) return true;
+
+                if (item.href !== undefined && item.href !== null && String(item.href).trim()) {
+                    const href = normalizeUrl(item.href);
+                    if (href === null || !href) return true;
+                }
+
+                if (item.openInNewTab !== undefined && typeof item.openInNewTab !== 'boolean' && !['true', 'false'].includes(String(item.openInNewTab).toLowerCase())) {
+                    return true;
+                }
+
+                if (item.size !== undefined && !['standard', 'wide', 'tall', 'hero'].includes(String(item.size).toLowerCase())) {
+                    return true;
+                }
+
+                return false;
+            });
+
+            if (hasInvalidImage) {
+                errors.push('El bloque imageGrid contiene imagenes o enlaces invalidos.');
+                break;
+            }
         } catch {
             errors.push('El bloque imageGrid tiene un data-images invalido.');
             break;
         }
 
-        if (![2, 3, 4].includes(Number(columnsRaw) || 0)) {
+        if (![1, 2, 3, 4].includes(Number(columnsRaw) || 0)) {
             errors.push('El bloque imageGrid tiene una configuracion de columnas invalida.');
+            break;
+        }
+
+        if (mobileColumnsRaw && ![1, 2].includes(Number(mobileColumnsRaw) || 0)) {
+            errors.push('El bloque imageGrid tiene una configuracion responsive invalida.');
+            break;
+        }
+
+        if (gapRaw && !['tight', 'normal', 'loose'].includes(gapRaw)) {
+            errors.push('El bloque imageGrid tiene un gap invalido.');
+            break;
+        }
+
+        if (aspectRaw && !['landscape', 'square', 'portrait', 'auto'].includes(aspectRaw)) {
+            errors.push('El bloque imageGrid tiene una relacion de aspecto invalida.');
+            break;
+        }
+
+        if (captionModeRaw && !['below', 'overlay', 'hidden'].includes(captionModeRaw)) {
+            errors.push('El bloque imageGrid tiene una configuracion de captions invalida.');
+            break;
+        }
+
+        if (cornerStyleRaw && !['soft', 'rounded', 'pill'].includes(cornerStyleRaw)) {
+            errors.push('El bloque imageGrid tiene un estilo de borde invalido.');
+            break;
+        }
+
+        if (widthRaw && !['content', 'wide', 'full'].includes(widthRaw)) {
+            errors.push('El bloque imageGrid tiene un ancho invalido.');
+            break;
+        }
+
+        if (imageFitRaw && !['cover', 'contain'].includes(imageFitRaw)) {
+            errors.push('El bloque imageGrid tiene un ajuste de imagen invalido.');
+            break;
+        }
+
+        if (layoutRaw && !['uniform', 'mosaic'].includes(layoutRaw)) {
+            errors.push('El bloque imageGrid tiene un layout invalido.');
             break;
         }
     }
