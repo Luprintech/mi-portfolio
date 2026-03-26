@@ -1,5 +1,27 @@
 import { getMermaidTemplateByAction } from './diagramConfig';
 
+// Cargar herramientas fijadas desde localStorage
+function loadPinnedTools() {
+    try {
+        const saved = localStorage.getItem('cms-pinned-tools');
+        return saved ? JSON.parse(saved) : [];
+    } catch {
+        return [];
+    }
+}
+
+// Guardar herramientas fijadas en localStorage
+export function savePinnedTools(tools) {
+    try {
+        localStorage.setItem('cms-pinned-tools', JSON.stringify(tools));
+    } catch {
+        // Silently fail if localStorage is not available
+    }
+}
+
+// Estado inicial de herramientas fijadas
+export const PINNED_TOOLS = loadPinnedTools();
+
 export const INSERT_MENU_ITEMS = [
     { title: 'Titulo 1', icon: 'H1', desc: 'Titulo principal', category: 'Bloques', action: 'h1', toolbar: 'primary' },
     { title: 'Titulo 2', icon: 'H2', desc: 'Subtitulo', category: 'Bloques', action: 'h2', toolbar: 'primary' },

@@ -6,6 +6,7 @@ import { IMAGE_INPUT_ACCEPT, IMAGE_UPLOAD_LABEL, validateImageFile } from '../..
 import { createPostContentPayload, inferPostContentFields, looksLikeHtmlContent } from '../../lib/postContentSource';
 import TemplatePicker from '../../components/cms/editor/TemplatePicker';
 import EditorialChecklist from '../../components/cms/editor/EditorialChecklist';
+import CollapsibleSection from '../../components/cms/editor/CollapsibleSection';
 import { X } from 'lucide-react';
 
 const RichEditor = lazy(() => import('../../components/cms/RichEditor'));
@@ -661,187 +662,187 @@ export default function BitacoraPostEditor() {
             <form id="post-form" onSubmit={e => handleSubmit(e, 'draft')} className="max-w-7xl mx-auto space-y-5">
 
                 {/* ── Metadatos ─────────────────────────────────────────────── */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-default)]">
-                    <p className="lg:col-span-2 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-widest">Metadatos</p>
+                <CollapsibleSection title="Metadatos" icon="📋" defaultOpen={true}>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        {/* Título */}
+                        <div className="lg:col-span-2">
+                            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5" htmlFor="post-title">Título *</label>
+                            <input
+                                id="post-title"
+                                type="text"
+                                value={form.title}
+                                onChange={handleTitleChange}
+                                required
+                                placeholder="Título del post…"
+                                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-default)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-fuchsia-500/60 focus:ring-1 focus:ring-fuchsia-500/40 transition-all text-sm shadow-sm"
+                            />
+                            {/* Title character counter */}
+                            <p className={`mt-1.5 text-right text-[10px] font-medium ${titleLen > TITLE_MAX ? 'text-red-500' : 'text-[var(--text-muted)]'}`}>
+                                {titleLen}/{TITLE_MAX}
+                                {titleLen > TITLE_MAX && <span className="ml-1">— demasiado largo</span>}
+                            </p>
+                        </div>
 
-                    {/* Título */}
-                    <div className="lg:col-span-2">
-                        <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5" htmlFor="post-title">Título *</label>
-                        <input
-                            id="post-title"
-                            type="text"
-                            value={form.title}
-                            onChange={handleTitleChange}
-                            required
-                            placeholder="Título del post…"
-                            className="w-full px-4 py-3 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-default)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-fuchsia-500/60 focus:ring-1 focus:ring-fuchsia-500/40 transition-all text-sm shadow-sm"
-                        />
-                        {/* Title character counter */}
-                        <p className={`mt-1.5 text-right text-[10px] font-medium ${titleLen > TITLE_MAX ? 'text-red-500' : 'text-[var(--text-muted)]'}`}>
-                            {titleLen}/{TITLE_MAX}
-                            {titleLen > TITLE_MAX && <span className="ml-1">— demasiado largo</span>}
-                        </p>
-                    </div>
+                        {/* Slug */}
+                        <div>
+                            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5" htmlFor="post-slug">
+                                Slug * <span className="text-[var(--text-muted)] opacity-70">(URL)</span>
+                            </label>
+                            <input
+                                id="post-slug"
+                                type="text"
+                                value={form.slug}
+                                onChange={handleSlugChange}
+                                required
+                                placeholder="mi-primer-post"
+                                disabled={isEdit}
+                                className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-default)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-fuchsia-500/60 focus:ring-1 focus:ring-fuchsia-500/40 transition-all text-sm disabled:opacity-40 disabled:cursor-not-allowed font-mono shadow-sm"
+                            />
+                        </div>
 
-                    {/* Slug */}
-                    <div>
-                        <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5" htmlFor="post-slug">
-                            Slug * <span className="text-[var(--text-muted)] opacity-70">(URL)</span>
-                        </label>
-                        <input
-                            id="post-slug"
-                            type="text"
-                            value={form.slug}
-                            onChange={handleSlugChange}
-                            required
-                            placeholder="mi-primer-post"
-                            disabled={isEdit}
-                            className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-default)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-fuchsia-500/60 focus:ring-1 focus:ring-fuchsia-500/40 transition-all text-sm disabled:opacity-40 disabled:cursor-not-allowed font-mono shadow-sm"
-                        />
-                    </div>
+                        {/* Fecha */}
+                        <div>
+                            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5" htmlFor="post-date">Fecha de publicación</label>
+                            <input
+                                id="post-date"
+                                type="date"
+                                value={form.date}
+                                onChange={handleChange('date')}
+                                className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-default)] text-[var(--text-primary)] focus:outline-none focus:border-fuchsia-500/60 focus:ring-1 focus:ring-fuchsia-500/40 transition-all text-sm shadow-sm"
+                            />
+                        </div>
 
-                    {/* Fecha */}
-                    <div>
-                        <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5" htmlFor="post-date">Fecha de publicación</label>
-                        <input
-                            id="post-date"
-                            type="date"
-                            value={form.date}
-                            onChange={handleChange('date')}
-                            className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-default)] text-[var(--text-primary)] focus:outline-none focus:border-fuchsia-500/60 focus:ring-1 focus:ring-fuchsia-500/40 transition-all text-sm shadow-sm"
-                        />
-                    </div>
+                        {/* Tags */}
+                        <div className="lg:col-span-2">
+                            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5" htmlFor="post-tags">
+                                Tags <span className="text-[var(--text-muted)] opacity-70">(separados por coma)</span>
+                            </label>
+                            <input
+                                id="post-tags"
+                                type="text"
+                                value={form.tags}
+                                onChange={handleChange('tags')}
+                                placeholder="React, Node.js, Docker"
+                                className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-default)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-fuchsia-500/60 focus:ring-1 focus:ring-fuchsia-500/40 transition-all text-sm shadow-sm"
+                            />
+                            {/* Visual tag chips */}
+                            <TagChips tagsString={form.tags} onChange={handleTagsChange} />
+                        </div>
 
-                    {/* Tags */}
-                    <div className="lg:col-span-2">
-                        <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5" htmlFor="post-tags">
-                            Tags <span className="text-[var(--text-muted)] opacity-70">(separados por coma)</span>
-                        </label>
-                        <input
-                            id="post-tags"
-                            type="text"
-                            value={form.tags}
-                            onChange={handleChange('tags')}
-                            placeholder="React, Node.js, Docker"
-                            className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-default)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-fuchsia-500/60 focus:ring-1 focus:ring-fuchsia-500/40 transition-all text-sm shadow-sm"
-                        />
-                        {/* Visual tag chips */}
-                        <TagChips tagsString={form.tags} onChange={handleTagsChange} />
-                    </div>
+                        {/* Excerpt */}
+                        <div className="lg:col-span-2">
+                            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5" htmlFor="post-excerpt">Resumen / excerpt</label>
+                            <textarea
+                                id="post-excerpt"
+                                value={form.excerpt}
+                                onChange={handleChange('excerpt')}
+                                rows={2}
+                                placeholder="Breve descripción que aparece en el listado del blog…"
+                                className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-default)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-fuchsia-500/60 focus:ring-1 focus:ring-fuchsia-500/40 transition-all text-sm resize-none shadow-sm"
+                            />
+                            {/* Excerpt character counter */}
+                            <p className={`mt-1.5 text-right text-[10px] font-medium ${excerptLen > EXCERPT_MAX ? 'text-red-500' : 'text-[var(--text-muted)]'}`}>
+                                {excerptLen}/{EXCERPT_MAX}
+                                {excerptLen > EXCERPT_MAX && <span className="ml-1">— demasiado largo</span>}
+                            </p>
+                        </div>
 
-                    {/* Excerpt */}
-                    <div className="lg:col-span-2">
-                        <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5" htmlFor="post-excerpt">Resumen / excerpt</label>
-                        <textarea
-                            id="post-excerpt"
-                            value={form.excerpt}
-                            onChange={handleChange('excerpt')}
-                            rows={2}
-                            placeholder="Breve descripción que aparece en el listado del blog…"
-                            className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-default)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-fuchsia-500/60 focus:ring-1 focus:ring-fuchsia-500/40 transition-all text-sm resize-none shadow-sm"
-                        />
-                        {/* Excerpt character counter */}
-                        <p className={`mt-1.5 text-right text-[10px] font-medium ${excerptLen > EXCERPT_MAX ? 'text-red-500' : 'text-[var(--text-muted)]'}`}>
-                            {excerptLen}/{EXCERPT_MAX}
-                            {excerptLen > EXCERPT_MAX && <span className="ml-1">— demasiado largo</span>}
-                        </p>
-                    </div>
+                        <div className="lg:col-span-2 rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-4">
+                            <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">Portada</p>
+                            <p className="mt-1 text-xs leading-relaxed text-[var(--text-muted)]">
+                                Elige aqui de forma explicita la portada del post. Aunque el contenido incluya imagenes, la portada del blog se toma de este campo y se guarda en <code>ogImage</code>.
+                            </p>
 
-                    <div className="lg:col-span-2 rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-4">
-                        <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">Portada</p>
-                        <p className="mt-1 text-xs leading-relaxed text-[var(--text-muted)]">
-                            Elige aqui de forma explicita la portada del post. Aunque el contenido incluya imagenes, la portada del blog se toma de este campo y se guarda en <code>ogImage</code>.
-                        </p>
+                            <label className="mt-3 block text-xs font-medium text-[var(--text-secondary)]">URL de portada</label>
+                            <input
+                                type="text"
+                                value={form.ogImage}
+                                onChange={handleOgImageChange}
+                                placeholder="/images/tu-portada.webp o URL completa"
+                                className="mt-1.5 w-full px-4 py-2.5 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)] focus:outline-none focus:border-fuchsia-500/60 focus:ring-1 focus:ring-fuchsia-500/40 text-sm shadow-sm"
+                            />
 
-                        <label className="mt-3 block text-xs font-medium text-[var(--text-secondary)]">URL de portada</label>
-                        <input
-                            type="text"
-                            value={form.ogImage}
-                            onChange={handleOgImageChange}
-                            placeholder="/images/tu-portada.webp o URL completa"
-                            className="mt-1.5 w-full px-4 py-2.5 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)] focus:outline-none focus:border-fuchsia-500/60 focus:ring-1 focus:ring-fuchsia-500/40 text-sm shadow-sm"
-                        />
+                            <input
+                                ref={coverFileInputRef}
+                                type="file"
+                                accept={IMAGE_INPUT_ACCEPT}
+                                onChange={handleOgImageUpload}
+                                className="sr-only"
+                            />
 
-                        <input
-                            ref={coverFileInputRef}
-                            type="file"
-                            accept={IMAGE_INPUT_ACCEPT}
-                            onChange={handleOgImageUpload}
-                            className="sr-only"
-                        />
-
-                        <div className="mt-3 flex flex-wrap items-center gap-2">
-                            <button
-                                type="button"
-                                onClick={() => coverFileInputRef.current?.click()}
-                                disabled={coverUploading}
-                                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--border-default)] text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-fuchsia-500/40 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-                            >
-                                {coverUploading ? (
-                                    <>
-                                        <div className="w-3.5 h-3.5 border-2 border-fuchsia-500/30 border-t-fuchsia-500 rounded-full animate-spin" />
-                                        Subiendo portada...
-                                    </>
-                                ) : (
-                                    'Subir portada desde mi ordenador'
-                                )}
-                            </button>
-
-                            {form.ogImage && (
+                            <div className="mt-3 flex flex-wrap items-center gap-2">
                                 <button
                                     type="button"
-                                    onClick={clearCoverSelection}
-                                    className="inline-flex items-center px-3 py-1.5 rounded-lg border border-red-500/30 text-xs font-medium text-red-400 hover:bg-red-500/10 transition-all"
+                                    onClick={() => coverFileInputRef.current?.click()}
+                                    disabled={coverUploading}
+                                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--border-default)] text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-fuchsia-500/40 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
-                                    Quitar portada
+                                    {coverUploading ? (
+                                        <>
+                                            <div className="w-3.5 h-3.5 border-2 border-fuchsia-500/30 border-t-fuchsia-500 rounded-full animate-spin" />
+                                            Subiendo portada...
+                                        </>
+                                    ) : (
+                                        'Subir portada desde mi ordenador'
+                                    )}
                                 </button>
+
+                                {form.ogImage && (
+                                    <button
+                                        type="button"
+                                        onClick={clearCoverSelection}
+                                        className="inline-flex items-center px-3 py-1.5 rounded-lg border border-red-500/30 text-xs font-medium text-red-400 hover:bg-red-500/10 transition-all"
+                                    >
+                                        Quitar portada
+                                    </button>
+                                )}
+                            </div>
+
+                            <p className="mt-1 text-[10px] text-[var(--text-muted)]">{IMAGE_UPLOAD_LABEL}</p>
+
+                            {coverUploadError && (
+                                <p className="mt-1.5 text-xs text-red-400">{coverUploadError}</p>
+                            )}
+
+                            {coverUploadSuccess && (
+                                <p className="mt-1.5 text-xs text-emerald-400">{coverUploadSuccess}</p>
+                            )}
+
+                            {form.ogImage && (
+                                <div className="mt-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-primary)] p-3">
+                                    <p className="mb-1 text-[10px] uppercase tracking-wide text-[var(--text-muted)]">Vista previa de portada seleccionada</p>
+                                    <div className="overflow-hidden rounded-lg border border-[var(--border-default)] bg-[var(--bg-elevated)] aspect-[16/9] min-h-[12rem]">
+                                        <img
+                                            src={form.ogImage}
+                                            alt="Vista previa de portada del post"
+                                            className="h-full w-full object-cover"
+                                        />
+                                    </div>
+                                </div>
                             )}
                         </div>
 
-                        <p className="mt-1 text-[10px] text-[var(--text-muted)]">{IMAGE_UPLOAD_LABEL}</p>
-
-                        {coverUploadError && (
-                            <p className="mt-1.5 text-xs text-red-400">{coverUploadError}</p>
-                        )}
-
-                        {coverUploadSuccess && (
-                            <p className="mt-1.5 text-xs text-emerald-400">{coverUploadSuccess}</p>
-                        )}
-
-                        {form.ogImage && (
-                            <div className="mt-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-primary)] p-3">
-                                <p className="mb-1 text-[10px] uppercase tracking-wide text-[var(--text-muted)]">Vista previa de portada seleccionada</p>
-                                <div className="overflow-hidden rounded-lg border border-[var(--border-default)] bg-[var(--bg-elevated)] aspect-[16/9] min-h-[12rem]">
-                                    <img
-                                        src={form.ogImage}
-                                        alt="Vista previa de portada del post"
-                                        className="h-full w-full object-cover"
+                        <div className="lg:col-span-2 mt-1">
+                            <label className="flex items-center gap-3 cursor-pointer group w-fit">
+                                <div className={`relative h-5 w-10 rounded-full transition-colors ${form.featured ? 'bg-fuchsia-500' : 'bg-[var(--text-secondary)] opacity-50'}`}>
+                                    <span className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${form.featured ? 'translate-x-5' : ''}`} />
+                                    <input
+                                        type="checkbox"
+                                        checked={form.featured}
+                                        onChange={handleChange('featured')}
+                                        className="sr-only"
                                     />
                                 </div>
-                            </div>
-                        )}
+                                <span className="text-sm font-medium text-[var(--text-primary)] transition-colors group-hover:text-fuchsia-500">
+                                    Marcar como artículo destacado
+                                </span>
+                            </label>
+                            <p className="mt-2 text-xs leading-relaxed text-[var(--text-muted)]">
+                                El blog mostrará este post en la zona destacada de la portada. Si activas esta opción en otro artículo, sustituirá al actual.
+                            </p>
+                        </div>
                     </div>
-
-                    <div className="lg:col-span-2 mt-1">
-                        <label className="flex items-center gap-3 cursor-pointer group w-fit">
-                            <div className={`relative h-5 w-10 rounded-full transition-colors ${form.featured ? 'bg-fuchsia-500' : 'bg-[var(--text-secondary)] opacity-50'}`}>
-                                <span className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${form.featured ? 'translate-x-5' : ''}`} />
-                                <input
-                                    type="checkbox"
-                                    checked={form.featured}
-                                    onChange={handleChange('featured')}
-                                    className="sr-only"
-                                />
-                            </div>
-                            <span className="text-sm font-medium text-[var(--text-primary)] transition-colors group-hover:text-fuchsia-500">
-                                Marcar como artículo destacado
-                            </span>
-                        </label>
-                        <p className="mt-2 text-xs leading-relaxed text-[var(--text-muted)]">
-                            El blog mostrará este post en la zona destacada de la portada. Si activas esta opción en otro artículo, sustituirá al actual.
-                        </p>
-                    </div>
-                </div>
+                </CollapsibleSection>
 
                 {/* ── Editor rico ───────────────────────────────────────────── */}
                 <div>
@@ -864,33 +865,40 @@ export default function BitacoraPostEditor() {
                     </Suspense>
                 </div>
 
-                <TemplatePicker activeTemplateKey={activeTemplateKey} onApplyTemplate={handleApplyTemplate} />
+                {/* ── Templates Editoriales ───────────────────────────────────── */}
+                <CollapsibleSection title="Templates Editoriales" icon="📄" defaultOpen={false}>
+                    <TemplatePicker activeTemplateKey={activeTemplateKey} onApplyTemplate={handleApplyTemplate} />
+                </CollapsibleSection>
 
-                <EditorialChecklist form={form} wordCount={wordCount} />
+                {/* ── Checklist Editorial ──────────────────────────────────────── */}
+                <CollapsibleSection title="Checklist Editorial" icon="✅" badge={wordCount > 0 ? `${Math.min(100, Math.round((wordCount / 1500) * 100))}%` : '0%'} badgeColor="emerald" defaultOpen={false}>
+                    <EditorialChecklist form={form} wordCount={wordCount} />
+                </CollapsibleSection>
 
+                {/* ── Revisiones ─────────────────────────────────────────────── */}
                 {isEdit && (
-                    <div className="space-y-3 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-5">
-                        <div className="flex items-center justify-between gap-3">
-                            <div>
-                                <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">Revisiones</p>
-                                <p className="mt-1 text-xs text-[var(--text-muted)]">Cada guardado y autoguardado crea un snapshot por post para restaurar rapido si algo sale mal.</p>
+                    <CollapsibleSection title="Revisiones" icon="📜" badge={revisions.length} badgeColor="violet" defaultOpen={false}>
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between gap-3">
+                                <div>
+                                    <p className="text-xs text-[var(--text-muted)]">Cada guardado y autoguardado crea un snapshot por post para restaurar rapido si algo sale mal.</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => loadRevisions(editSlug)}
+                                    className="rounded-lg border border-[var(--border-default)] px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                                >
+                                    Recargar
+                                </button>
                             </div>
-                            <button
-                                type="button"
-                                onClick={() => loadRevisions(editSlug)}
-                                className="rounded-lg border border-[var(--border-default)] px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-                            >
-                                Recargar
-                            </button>
-                        </div>
 
-                        {loadingRevisions ? (
-                            <p className="text-xs text-[var(--text-muted)]">Cargando revisiones...</p>
-                        ) : revisions.length === 0 ? (
-                            <p className="text-xs text-[var(--text-muted)]">Todavia no hay revisiones persistidas para este post.</p>
-                        ) : (
-                            <div className="grid gap-2">
-                                {revisions.map(item => (
+                            {loadingRevisions ? (
+                                <p className="text-xs text-[var(--text-muted)]">Cargando revisiones...</p>
+                            ) : revisions.length === 0 ? (
+                                <p className="text-xs text-[var(--text-muted)]">Todavia no hay revisiones persistidas para este post.</p>
+                            ) : (
+                                <div className="grid gap-2">
+                                    {revisions.map(item => (
                                     <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] px-4 py-3">
                                         <div>
                                             <p className="text-sm font-medium text-[var(--text-primary)]">Revision {item.revision} · {formatRevisionLabel(item)}</p>
@@ -909,12 +917,11 @@ export default function BitacoraPostEditor() {
                             </div>
                         )}
                     </div>
+                </CollapsibleSection>
                 )}
 
                 {/* ── SEO Profesional ───────────────────────────────────────── */}
-                <div className="space-y-4 p-5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-default)]">
-                    <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-widest">SEO Profesional</p>
-
+                <CollapsibleSection title="SEO Profesional" icon="🔍" badge={(form.seoTitle || form.title).length > 0 || (form.seoDescription || form.excerpt).length > 0 ? '✓' : null} badgeColor="cyan" defaultOpen={false}>
                     {/* Google Preview */}
                     <div className="p-4 bg-[var(--bg-primary)] rounded-xl mb-6 font-sans max-w-2xl border border-[var(--border-default)]">
                         <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-2 font-semibold">Previsualización de Google</p>
@@ -997,7 +1004,7 @@ export default function BitacoraPostEditor() {
                             </div>
                         </div>
                     </div>
-                </div>
+                </CollapsibleSection>
             </form>
 
             {/* ── Toast notification ───────────────────────────────────── */}

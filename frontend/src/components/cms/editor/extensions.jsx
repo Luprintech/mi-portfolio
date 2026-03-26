@@ -2153,7 +2153,34 @@ function GifView({ node, updateAttributes, selected, deleteNode }) {
             </div>
 
             {selected && src && (
-                <div className="mt-3 space-y-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-elevated)]/65 p-3">
+                <div className="mt-3 space-y-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-elevated)]/65 p-3" onMouseDown={e => e.stopPropagation()}>
+                    {/* Alineación */}
+                    <div onMouseDown={e => e.stopPropagation()}>
+                        <span className="mb-1 block text-xs text-[var(--text-muted)]">Alineación</span>
+                        <div className="flex gap-1 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)]/60 p-1">
+                            <button
+                                type="button"
+                                onClick={() => updateAttributes({ textAlign: 'left' })}
+                                className={`flex-1 rounded px-2 py-1 text-xs ${(node.attrs.textAlign === 'left' || !node.attrs.textAlign) ? 'bg-fuchsia-500/20 text-fuchsia-300' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+                            >
+                                ← Izquierda
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => updateAttributes({ textAlign: 'center' })}
+                                className={`flex-1 rounded px-2 py-1 text-xs ${node.attrs.textAlign === 'center' ? 'bg-fuchsia-500/20 text-fuchsia-300' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+                            >
+                                Centro
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => updateAttributes({ textAlign: 'right' })}
+                                className={`flex-1 rounded px-2 py-1 text-xs ${node.attrs.textAlign === 'right' ? 'bg-fuchsia-500/20 text-fuchsia-300' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+                            >
+                                Derecha →
+                            </button>
+                        </div>
+                    </div>
                     <input
                         type="text"
                         value={alt}
@@ -2168,19 +2195,52 @@ function GifView({ node, updateAttributes, selected, deleteNode }) {
                         placeholder="Caption (opcional)"
                         className="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)]/80 px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-fuchsia-500"
                     />
-                    <div className="flex gap-2">
-                        <label className="flex-1">
+                    <div className="flex items-end gap-2" onMouseDown={e => e.stopPropagation()}>
+                        <label className="flex-1" onMouseDown={e => e.stopPropagation()}>
                             <span className="mb-1 block text-xs text-[var(--text-muted)]">Ancho (px)</span>
-                            <input
-                                type="number"
-                                value={width}
-                                onChange={(e) => updateAttributes({ width: Math.max(100, Math.min(800, Number(e.target.value))) })}
-                                min="100"
-                                max="800"
-                                className="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)]/80 px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-fuchsia-500"
-                            />
+                            <div className="flex items-center">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const newWidth = Math.max(100, width - 50);
+                                        updateAttributes({ width: newWidth });
+                                    }}
+                                    className="flex h-9 w-8 items-center justify-center rounded-l-lg border border-r-0 border-[var(--border-color)] bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:bg-[var(--bg-primary)] hover:text-[var(--text-primary)]"
+                                >
+                                    −
+                                </button>
+                                <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    value={width}
+                                    onChange={(e) => {
+                                        const val = e.target.value.replace(/[^0-9]/g, '');
+                                        if (val === '') {
+                                            updateAttributes({ width: 400 });
+                                        } else {
+                                            const num = parseInt(val, 10);
+                                            if (!isNaN(num)) {
+                                                const clamped = Math.max(100, Math.min(800, num));
+                                                updateAttributes({ width: clamped });
+                                            }
+                                        }
+                                    }}
+                                    onMouseDown={e => e.stopPropagation()}
+                                    className="w-16 rounded-none border-y border-[var(--border-color)] bg-[var(--bg-primary)]/80 px-2 py-2 text-center text-sm text-[var(--text-primary)] outline-none focus:border-fuchsia-500"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const newWidth = Math.min(800, width + 50);
+                                        updateAttributes({ width: newWidth });
+                                    }}
+                                    className="flex h-9 w-8 items-center justify-center rounded-r-lg border border-l-0 border-[var(--border-color)] bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:bg-[var(--bg-primary)] hover:text-[var(--text-primary)]"
+                                >
+                                    +
+                                </button>
+                            </div>
                         </label>
-                        <label className="flex items-end gap-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)]/70 px-3 py-2">
+                        <label className="flex items-end gap-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)]/70 px-3 py-2" onMouseDown={e => e.stopPropagation()}>
                             <input
                                 type="checkbox"
                                 checked={autoplay}
@@ -2248,12 +2308,20 @@ export const GifExtension = Node.create({
         
         if (!src) return ['div', mergeAttributes(getRichBlockHtmlAttributes(HTMLAttributes, node.attrs.textAlign, { 'data-block': 'gif' }))];
         
+        // Obtener alineación del atributo
+        const alignment = node.attrs.textAlign || 'center';
+        const marginMap = {
+            left: '1em 0',
+            center: '1em auto',
+            right: '1em 0 1em auto',
+        };
+        
         const figureAttrs = mergeAttributes(getRichBlockHtmlAttributes(HTMLAttributes, node.attrs.textAlign, {
             'data-block': 'gif',
             'data-gif': '',
             'data-width': width,
             'data-autoplay': autoplay ? 'true' : 'false',
-            style: `max-width:${width}px;margin:1em auto;`,
+            style: `max-width:${width}px;margin:${marginMap[alignment] || '1em auto'};`,
         }));
         
         const children = [

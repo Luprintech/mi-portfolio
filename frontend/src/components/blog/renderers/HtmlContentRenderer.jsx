@@ -383,9 +383,17 @@ function renderNode(node, path) {
       const width = parseInt(node.getAttribute('data-width')) || 400;
       const autoplay = node.getAttribute('data-autoplay') !== 'false';
       
+      // Determinar margen basado en alineación
+      const marginMap = {
+        left: '1em 0',
+        center: '1em auto',
+        right: '1em 0 1em auto',
+      };
+      const margin = marginMap[alignment] || '1em auto';
+      
       return (
         <div key={path} className={getBlockWrapperClassName(alignment)}>
-          <figure style={{ maxWidth: `${width}px`, margin: '1em auto' }}>
+          <figure style={{ maxWidth: `${width}px`, margin }}>
             <img
               src={img.src}
               alt={img.alt || ''}
@@ -466,6 +474,9 @@ function renderNode(node, path) {
           events={events}
           layout={node.getAttribute('data-layout') || 'vertical'}
           theme={node.getAttribute('data-theme') || 'default'}
+          lineColor={node.getAttribute('data-line-color') || 'fuchsia-cyan'}
+          cardBg={node.getAttribute('data-card-bg') || 'violet-fuchsia'}
+          size={node.getAttribute('data-size') || 'md'}
         />
       </div>
     );

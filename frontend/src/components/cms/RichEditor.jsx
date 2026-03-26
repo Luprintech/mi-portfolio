@@ -104,6 +104,8 @@ import {
     groupInsertMenuItems,
     INSERT_MENU_CATEGORY_STYLES,
     PLUS_MENU_ITEMS,
+    PINNED_TOOLS,
+    savePinnedTools,
     runInsertMenuEditorAction,
 } from './editor/insertMenuConfig';
 import {
@@ -892,6 +894,25 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
     // Slash commands
     const [slashMenu, setSlashMenu] = useState({ open: false, query: '', coords: { top: 0, left: 0 } });
 
+    // Herramientas fijadas por el usuario
+    const [pinnedTools, setPinnedTools] = useState(PINNED_TOOLS);
+
+    // Función para añadir herramienta a la barra de herramientas
+    const handlePinTool = (tool) => {
+        if (!pinnedTools.find(t => t.action === tool.action)) {
+            const newPinned = [...pinnedTools, tool];
+            setPinnedTools(newPinned);
+            savePinnedTools(newPinned);
+        }
+    };
+
+    // Función para quitar herramienta de la barra de herramientas
+    const handleUnpinTool = (action) => {
+        const newPinned = pinnedTools.filter(t => t.action !== action);
+        setPinnedTools(newPinned);
+        savePinnedTools(newPinned);
+    };
+
     // Cerrar popups al hacer clic fuera
     useEffect(() => {
         function close() {
@@ -1477,6 +1498,37 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
 
                 <Divider />
 
+                <Divider />
+
+                {/* Herramientas fijadas por el usuario */}
+                {pinnedTools.length > 0 && (
+                    <>
+                        {pinnedTools.map(tool => {
+                            const toolItem = PLUS_MENU_ITEMS.find(item => item.action === tool.action) || INSERT_MENU_ITEMS.find(item => item.action === tool.action);
+                            if (!toolItem) return null;
+                            return (
+                                <div key={tool.action} className="relative group" onMouseDown={e => e.stopPropagation()}>
+                                    <ToolBtn 
+                                        onClick={() => handleInsertAction(tool.action)} 
+                                        title={`${toolItem.title} (fijado)`}
+                                    >
+                                        <span className="text-[10px] font-semibold">{toolItem.icon}</span>
+                                    </ToolBtn>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleUnpinTool(tool.action)}
+                                        className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                                        title="Quitar de barra"
+                                    >
+                                        <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                    </button>
+                                </div>
+                            );
+                        })}
+                        <Divider />
+                    </>
+                )}
+
                 {/* Emoji */}
                 <div className="relative" onMouseDown={e => e.stopPropagation()}>
                     <ToolBtn onClick={() => setShowEmojiPicker(p => !p)} title="Insertar emoji">
@@ -1540,22 +1592,37 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                                                 <p className={`text-[10px] font-bold uppercase tracking-wider ${categoryStyle.color}`}>{category}</p>
                                                 <span className="text-[10px] text-[var(--text-muted)]">{items.length}</span>
                                             </div>
-                                            {items.map(item => (
+                                            {items.map(item => {
+                                                const isPinned = pinnedTools.some(t => t.action === item.action);
+                                                return (
                                                 <button
                                                     key={item.action}
                                                     type="button"
                                                     onClick={() => handleInsertAction(item.action)}
-                                                    className="group mx-1 flex w-[calc(100%-0.5rem)] items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-fuchsia-500/10"
+                                                    className="group mx-1 flex w-[calc(100%-0.5rem)] items-start gap-2 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-fuchsia-500/10"
                                                 >
                                                     <span className={`mt-0.5 flex items-center justify-center w-8 h-8 rounded-lg shrink-0 text-[11px] font-semibold ${categoryStyle.bg} ${categoryStyle.color}`}>
                                                         {item.icon}
                                                     </span>
-                                                    <div className="min-w-0">
+                                                    <div className="min-w-0 flex-1">
                                                         <p className="text-sm font-medium text-[var(--text-primary)] group-hover:text-fuchsia-400 transition-colors">{item.title}</p>
                                                         <p className="text-[11px] text-[var(--text-muted)] leading-tight mt-0.5">{item.desc}</p>
                                                     </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            isPinned ? handleUnpinTool(item.action) : handlePinTool(item);
+                                                        }}
+                                                        className={`shrink-0 p-1 rounded-md transition-colors ${isPinned ? 'text-fuchsia-400 bg-fuchsia-500/20' : 'text-[var(--text-muted)] hover:text-fuchsia-400 hover:bg-fuchsia-500/10'}`}
+                                                        title={isPinned ? 'Quitar de barra de herramientas' : 'Fijar en barra de herramientas'}
+                                                    >
+                                                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill={isPinned ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+                                                            <path d="M12 2L9.5 9.5 2 12l6.5 2.5L12 22l2.5-7.5L22 12l-6.5-2.5L12 2z"/>
+                                                        </svg>
+                                                    </button>
                                                 </button>
-                                            ))}
+                                            )})}
                                         </div>
                                     );
                                 })}

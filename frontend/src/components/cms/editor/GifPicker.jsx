@@ -1,9 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 
-// GIPHY API Key - Puedes usar la API key pública de GIPHY para desarrollo
-// Para producción, considera usar tu propia key desde variables de entorno
-const GIPHY_API_KEY = 'sWeN0DE0z1kheuW5ospstHQ05gSnV1pN'; // API key pública de ejemplo
+// GIPHY API Key - Configurable via entorno VITE_GIPHY_API_KEY
+// Obtener de https://developers.giphy.com/
+const GIPHY_API_KEY = import.meta.env.VITE_GIPHY_API_KEY || '';
 const GIPHY_API_BASE = 'https://api.giphy.com/v1/gifs';
+
+// Verificar si hay API key configurada
+const hasGiphyKey = Boolean(GIPHY_API_KEY);
 
 export default function GifPicker({ onSelect, onClose }) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -11,6 +14,7 @@ export default function GifPicker({ onSelect, onClose }) {
   const [trending, setTrending] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('trending');
+  const [error, setError] = useState(null);
   const searchTimeoutRef = useRef(null);
 
   const categories = [
@@ -46,6 +50,11 @@ export default function GifPicker({ onSelect, onClose }) {
   }, [searchQuery]);
 
   async function fetchTrending() {
+    if (!hasGiphyKey) {
+      setError('API key de GIPHY no configurada. Añade VITE_GIPHY_API_KEY en tu archivo .env');
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const response = await fetch(
@@ -53,8 +62,10 @@ export default function GifPicker({ onSelect, onClose }) {
       );
       const data = await response.json();
       setTrending(data.data || []);
+      setError(null);
     } catch (error) {
       console.error('Error fetching trending GIFs:', error);
+      setError('Error al cargar GIFs');
     } finally {
       setLoading(false);
     }
@@ -108,6 +119,37 @@ export default function GifPicker({ onSelect, onClose }) {
   }
 
   const displayGifs = searchQuery.trim() ? gifs : trending;
+
+  // Mostrar mensaje de error si no hay API key
+  if (!hasGiphyKey) {
+    return (
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm">
+        <div className="relative flex h-[90vh] w-[90vw] max-w-lg flex-col items-center justify-center rounded-2xl border border-[var(--border-color)] bg-[var(--bg-primary)] p-8 text-center shadow-2xl">
+          <span className="text-6xl mb-4">⚙️</span>
+          <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">API de GIPHY no configurada</h2>
+          <p className="text-[var(--text-muted)] mb-6">
+            Para usar GIFs, necesitas configurar la API key de GIPHY.
+          </p>
+          <div className="w-full max-w-md rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-color)] p-4 text-left">
+            <p className="text-sm text-[var(--text-muted)] mb-2">Añade en tu archivo <code className="text-fuchsia-400">.env</code>:</p>
+            <code className="block rounded-lg bg-black/30 px-4 py-3 text-sm text-cyan-400 font-mono">
+              VITE_GIPHY_API_KEY=tu_api_key_aqui
+            </code>
+            <p className="text-xs text-[var(--text-muted)] mt-3">
+              Obtén tu API key en <a href="https://developers.giphy.com/" target="_blank" rel="noopener noreferrer" className="text-fuchsia-400 hover:underline">developers.giphy.com</a>
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="mt-6 rounded-lg bg-fuchsia-600 px-6 py-2 text-white hover:bg-fuchsia-500"
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm">

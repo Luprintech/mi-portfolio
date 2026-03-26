@@ -1,5 +1,6 @@
 import { Node, mergeAttributes } from '@tiptap/core';
 import { ReactNodeViewRenderer } from '@tiptap/react';
+import React from 'react';
 import RichBlockFrame from '../RichBlockFrame';
 import { createRichBlockTextAlignAttribute, getRichBlockHtmlAttributes } from '../blockAlignment';
 
@@ -14,10 +15,63 @@ const TIMELINE_LAYOUTS = {
   horizontal: { name: 'Horizontal', icon: '→' },
 };
 
+// Lista de iconos predefinidos para seleccionar
+const ICON_OPTIONS = [
+  '📌', '🚀', '💡', '🎯', '⭐', '🔥', '💎', '🏆', '🎉', '✨',
+  '📅', '🗓️', '⏰', '⚡', '💪', '🎨', '🔧', '📱', '💻', '🌐',
+  '🎓', '📚', '🔬', '💼', '🏠', '✈️', '🎸', '📷', '🎬', '💡',
+];
+
+// Opciones de color para línea y fondo
+const LINE_COLOR_OPTIONS = [
+  { value: 'fuchsia-cyan', label: 'Fuchsia → Cyan', class: 'from-fuchsia-500 to-cyan-500', bgClass: 'bg-gradient-to-b from-fuchsia-500 to-cyan-500' },
+  { value: 'blue-cyan', label: 'Blue → Cyan', class: 'from-blue-500 to-cyan-500', bgClass: 'bg-gradient-to-b from-blue-500 to-cyan-500' },
+  { value: 'purple-pink', label: 'Purple → Pink', class: 'from-purple-500 to-pink-500', bgClass: 'bg-gradient-to-b from-purple-500 to-pink-500' },
+  { value: 'orange-red', label: 'Orange → Red', class: 'from-orange-500 to-red-500', bgClass: 'bg-gradient-to-b from-orange-500 to-red-500' },
+  { value: 'green-teal', label: 'Green → Teal', class: 'from-green-500 to-teal-500', bgClass: 'bg-gradient-to-b from-green-500 to-teal-500' },
+  { value: 'yellow-amber', label: 'Yellow → Amber', class: 'from-yellow-500 to-amber-500', bgClass: 'bg-gradient-to-b from-yellow-500 to-amber-500' },
+  { value: 'slate', label: 'Gris (Minimal)', class: 'slate-400', bgClass: 'bg-slate-400' },
+  { value: 'white', label: 'Blanco', class: 'white', bgClass: 'bg-white' },
+];
+
+const CARD_BG_OPTIONS = [
+  { value: 'violet-fuchsia', label: 'Violet → Fuchsia', class: 'from-violet-900/10 to-fuchsia-900/10' },
+  { value: 'blue-indigo', label: 'Blue → Indigo', class: 'from-blue-900/10 to-indigo-900/10' },
+  { value: 'emerald-teal', label: 'Emerald → Teal', class: 'from-emerald-900/10 to-teal-900/10' },
+  { value: 'orange-amber', label: 'Orange → Amber', class: 'from-orange-900/10 to-amber-900/10' },
+  { value: 'slate', label: 'Gris (Minimal)', class: 'from-slate-900/5 to-slate-800/5' },
+  { value: 'white', label: 'Blanco', class: 'from-white/10 to-white/5' },
+  { value: 'transparent', label: 'Transparente', class: 'from-transparent to-transparent' },
+];
+
+// Opciones de tamaño
+const SIZE_OPTIONS = [
+  { value: 'sm', label: 'Pequeño' },
+  { value: 'md', label: 'Mediano' },
+  { value: 'lg', label: 'Grande' },
+];
+
 function TimelineView({ node, updateAttributes, selected, deleteNode }) {
   const events = node.attrs.events || [];
   const layout = node.attrs.layout || 'vertical';
   const theme = node.attrs.theme || 'default';
+  const lineColor = node.attrs.lineColor || 'fuchsia-cyan';
+  const cardBg = node.attrs.cardBg || 'violet-fuchsia';
+  const size = node.attrs.size || 'md';
+
+  // Estado para el popup de iconos
+  const [showIconPicker, setShowIconPicker] = React.useState(null);
+
+  // Encontrar el estilo de línea correspondiente
+  const currentLineColor = LINE_COLOR_OPTIONS.find(c => c.value === lineColor) || LINE_COLOR_OPTIONS[0];
+  const currentCardBg = CARD_BG_OPTIONS.find(c => c.value === cardBg) || CARD_BG_OPTIONS[0];
+
+  // Determinar clases de tamaño
+  const sizeClasses = {
+    sm: { date: 'text-[10px]', title: 'text-sm', desc: 'text-xs', dot: 'h-8 w-8 text-sm', card: 'p-3' },
+    md: { date: 'text-xs', title: 'text-base', desc: 'text-sm', dot: 'h-10 w-10 text-lg', card: 'p-4' },
+    lg: { date: 'text-sm', title: 'text-lg', desc: 'text-base', dot: 'h-12 w-12 text-xl', card: 'p-5' },
+  };
 
   function updateEvent(index, updates) {
     const newEvents = [...events];
@@ -88,11 +142,11 @@ function TimelineView({ node, updateAttributes, selected, deleteNode }) {
               layout === 'vertical'
                 ? 'relative space-y-8 border-l-2 pl-8'
                 : 'flex gap-8 pb-8 pt-12'
-            } ${layout === 'vertical' ? lineColors[theme] : ''}`}
+            } ${currentLineColor.bgClass}`}
           >
             {layout === 'horizontal' && (
               <div
-                className={`absolute left-0 top-6 h-0.5 ${lineColors[theme]}`}
+                className={`absolute left-0 top-6 h-0.5 ${currentLineColor.bgClass}`}
                 style={{ width: `${events.length * 280}px` }}
               />
             )}
@@ -104,13 +158,7 @@ function TimelineView({ node, updateAttributes, selected, deleteNode }) {
               >
                 {/* Timeline dot/marker */}
                 <div
-                  className={`absolute flex h-10 w-10 items-center justify-center rounded-full border-2 border-[var(--bg-primary)] ${
-                    theme === 'default'
-                      ? 'bg-gradient-to-br from-fuchsia-500 to-cyan-500'
-                      : theme === 'minimal'
-                      ? 'bg-slate-400'
-                      : 'bg-gradient-to-br from-orange-500 to-red-500'
-                  } text-lg ${
+                  className={`absolute flex ${sizeClasses[size].dot} items-center justify-center rounded-full border-2 border-[var(--bg-primary)] ${currentLineColor.bgClass} ${
                     layout === 'vertical' ? '-left-[2.6rem] top-0' : 'left-0 -top-11'
                   }`}
                 >
@@ -119,15 +167,15 @@ function TimelineView({ node, updateAttributes, selected, deleteNode }) {
 
                 {/* Event card */}
                 <div
-                  className={`group rounded-xl border border-[var(--border-color)] bg-gradient-to-br ${themeClasses[theme]} p-4 transition-transform hover:-translate-y-1`}
+                  className={`group rounded-xl border border-[var(--bg-primary)]/30 bg-gradient-to-br ${currentCardBg.class} ${sizeClasses[size].card} transition-transform hover:-translate-y-1`}
                 >
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                  <div className={`mb-2 font-semibold uppercase tracking-wider text-[var(--text-muted)] ${sizeClasses[size].date}`}>
                     {event.date || 'Fecha'}
                   </div>
-                  <h4 className="mb-1 text-lg font-bold text-[var(--text-primary)]">
+                  <h4 className={`mb-1 font-bold text-[var(--text-primary)] ${sizeClasses[size].title}`}>
                     {event.title || 'Título'}
                   </h4>
-                  <p className="text-sm leading-relaxed text-[var(--text-secondary)]">
+                  <p className={`leading-relaxed text-[var(--text-secondary)] ${sizeClasses[size].desc}`}>
                     {event.description || 'Descripción'}
                   </p>
 
@@ -228,6 +276,73 @@ function TimelineView({ node, updateAttributes, selected, deleteNode }) {
               </div>
             </div>
 
+            {/* Color de línea selector */}
+            <div>
+              <label className="mb-1 block text-xs font-medium text-[var(--text-muted)]">
+                Color de línea
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {LINE_COLOR_OPTIONS.map((color) => (
+                  <button
+                    key={color.value}
+                    type="button"
+                    onClick={() => updateAttributes({ lineColor: color.value })}
+                    className={`h-8 w-8 rounded-full border-2 transition-all ${
+                      lineColor === color.value
+                        ? 'border-fuchsia-500 scale-110'
+                        : 'border-transparent hover:scale-105'
+                    } ${color.bgClass}`}
+                    title={color.label}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Color de fondo de tarjetas selector */}
+            <div>
+              <label className="mb-1 block text-xs font-medium text-[var(--text-muted)]">
+                Fondo de tarjetas
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {CARD_BG_OPTIONS.map((bg) => (
+                  <button
+                    key={bg.value}
+                    type="button"
+                    onClick={() => updateAttributes({ cardBg: bg.value })}
+                    className={`h-6 w-6 rounded border ${
+                      cardBg === bg.value
+                        ? 'ring-2 ring-fuchsia-500'
+                        : 'border-[var(--border-color)]'
+                    } bg-gradient-to-br ${bg.class}`}
+                    title={bg.label}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Tamaño selector */}
+            <div>
+              <label className="mb-1 block text-xs font-medium text-[var(--text-muted)]">
+                Tamaño
+              </label>
+              <div className="flex gap-2">
+                {SIZE_OPTIONS.map((s) => (
+                  <button
+                    key={s.value}
+                    type="button"
+                    onClick={() => updateAttributes({ size: s.value })}
+                    className={`flex-1 rounded-lg border px-3 py-2 text-xs font-medium transition-all ${
+                      size === s.value
+                        ? 'border-fuchsia-500 bg-fuchsia-500/10 text-fuchsia-300'
+                        : 'border-[var(--border-color)] bg-[var(--bg-primary)]/60 text-[var(--text-muted)] hover:border-fuchsia-500/50'
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Event editors */}
             <div className="space-y-2">
               {events.map((event, index) => (
@@ -242,14 +357,35 @@ function TimelineView({ node, updateAttributes, selected, deleteNode }) {
                       onChange={(e) => updateEvent(index, { date: e.target.value })}
                       className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)]/80 px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-fuchsia-500"
                     />
-                    <input
-                      type="text"
-                      value={event.icon || ''}
-                      onChange={(e) => updateEvent(index, { icon: e.target.value })}
-                      placeholder="📌 Icono/emoji"
-                      maxLength={2}
-                      className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)]/80 px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-fuchsia-500"
-                    />
+                    {/* Selector de icono */}
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowIconPicker(showIconPicker === index ? null : index)}
+                        className="flex w-full items-center gap-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)]/80 px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-fuchsia-500 hover:bg-[var(--bg-elevated)]"
+                      >
+                        <span className="text-lg">{event.icon || '📌'}</span>
+                        <span className="text-xs text-[var(--text-muted)]">Elegir icono</span>
+                      </button>
+                      {/* Dropdown de iconos */}
+                      {showIconPicker === index && (
+                        <div className="absolute z-10 mt-1 w-full grid grid-cols-6 gap-1 rounded-lg border border-[var(--border-color)] bg-[var(--bg-elevated)] p-2 shadow-xl max-h-40 overflow-y-auto">
+                          {ICON_OPTIONS.map((icon) => (
+                            <button
+                              key={icon}
+                              type="button"
+                              onClick={() => {
+                                updateEvent(index, { icon });
+                                setShowIconPicker(null);
+                              }}
+                              className={`flex h-8 w-8 items-center justify-center rounded hover:bg-fuchsia-500/20 text-lg ${event.icon === icon ? 'bg-fuchsia-500/30' : ''}`}
+                            >
+                              {icon}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <input
                     type="text"
@@ -306,6 +442,9 @@ export const TimelineExtension = Node.create({
       },
       layout: { default: 'vertical' },
       theme: { default: 'default' },
+      lineColor: { default: 'fuchsia-cyan' },
+      cardBg: { default: 'violet-fuchsia' },
+      size: { default: 'md' },
       textAlign: createRichBlockTextAlignAttribute(),
     };
   },
@@ -313,7 +452,7 @@ export const TimelineExtension = Node.create({
     return [{ tag: 'div[data-timeline]' }, { tag: 'div[data-block="timeline"]' }];
   },
   renderHTML({ node, HTMLAttributes }) {
-    const { events, layout, theme } = node.attrs;
+    const { events, layout, theme, lineColor, cardBg, size } = node.attrs;
 
     return [
       'div',
@@ -323,6 +462,9 @@ export const TimelineExtension = Node.create({
           'data-timeline': '',
           'data-layout': layout,
           'data-theme': theme,
+          'data-line-color': lineColor,
+          'data-card-bg': cardBg,
+          'data-size': size,
           'data-events': JSON.stringify(events),
           style: 'margin:1.5em 0;',
         })
@@ -360,6 +502,9 @@ export const TimelineExtension = Node.create({
             ],
             layout: 'vertical',
             theme: 'default',
+            lineColor: 'fuchsia-cyan',
+            cardBg: 'violet-fuchsia',
+            size: 'md',
           },
         }),
     };
