@@ -118,7 +118,7 @@ export default function ProfileStorySection({ id, className = "" }) {
                   {/* Contenido */}
                   <div className={`flex-1 pt-1.5 ${upcoming ? "opacity-70" : ""}`}>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-bold text-[var(--text-primary)] md:text-base">
+                      <h3 className="text-sm font-bold text-[var(--text-primary)]">
                         {t(`about.${titleKey}`)}
                       </h3>
                       {upcoming && (
@@ -127,7 +127,7 @@ export default function ProfileStorySection({ id, className = "" }) {
                         </span>
                       )}
                     </div>
-                    <p className="mt-1 text-sm leading-relaxed text-[var(--text-secondary)]">
+                    <p className="mt-1 text-sm leading-relaxed text-[var(--text-secondary)] text-justify">
                       {t(`about.${bodyKey}`)}
                     </p>
                   </div>
