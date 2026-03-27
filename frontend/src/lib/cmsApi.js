@@ -94,4 +94,7 @@ export const cmsApi = {
     uploadDocument: (token, file) => upload('/api/bitacora/upload-document', 'document', token, file),
     uploadAudio: (token, file) => upload('/api/bitacora/upload-audio', 'audio', token, file),
     uploadCv: (token, file) => upload('/api/bitacora/upload-cv', 'cv', token, file),
+
+    // Chat stats
+    getChatStats: (token) => request('/api/bitacora/chat-stats', { token }),
 };
