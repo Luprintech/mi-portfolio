@@ -16,7 +16,8 @@
     "description": "I design and build modern, polished web experiences. I work across frontend, backend, integrations, and AI to turn ideas into real products with a professional finish.",
     "greeting": "Hi, I'm Lupe",
     "cv": "Download CV",
-    "photo_badge": "Frontend · Backend · AI"
+    "photo_badge": "Frontend · Backend · AI",
+    "available_badge": "Open to projects"
   },
   "landing": {
     "roles": [

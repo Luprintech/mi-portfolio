@@ -16,7 +16,8 @@
     "description": "Diseño y desarrollo experiencias web modernas, funcionales y bien resueltas. Trabajo entre frontend, backend, integraciones e inteligencia artificial para convertir ideas en productos reales con acabado profesional.",
     "greeting": "Hola, soy Lupe",
     "cv": "Descargar CV",
-    "photo_badge": "Frontend · Backend · IA"
+    "photo_badge": "Frontend · Backend · IA",
+    "available_badge": "Disponible para proyectos"
   },
   "landing": {
     "roles": [

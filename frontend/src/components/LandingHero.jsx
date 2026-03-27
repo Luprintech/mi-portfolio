@@ -29,6 +29,23 @@ export default function LandingHero({ id, className = "" }) {
           transition={{ duration: 0.7, ease: "easeOut" }}
           className="relative flex w-full min-w-0 flex-col items-start text-left lg:flex-1"
         >
+          {/* Badge de disponibilidad */}
+          <motion.div
+            initial={shouldReduceMotion ? false : { opacity: 0, y: -10 }}
+            animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1.5 backdrop-blur-sm"
+          >
+            {/* Punto pulsante */}
+            <span className="relative flex h-2 w-2 shrink-0">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+            </span>
+            <span className="typo-label text-xs font-semibold tracking-wide text-emerald-300">
+              {t("hero.available_badge")}
+            </span>
+          </motion.div>
+
           <div className="typo-label mb-5 min-h-[2.8rem] text-xl font-bold text-[var(--hero-typewriter-color)] drop-shadow-[0_4px_18px_rgba(255,255,255,0.12)] xs:text-2xl md:min-h-[3.6rem] md:text-3xl">
             <Typewriter
               words={roles}
