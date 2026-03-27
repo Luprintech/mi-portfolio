@@ -5,18 +5,13 @@
     <changefreq>daily</changefreq>
   </url>
   <url>
-    <loc>https://guadalupecano.es/blog/pruebaczxcz</loc>
-    <lastmod>2026-03-15</lastmod>
-    <changefreq>monthly</changefreq>
-  </url>
-  <url>
     <loc>https://guadalupecano.es/blog/diseno-arquitectura-vocaccion</loc>
     <lastmod>2026-02-22</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
     <loc>https://guadalupecano.es/blog/synology-docker-deploy</loc>
-    <lastmod>2026-02-22</lastmod>
+    <lastmod>2026-02-21</lastmod>
     <changefreq>monthly</changefreq>
   </url>
 </urlset>

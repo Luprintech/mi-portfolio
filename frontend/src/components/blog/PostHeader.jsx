@@ -8,7 +8,7 @@ import { formatDate, getReadTime } from './markdownComponents';
 
 export default function PostHeader({ postMeta }) {
   return (
-    <header className="mx-auto max-w-4xl">
+    <header className="mx-auto max-w-none">
       <Link
         to="/blog"
         className="inline-flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
@@ -16,6 +16,10 @@ export default function PostHeader({ postMeta }) {
         <ArrowLeft className="h-4 w-4" aria-hidden="true" />
         Volver al blog
       </Link>
+
+      <h1 className="mt-8 text-3xl font-extrabold leading-tight text-[var(--text-primary)] md:text-5xl">
+        {postMeta.title}
+      </h1>
 
       {postMeta.excerpt && (
         <p className="mt-6 max-w-3xl text-lg leading-8 text-justify text-[var(--text-secondary)] md:text-[1.05rem]">

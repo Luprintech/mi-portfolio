@@ -1,4 +1,5 @@
 import { useEditor, EditorContent, ReactNodeViewRenderer, NodeViewContent } from '@tiptap/react';
+import { BubbleMenu } from '@tiptap/react/menus';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
@@ -7,6 +8,7 @@ import Youtube from '@tiptap/extension-youtube';
 import TextAlign from '@tiptap/extension-text-align';
 import Highlight from '@tiptap/extension-highlight';
 import { TextStyleKit } from '@tiptap/extension-text-style';
+import FontFamily from '@tiptap/extension-font-family';
 import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
 import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table';
@@ -85,7 +87,7 @@ import Superscript from '@tiptap/extension-superscript';
 import Subscript from '@tiptap/extension-subscript';
 import 'highlight.js/styles/github-dark.css';
 import mermaid from 'mermaid';
-import { useCallback, useRef, useEffect, useState } from 'react';
+import { useCallback, useRef, useEffect, useState, useMemo } from 'react';
 import { LineHeight, AccordionExtension, ContentButtonExtension, DocumentAttachmentExtension, ImageGridExtension, VideoGalleryExtension, GifExtension, QuoteCardExtension, StatsCounterExtension, TimelineExtension, ComparisonSliderExtension, CountdownTimerExtension, SpotifyEmbedExtension, ProgressBarsExtension, SocialShareExtension, TabsExtension, ToggleExtension, QuizExtension, PollExtension } from './editor/extensions';
 import RichBlockFrame from './editor/RichBlockFrame';
 import { TooltipMark } from './editor/extensions/tooltipMark';
@@ -126,6 +128,7 @@ import {
     validateImageFile,
 } from '../../lib/mediaUploadPolicy';
 import { cmsApi } from '../../lib/cmsApi';
+import HtmlContentRenderer from '../blog/renderers/HtmlContentRenderer';
 
 const lowlight = createLowlight(common);
 
@@ -835,6 +838,12 @@ async function uploadAudioFile(file, token) {
 
 const FONT_SIZES = ['12px','14px','16px','18px','20px','24px','28px','32px','36px','48px'];
 const LINE_HEIGHTS = ['1', '1.2', '1.5', '1.8', '2'];
+const FONT_FAMILIES = [
+    { label: 'Por defecto', value: null },
+    { label: 'Inter', value: 'Inter, sans-serif' },
+    { label: 'Georgia', value: 'Georgia, serif' },
+    { label: 'Monospace', value: 'monospace' },
+];
 const CODE_LANGUAGES = [
     { value: 'javascript', label: 'JavaScript' },
     { value: 'typescript', label: 'TypeScript' },
@@ -890,6 +899,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
     const [markdownSource,  setMarkdownSource]  = useState('');
     const [uploadError,     setUploadError]     = useState('');
     const [codeBlockMeta,   setCodeBlockMeta]   = useState({ filename: '', title: '' });
+    const [showPreview,     setShowPreview]     = useState(false);
 
     // Slash commands
     const [slashMenu, setSlashMenu] = useState({ open: false, query: '', coords: { top: 0, left: 0 } });
@@ -938,6 +948,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             createTechnicalCodeBlockExtension(lowlight),
             Underline,
             TextStyleKit,
+            FontFamily.configure({ types: ['textStyle'] }),
             Highlight.configure({ multicolor: true }),
             TooltipMark,
             TextAlign.configure({ types: ['heading', 'paragraph', 'image', 'youtube', 'audio', 'callout', 'mermaid', 'accordion', 'contentButton', 'documentAttachment', 'imageGrid'] }),
@@ -975,7 +986,14 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             ToggleExtension,
             QuizExtension,
             PollExtension,
-            Placeholder.configure({ placeholder: 'Escribe aquí… Usa "/" para insertar bloques' }),
+            Placeholder.configure({
+                showOnlyCurrent: false,
+                placeholder: ({ node }) => {
+                    if (node.type.name === 'heading') return 'Título…';
+                    if (node.type.name === 'paragraph') return 'Escribe aquí… Usa "/" para insertar bloques';
+                    return '';
+                },
+            }),
             CharacterCount,
         ],
         content: value || '',
@@ -999,6 +1017,27 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
         },
         editorProps: {
             attributes: { class: 'outline-none min-h-[400px] text-gray-200 leading-relaxed' },
+            transformPastedHTML(html) {
+                // Limpiar tablas pegadas de Word/Google Docs/sitios externos
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // Remover atributos problemáticos que rompen el schema de TipTap
+                doc.querySelectorAll('table, tbody, thead, tr, td, th, colgroup, col').forEach(el => {
+                    el.removeAttribute('class');
+                    el.removeAttribute('width');
+                    el.removeAttribute('height');
+                    el.removeAttribute('style');
+                    el.removeAttribute('data-sheets-value');
+                    el.removeAttribute('data-sheets-formula');
+                    // Mantener colspan/rowspan que son estructurales
+                });
+                
+                // Eliminar colgroup completo (TipTap no lo usa)
+                doc.querySelectorAll('colgroup').forEach(el => el.remove());
+                
+                return doc.body.innerHTML;
+            },
             handleDrop(_view, event, _slice, moved) {
                 if (!moved && event.dataTransfer?.files?.length) {
                     const file = event.dataTransfer.files[0];
@@ -1056,6 +1095,14 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
         editor.on('transaction',     update);
         return () => { editor.off('selectionUpdate', update); editor.off('transaction', update); };
     }, [editor]);
+
+    // Cerrar preview con ESC
+    useEffect(() => {
+        if (!showPreview) return;
+        const onKey = (e) => { if (e.key === 'Escape') setShowPreview(false); };
+        document.addEventListener('keydown', onKey);
+        return () => document.removeEventListener('keydown', onKey);
+    }, [showPreview]);
 
     const handleImageFile = useCallback(async (file) => {
         if (!file || !token) return;
@@ -1213,6 +1260,20 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
     const wordCount = editor.storage.characterCount?.words?.() ?? 0;
     const charCount = editor.storage.characterCount?.characters?.() ?? 0;
     const readMin   = Math.max(1, Math.ceil(wordCount / 200));
+    
+    // Keyboard hint contextual
+    const contextHint = useMemo(() => {
+        if (!editor) return '';
+        if (editor.isActive('table')) 
+            return 'Tab: siguiente celda · Shift+Tab: anterior · Ctrl+Shift+X: eliminar tabla';
+        if (editor.isActive('codeBlock')) 
+            return 'Shift+Enter: salir del bloque de código';
+        if (editor.isActive('link'))
+            return 'Ctrl+K: editar enlace · Ctrl+Shift+K: quitar enlace';
+        if (editor.isActive('bold') || editor.isActive('italic'))
+            return 'Ctrl+B: negrita · Ctrl+I: cursiva · Ctrl+U: subrayado';
+        return 'Ctrl+B: negrita · Ctrl+K: enlace · "/" para insertar bloques';
+    }, [editor?.state]);
     const richBlockAlignmentActive = isRichBlockNodeActive(editor);
     const justifyEnabled = canUseJustifyAlignment(editor);
     const plusMenuItems = filterInsertMenuItems(PLUS_MENU_ITEMS, insertMenuQuery);
@@ -1344,6 +1405,26 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                             </div>
                         </div>
                     )}
+                </div>
+
+                {/* Selector de familia tipográfica */}
+                <div className="relative" onMouseDown={e => e.stopPropagation()}>
+                    <select
+                        value={editor.getAttributes('textStyle').fontFamily || ''}
+                        onChange={e => {
+                            const val = e.target.value;
+                            if (!val) editor.chain().focus().unsetFontFamily().run();
+                            else editor.chain().focus().setFontFamily(val).run();
+                        }}
+                        className="text-xs h-8 px-2 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border-color)] 
+                                   text-[var(--text-secondary)] hover:border-fuchsia-500/50 cursor-pointer outline-none
+                                   focus:border-fuchsia-500/60 w-[110px] shrink-0"
+                        title="Familia tipográfica"
+                    >
+                        {FONT_FAMILIES.map(f => (
+                            <option key={f.label} value={f.value || ''}>{f.label}</option>
+                        ))}
+                    </select>
                 </div>
 
                 <Divider />
@@ -1639,8 +1720,14 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
                 </ToolBtn>
 
-                {/* Pantalla completa */}
-                <div className="ml-auto">
+                {/* Preview y pantalla completa */}
+                <div className="ml-auto flex items-center gap-1">
+                    <ToolBtn onClick={() => setShowPreview(true)} title="Vista previa (Ctrl+P)">
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </ToolBtn>
                     <ToolBtn onClick={onToggleFullscreen} title={fullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}>
                         {fullscreen
                             ? <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
@@ -1686,87 +1773,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                 </div>
             )}
 
-            {/* ── TOOLBAR CONTEXTUAL DE TABLA ──────────────────────────────── */}
-            {editor.isActive('table') && (
-                <div className="flex flex-wrap items-center gap-1 px-3 py-1.5 border-b border-[var(--border-color)] bg-[var(--bg-elevated)] text-xs">
-                    <span className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mr-1">Tabla:</span>
-                    <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().addRowBefore().run(); }}
-                        className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors" title="Añadir fila arriba">↑ Fila</button>
-                    <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().addRowAfter().run(); }}
-                        className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors" title="Añadir fila abajo">↓ Fila</button>
-                    <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().deleteRow().run(); }}
-                        className="px-2 py-1 rounded hover:bg-red-500/10 text-red-400 transition-colors" title="Eliminar fila">✕ Fila</button>
-                    <div className="w-px h-4 bg-[var(--border-color)] mx-0.5 self-center" />
-                    <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().addColumnBefore().run(); }}
-                        className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors" title="Añadir columna izquierda">← Col</button>
-                    <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().addColumnAfter().run(); }}
-                        className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors" title="Añadir columna derecha">→ Col</button>
-                    <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().deleteColumn().run(); }}
-                        className="px-2 py-1 rounded hover:bg-red-500/10 text-red-400 transition-colors" title="Eliminar columna">✕ Col</button>
-                    <div className="w-px h-4 bg-[var(--border-color)] mx-0.5 self-center" />
-                    <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().toggleHeaderRow().run(); }}
-                        className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors">Cabecera</button>
-                    <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().mergeCells().run(); }}
-                        className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors" title="Combinar celdas">Combinar</button>
-                    <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().splitCell().run(); }}
-                        className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors" title="Dividir celda">Dividir</button>
-                    <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().setCellAttribute('backgroundColor', null).setCellAttribute('borderColor', null).run(); }}
-                        className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors" title="Limpiar estilos de celda">Limpiar celda</button>
-                    <span className="rounded-full border border-[var(--border-color)] bg-[var(--bg-primary)]/65 px-2 py-1 text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
-                        Arrastra bordes para ancho
-                    </span>
-                    <div className="w-px h-4 bg-[var(--border-color)] mx-0.5 self-center" />
-                    {/* Color picker */}
-                    <div className="relative">
-                        <button type="button" onClick={() => setShowTableColors(v => !v)}
-                            className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors flex items-center gap-1" title="Color de celda">
-                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-                            Color
-                        </button>
-                        {showTableColors && (
-                            <div className="absolute top-full left-0 mt-1 p-3 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-xl shadow-xl z-50 w-56" onMouseDown={e => e.preventDefault()}>
-                                <p className="text-[10px] uppercase text-[var(--text-muted)] tracking-wider mb-2">Fondo de celda</p>
-                                <div className="flex flex-wrap gap-1.5 mb-3">
-                                    {[
-                                        null,
-                                        '#fecaca', '#fed7aa', '#fef08a', '#bbf7d0', '#a5f3fc', '#bfdbfe', '#ddd6fe', '#fbcfe8',
-                                        '#dc2626', '#ea580c', '#ca8a04', '#16a34a', '#0891b2', '#2563eb', '#7c3aed', '#db2777',
-                                        '#1e1e2e', '#2a2a3a', '#3a3a4a', '#f8fafc', '#f1f5f9', '#e2e8f0',
-                                    ].map((color, i) => (
-                                        <button key={i} type="button"
-                                            onMouseDown={e => { e.preventDefault(); editor.chain().focus().setCellAttribute('backgroundColor', color).run(); setShowTableColors(false); }}
-                                            className={`w-6 h-6 rounded border transition-transform hover:scale-110 ${!color ? 'border-dashed border-[var(--border-color)]' : 'border-transparent'}`}
-                                            style={{ background: color || 'transparent' }}
-                                            title={color || 'Sin color'}
-                                        >
-                                            {!color && <span className="text-[9px] text-[var(--text-muted)]">✕</span>}
-                                        </button>
-                                    ))}
-                                </div>
-                                <p className="text-[10px] uppercase text-[var(--text-muted)] tracking-wider mb-2">Borde de celda</p>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {[
-                                        null, '#e5e7eb', '#d4d4d8',
-                                        '#dc2626', '#ea580c', '#16a34a', '#2563eb', '#7c3aed', '#db2777',
-                                        '#fecaca', '#bfdbfe', '#ddd6fe',
-                                    ].map((color, i) => (
-                                        <button key={i} type="button"
-                                            onMouseDown={e => { e.preventDefault(); editor.chain().focus().setCellAttribute('borderColor', color).run(); setShowTableColors(false); }}
-                                            className={`w-6 h-6 rounded border-2 transition-transform hover:scale-110 ${!color ? 'border-dashed border-[var(--border-color)]' : ''}`}
-                                            style={{ borderColor: color || undefined, background: 'transparent' }}
-                                            title={color || 'Por defecto'}
-                                        >
-                                            {!color && <span className="text-[9px] text-[var(--text-muted)]">✕</span>}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                    <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().deleteTable().run(); }}
-                        className="px-2 py-1 rounded hover:bg-red-500/10 text-red-400 transition-colors ml-auto">Eliminar tabla</button>
-                </div>
-            )}
+            {/* ── TOOLBAR CONTEXTUAL DE TABLA (ahora BubbleMenu flotante) ──────────────────────────────── */}
 
             {uploadError && (
                 <div className="mx-4 mt-3 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-400">
@@ -1821,6 +1828,93 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                 `}>
                     <EditorContent editor={editor} />
                     <BubbleMenuTooltip editor={editor} />
+                    
+                    {/* BubbleMenu de tabla flotante */}
+                    {editor && (
+                        <BubbleMenu
+                            editor={editor}
+                            shouldShow={({ editor }) => editor.isActive('table')}
+                            options={{
+                                placement: 'top',
+                                offset: [0, 12],
+                            }}
+                            className="flex flex-wrap items-center justify-center gap-1 px-3 py-1.5 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl text-xs z-50"
+                        >
+                            <span className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mr-1">Tabla:</span>
+                            <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().addRowBefore().run(); }}
+                                className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors" title="Añadir fila arriba">↑ Fila</button>
+                            <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().addRowAfter().run(); }}
+                                className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors" title="Añadir fila abajo">↓ Fila</button>
+                            <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().deleteRow().run(); }}
+                                className="px-2 py-1 rounded hover:bg-red-500/10 text-red-400 transition-colors" title="Eliminar fila">✕ Fila</button>
+                            <div className="w-px h-4 bg-[var(--border-color)] mx-0.5 self-center" />
+                            <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().addColumnBefore().run(); }}
+                                className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors" title="Añadir columna izquierda">← Col</button>
+                            <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().addColumnAfter().run(); }}
+                                className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors" title="Añadir columna derecha">→ Col</button>
+                            <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().deleteColumn().run(); }}
+                                className="px-2 py-1 rounded hover:bg-red-500/10 text-red-400 transition-colors" title="Eliminar columna">✕ Col</button>
+                            <div className="w-px h-4 bg-[var(--border-color)] mx-0.5 self-center" />
+                            <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().toggleHeaderRow().run(); }}
+                                className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors">Cabecera</button>
+                            <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().mergeCells().run(); }}
+                                className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors" title="Combinar celdas">Combinar</button>
+                            <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().splitCell().run(); }}
+                                className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors" title="Dividir celda">Dividir</button>
+                            <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().setCellAttribute('backgroundColor', null).setCellAttribute('borderColor', null).run(); }}
+                                className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors" title="Limpiar estilos de celda">Limpiar celda</button>
+                            <div className="w-px h-4 bg-[var(--border-color)] mx-0.5 self-center" />
+                            {/* Color picker */}
+                            <div className="relative">
+                                <button type="button" onClick={() => setShowTableColors(v => !v)}
+                                    className="px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors flex items-center gap-1" title="Color de celda">
+                                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                                    Color
+                                </button>
+                                {showTableColors && (
+                                    <div className="absolute top-full left-0 mt-1 p-3 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-xl shadow-xl z-50 w-56" onMouseDown={e => e.preventDefault()}>
+                                        <p className="text-[10px] uppercase text-[var(--text-muted)] tracking-wider mb-2">Fondo de celda</p>
+                                        <div className="flex flex-wrap gap-1.5 mb-3">
+                                            {[
+                                                null,
+                                                '#fecaca', '#fed7aa', '#fef08a', '#bbf7d0', '#a5f3fc', '#bfdbfe', '#ddd6fe', '#fbcfe8',
+                                                '#dc2626', '#ea580c', '#ca8a04', '#16a34a', '#0891b2', '#2563eb', '#7c3aed', '#db2777',
+                                                '#1e1e2e', '#2a2a3a', '#3a3a4a', '#f8fafc', '#f1f5f9', '#e2e8f0',
+                                            ].map((color, i) => (
+                                                <button key={i} type="button"
+                                                    onMouseDown={e => { e.preventDefault(); editor.chain().focus().setCellAttribute('backgroundColor', color).run(); setShowTableColors(false); }}
+                                                    className={`w-6 h-6 rounded border transition-transform hover:scale-110 ${!color ? 'border-dashed border-[var(--border-color)]' : 'border-transparent'}`}
+                                                    style={{ background: color || 'transparent' }}
+                                                    title={color || 'Sin color'}
+                                                >
+                                                    {!color && <span className="text-[9px] text-[var(--text-muted)]">✕</span>}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <p className="text-[10px] uppercase text-[var(--text-muted)] tracking-wider mb-2">Borde de celda</p>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {[
+                                                null, '#e5e7eb', '#d4d4d8',
+                                                '#dc2626', '#ea580c', '#16a34a', '#2563eb', '#7c3aed', '#db2777',
+                                                '#fecaca', '#bfdbfe', '#ddd6fe',
+                                            ].map((color, i) => (
+                                                <button key={i} type="button"
+                                                    onMouseDown={e => { e.preventDefault(); editor.chain().focus().setCellAttribute('borderColor', color).run(); setShowTableColors(false); }}
+                                                    className={`w-6 h-6 rounded border-2 transition-transform hover:scale-110 ${!color ? 'border-dashed border-[var(--border-color)]' : ''}`}
+                                                    style={{ borderColor: color || undefined, background: 'transparent' }}
+                                                    title={color || 'Por defecto'}
+                                                >
+                                                    {!color && <span className="text-[9px] text-[var(--text-muted)]">✕</span>}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().deleteTable().run(); }}
+                                className="px-2 py-1 rounded hover:bg-red-500/10 text-red-400 transition-colors ml-auto">Eliminar tabla</button>
+                        </BubbleMenu>
+                    )}
                 </div>
             </div>
 
@@ -1840,6 +1934,35 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                         placeholder="Edita el código fuente HTML aquí…"
                         spellCheck={false}
                     />
+                </div>
+            )}
+
+            {/* ── PREVIEW MODAL ────────────────────────────────────── */}
+            {showPreview && (
+                <div 
+                    className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm overflow-y-auto"
+                    onClick={() => setShowPreview(false)}
+                >
+                    <div 
+                        className="relative max-w-3xl mx-auto my-12 px-8 py-10 
+                                   bg-[var(--bg-primary)] rounded-2xl shadow-2xl border border-[var(--border-color)]"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <button 
+                            onClick={() => setShowPreview(false)}
+                            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg
+                                       text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]
+                                       transition-colors"
+                            title="Cerrar (ESC)"
+                        >
+                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M18 6L6 18M6 6l12 12"/>
+                            </svg>
+                        </button>
+                        <div className="prose prose-invert max-w-none">
+                            <HtmlContentRenderer content={editor?.getHTML() || ''} />
+                        </div>
+                    </div>
                 </div>
             )}
 
@@ -1866,7 +1989,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                 <div className="flex items-center gap-2">
                     {markdownMode && <span className="text-cyan-400 font-medium">HTML Source</span>}
                     <span className="text-[var(--text-muted)] opacity-60">Docs: {DOCUMENT_UPLOAD_LABEL}</span>
-                    <span className="text-[var(--text-muted)] opacity-60">Tip: escribe "/" para insertar bloques</span>
+                    <span className="text-[var(--text-muted)] opacity-60 transition-opacity">{contextHint}</span>
                 </div>
             </div>
         </div>

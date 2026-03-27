@@ -226,6 +226,7 @@ function parseStyle(styleText = '') {
       'textDecoration',
       'textTransform',
       'fontSize',
+      'fontFamily',
       'borderRadius',
       'boxShadow',
       'width',

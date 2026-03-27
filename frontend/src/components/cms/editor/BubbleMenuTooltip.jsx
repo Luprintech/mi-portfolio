@@ -1,6 +1,5 @@
 // ─── BubbleMenuTooltip — interfaz de edición de tooltips inline ──────────────
 import { BubbleMenu } from '@tiptap/react/menus';
-import { offset } from '@floating-ui/dom';
 import { useState, useEffect } from 'react';
 
 export default function BubbleMenuTooltip({ editor }) {
@@ -75,7 +74,6 @@ export default function BubbleMenuTooltip({ editor }) {
             editor={editor}
             shouldShow={shouldShow}
             options={{
-                duration: 100,
                 placement: 'top',
                 offset: 6,
             }}
