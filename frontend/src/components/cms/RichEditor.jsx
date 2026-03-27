@@ -8,6 +8,7 @@ import Youtube from '@tiptap/extension-youtube';
 import TextAlign from '@tiptap/extension-text-align';
 import Highlight from '@tiptap/extension-highlight';
 import { TextStyleKit } from '@tiptap/extension-text-style';
+import FontFamily from '@tiptap/extension-font-family';
 import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
 import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table';
@@ -86,7 +87,7 @@ import Superscript from '@tiptap/extension-superscript';
 import Subscript from '@tiptap/extension-subscript';
 import 'highlight.js/styles/github-dark.css';
 import mermaid from 'mermaid';
-import { useCallback, useRef, useEffect, useState } from 'react';
+import { useCallback, useRef, useEffect, useState, useMemo } from 'react';
 import { LineHeight, AccordionExtension, ContentButtonExtension, DocumentAttachmentExtension, ImageGridExtension, VideoGalleryExtension, GifExtension, QuoteCardExtension, StatsCounterExtension, TimelineExtension, ComparisonSliderExtension, CountdownTimerExtension, SpotifyEmbedExtension, ProgressBarsExtension, SocialShareExtension, TabsExtension, ToggleExtension, QuizExtension, PollExtension } from './editor/extensions';
 import RichBlockFrame from './editor/RichBlockFrame';
 import { TooltipMark } from './editor/extensions/tooltipMark';
@@ -127,6 +128,7 @@ import {
     validateImageFile,
 } from '../../lib/mediaUploadPolicy';
 import { cmsApi } from '../../lib/cmsApi';
+import HtmlContentRenderer from '../blog/renderers/HtmlContentRenderer';
 
 const lowlight = createLowlight(common);
 
@@ -836,6 +838,12 @@ async function uploadAudioFile(file, token) {
 
 const FONT_SIZES = ['12px','14px','16px','18px','20px','24px','28px','32px','36px','48px'];
 const LINE_HEIGHTS = ['1', '1.2', '1.5', '1.8', '2'];
+const FONT_FAMILIES = [
+    { label: 'Por defecto', value: null },
+    { label: 'Inter', value: 'Inter, sans-serif' },
+    { label: 'Georgia', value: 'Georgia, serif' },
+    { label: 'Monospace', value: 'monospace' },
+];
 const CODE_LANGUAGES = [
     { value: 'javascript', label: 'JavaScript' },
     { value: 'typescript', label: 'TypeScript' },
@@ -891,6 +899,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
     const [markdownSource,  setMarkdownSource]  = useState('');
     const [uploadError,     setUploadError]     = useState('');
     const [codeBlockMeta,   setCodeBlockMeta]   = useState({ filename: '', title: '' });
+    const [showPreview,     setShowPreview]     = useState(false);
 
     // Slash commands
     const [slashMenu, setSlashMenu] = useState({ open: false, query: '', coords: { top: 0, left: 0 } });
@@ -939,6 +948,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             createTechnicalCodeBlockExtension(lowlight),
             Underline,
             TextStyleKit,
+            FontFamily.configure({ types: ['textStyle'] }),
             Highlight.configure({ multicolor: true }),
             TooltipMark,
             TextAlign.configure({ types: ['heading', 'paragraph', 'image', 'youtube', 'audio', 'callout', 'mermaid', 'accordion', 'contentButton', 'documentAttachment', 'imageGrid'] }),
@@ -976,7 +986,14 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             ToggleExtension,
             QuizExtension,
             PollExtension,
-            Placeholder.configure({ placeholder: 'Escribe aquí… Usa "/" para insertar bloques' }),
+            Placeholder.configure({
+                showOnlyCurrent: false,
+                placeholder: ({ node }) => {
+                    if (node.type.name === 'heading') return 'Título…';
+                    if (node.type.name === 'paragraph') return 'Escribe aquí… Usa "/" para insertar bloques';
+                    return '';
+                },
+            }),
             CharacterCount,
         ],
         content: value || '',
@@ -1078,6 +1095,14 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
         editor.on('transaction',     update);
         return () => { editor.off('selectionUpdate', update); editor.off('transaction', update); };
     }, [editor]);
+
+    // Cerrar preview con ESC
+    useEffect(() => {
+        if (!showPreview) return;
+        const onKey = (e) => { if (e.key === 'Escape') setShowPreview(false); };
+        document.addEventListener('keydown', onKey);
+        return () => document.removeEventListener('keydown', onKey);
+    }, [showPreview]);
 
     const handleImageFile = useCallback(async (file) => {
         if (!file || !token) return;
@@ -1235,6 +1260,20 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
     const wordCount = editor.storage.characterCount?.words?.() ?? 0;
     const charCount = editor.storage.characterCount?.characters?.() ?? 0;
     const readMin   = Math.max(1, Math.ceil(wordCount / 200));
+    
+    // Keyboard hint contextual
+    const contextHint = useMemo(() => {
+        if (!editor) return '';
+        if (editor.isActive('table')) 
+            return 'Tab: siguiente celda · Shift+Tab: anterior · Ctrl+Shift+X: eliminar tabla';
+        if (editor.isActive('codeBlock')) 
+            return 'Shift+Enter: salir del bloque de código';
+        if (editor.isActive('link'))
+            return 'Ctrl+K: editar enlace · Ctrl+Shift+K: quitar enlace';
+        if (editor.isActive('bold') || editor.isActive('italic'))
+            return 'Ctrl+B: negrita · Ctrl+I: cursiva · Ctrl+U: subrayado';
+        return 'Ctrl+B: negrita · Ctrl+K: enlace · "/" para insertar bloques';
+    }, [editor?.state]);
     const richBlockAlignmentActive = isRichBlockNodeActive(editor);
     const justifyEnabled = canUseJustifyAlignment(editor);
     const plusMenuItems = filterInsertMenuItems(PLUS_MENU_ITEMS, insertMenuQuery);
@@ -1366,6 +1405,25 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                             </div>
                         </div>
                     )}
+                </div>
+
+                {/* Selector de familia tipográfica */}
+                <div className="relative" onMouseDown={e => e.stopPropagation()}>
+                    <select
+                        value={editor.getAttributes('textStyle').fontFamily || ''}
+                        onChange={e => {
+                            const val = e.target.value;
+                            if (!val) editor.chain().focus().unsetFontFamily().run();
+                            else editor.chain().focus().setFontFamily(val).run();
+                        }}
+                        className="text-xs h-7 px-2 rounded bg-[var(--bg-surface)] border border-[var(--border-color)] 
+                                   text-[var(--text-secondary)] hover:border-fuchsia-500/50 cursor-pointer outline-none"
+                        title="Familia tipográfica"
+                    >
+                        {FONT_FAMILIES.map(f => (
+                            <option key={f.label} value={f.value || ''}>{f.label}</option>
+                        ))}
+                    </select>
                 </div>
 
                 <Divider />
@@ -1661,8 +1719,14 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
                 </ToolBtn>
 
-                {/* Pantalla completa */}
-                <div className="ml-auto">
+                {/* Preview y pantalla completa */}
+                <div className="ml-auto flex items-center gap-1">
+                    <ToolBtn onClick={() => setShowPreview(true)} title="Vista previa (Ctrl+P)">
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </ToolBtn>
                     <ToolBtn onClick={onToggleFullscreen} title={fullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}>
                         {fullscreen
                             ? <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
@@ -1773,7 +1837,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                                 placement: 'top',
                                 offset: 6,
                             }}
-                            className="flex flex-wrap items-center gap-1 px-3 py-1.5 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl text-xs z-50"
+                            className="flex flex-wrap items-center justify-center gap-1 px-3 py-1.5 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl text-xs z-50"
                         >
                             <span className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mr-1">Tabla:</span>
                             <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().addRowBefore().run(); }}
@@ -1872,6 +1936,35 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                 </div>
             )}
 
+            {/* ── PREVIEW MODAL ────────────────────────────────────── */}
+            {showPreview && (
+                <div 
+                    className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm overflow-y-auto"
+                    onClick={() => setShowPreview(false)}
+                >
+                    <div 
+                        className="relative max-w-3xl mx-auto my-12 px-8 py-10 
+                                   bg-[var(--bg-primary)] rounded-2xl shadow-2xl border border-[var(--border-color)]"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <button 
+                            onClick={() => setShowPreview(false)}
+                            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg
+                                       text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]
+                                       transition-colors"
+                            title="Cerrar (ESC)"
+                        >
+                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M18 6L6 18M6 6l12 12"/>
+                            </svg>
+                        </button>
+                        <div className="prose prose-invert max-w-none">
+                            <HtmlContentRenderer content={editor?.getHTML() || ''} />
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* ── SLASH MENU ───────────────────────────────────────── */}
             {slashMenu.open && (
                 <SlashMenu
@@ -1895,7 +1988,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                 <div className="flex items-center gap-2">
                     {markdownMode && <span className="text-cyan-400 font-medium">HTML Source</span>}
                     <span className="text-[var(--text-muted)] opacity-60">Docs: {DOCUMENT_UPLOAD_LABEL}</span>
-                    <span className="text-[var(--text-muted)] opacity-60">Tip: escribe "/" para insertar bloques</span>
+                    <span className="text-[var(--text-muted)] opacity-60 transition-opacity">{contextHint}</span>
                 </div>
             </div>
         </div>
