@@ -11,6 +11,8 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.js'],
     // Globals como describe/it/expect disponibles sin imports
     globals: true,
+    // Excluir tests E2E de Playwright — los corre `npm run test:e2e`, no Vitest
+    exclude: ['**/node_modules/**', '**/e2e/**'],
     // Cobertura
     coverage: {
       provider: 'v8',
