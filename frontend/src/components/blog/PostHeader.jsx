@@ -8,7 +8,7 @@ import { formatDate, getReadTime } from './markdownComponents';
 
 export default function PostHeader({ postMeta }) {
   return (
-    <header className="mx-auto max-w-4xl">
+    <header className="mx-auto max-w-none">
       <Link
         to="/blog"
         className="inline-flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"

@@ -56,7 +56,7 @@ const BlogPost = () => {
     : '';
 
   return (
-    <div className="relative min-h-screen blog-cosmic-grid px-6 py-24 text-[var(--text-primary)] selection:bg-violet-500/30 md:px-10 lg:px-14">
+    <div className="relative min-h-screen blog-cosmic-grid px-6 py-24 text-[var(--text-primary)] selection:bg-violet-500/30 md:px-10 lg:px-10">
       <Helmet>
         <title>{seoTitle} | Guadalupe Cano</title>
         <meta name="description" content={seoDescription} />
@@ -108,7 +108,7 @@ const BlogPost = () => {
             />
 
             <div className="order-1 min-w-0">
-              <div className="mx-auto max-w-3xl">
+              <div className={hasToc ? '' : 'mx-auto max-w-3xl'}>
                 <PostContent post={postMeta} />
                 <ShareButtons postMeta={postMeta} />
 
