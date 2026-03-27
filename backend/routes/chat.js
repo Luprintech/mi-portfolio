@@ -10,6 +10,10 @@ import { getCachedResponse, isSpam, saveToCache } from '../utils/messageProtecti
 const router = Router();
 const chatLogger = logger.child({ route: 'chat' });
 
+function getClientIp(req) {
+    return req.headers['x-forwarded-for']?.split(',')[0].trim() || req.ip || 'unknown';
+}
+
 function withTimeout(promise, timeoutMs) {
     return Promise.race([
         promise,
@@ -44,37 +48,34 @@ router.post('/', chatLimiter, validators, async (req, res, next) => {
 
     const { message, history = [] } = req.body;
 
+    const clientIp = getClientIp(req);
+    const baseMeta = {
+        requestId: req.requestId,
+        ip: clientIp,
+        messageLength: message.length,
+        historyLength: history.length,
+    };
+
     if (isSpam(message)) {
-        chatLogger.warn('Chat message blocked as spam', {
-            requestId: req.requestId,
-            messageLength: message.length,
-        });
+        chatLogger.warn('Chat message blocked as spam', { ...baseMeta, outcome: 'spam' });
         return res.status(400).json({ error: 'Mensaje no valido.' });
     }
 
     const faq = matchFaq(message);
     if (faq.matched) {
-        chatLogger.info('Chat resolved from FAQ', {
-            requestId: req.requestId,
-            faqId: faq.id,
-        });
+        chatLogger.info('Chat interaction', { ...baseMeta, outcome: 'faq', faqId: faq.id });
         return res.status(200).json({ reply: faq.answer });
     }
 
     const cached = getCachedResponse(message);
     if (cached) {
-        chatLogger.info('Chat resolved from cache', {
-            requestId: req.requestId,
-            messageLength: message.length,
-        });
+        chatLogger.info('Chat interaction', { ...baseMeta, outcome: 'cache' });
         return res.status(200).json({ reply: cached });
     }
 
     const model = getGeminiModel();
     if (!model) {
-        chatLogger.warn('Gemini API key is missing', {
-            requestId: req.requestId,
-        });
+        chatLogger.warn('Chat interaction', { ...baseMeta, outcome: 'gemini_unavailable', reason: 'missing_api_key' });
         return res.status(503).json({
             error: 'El asistente no esta disponible temporalmente. Puedes contactarme directamente en contacto@guadalupecano.es',
             isWarning: true,
@@ -87,21 +88,12 @@ router.post('/', chatLimiter, validators, async (req, res, next) => {
             parts: [{ text: entry.content }],
         }));
 
-        chatLogger.info('Sending message to Gemini', {
-            requestId: req.requestId,
-            messageLength: message.length,
-            historyLength: trimmedHistory.length,
-        });
-
         const chat = model.startChat({ history: trimmedHistory });
         const result = await withTimeout(chat.sendMessage(message), 10_000);
         const reply = result.response.text();
 
         saveToCache(message, reply);
-        chatLogger.info('Chat response generated', {
-            requestId: req.requestId,
-            replyLength: reply.length,
-        });
+        chatLogger.info('Chat interaction', { ...baseMeta, outcome: 'gemini', replyLength: reply.length });
 
         return res.status(200).json({ reply });
     } catch (error) {
@@ -115,10 +107,7 @@ router.post('/', chatLimiter, validators, async (req, res, next) => {
             normalizedMessage.includes('unavailable');
 
         if (isUnavailable) {
-            chatLogger.warn('Gemini request unavailable', {
-                requestId: req.requestId,
-                error,
-            });
+            chatLogger.warn('Chat interaction', { ...baseMeta, outcome: 'gemini_unavailable', reason: error?.code ?? 'timeout_or_503' });
             return res.status(503).json({
                 error: 'El asistente no esta disponible temporalmente. Puedes contactarme directamente en contacto@guadalupecano.es',
                 isWarning: true,
@@ -126,16 +115,14 @@ router.post('/', chatLimiter, validators, async (req, res, next) => {
         }
 
         if (status === 429 || normalizedMessage.includes('429') || normalizedMessage.includes('quota') || normalizedMessage.includes('rate')) {
-            chatLogger.warn('Gemini rate limited', {
-                requestId: req.requestId,
-                error,
-            });
+            chatLogger.warn('Chat interaction', { ...baseMeta, outcome: 'gemini_quota_exceeded' });
             return res.status(429).json({
                 error: 'En este momento estoy recibiendo muchas consultas. Intentalo en unos minutos o contactame directamente en contacto@guadalupecano.es',
                 isWarning: true,
             });
         }
 
+        chatLogger.error('Chat interaction', { ...baseMeta, outcome: 'error', error });
         next(createHttpError(
             500,
             'No he podido procesar tu mensaje en este momento. Intentalo de nuevo en unos segundos.',
