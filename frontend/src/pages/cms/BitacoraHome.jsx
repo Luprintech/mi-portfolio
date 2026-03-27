@@ -22,6 +22,7 @@ export default function BitacoraHome() {
     const [uploadingCv, setUploadingCv] = useState(false);
     const [cvMessage, setCvMessage] = useState('');
     const [loadError, setLoadError] = useState('');
+    const [currentCvUrl, setCurrentCvUrl] = useState('/CV_Guadalupe_Cano.pdf');
 
     async function handleCvUpload(event) {
         const file = event.target.files?.[0];
@@ -30,7 +31,8 @@ export default function BitacoraHome() {
         setUploadingCv(true);
         setCvMessage('');
         try {
-            await cmsApi.uploadCv(token, file);
+            const data = await cmsApi.uploadCv(token, file);
+            setCurrentCvUrl(data.url);
             setCvMessage('CV actualizado correctamente.');
         } catch (error) {
             setCvMessage(error.message || 'No se pudo actualizar el CV.');
@@ -134,7 +136,7 @@ export default function BitacoraHome() {
                     </label>
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-[var(--text-muted)]">
-                    <a href="/CV_Guadalupe_Cano.pdf" target="_blank" rel="noreferrer" className="text-cyan-400 hover:text-cyan-300 transition-colors">
+                    <a href={currentCvUrl} target="_blank" rel="noreferrer" className="text-cyan-400 hover:text-cyan-300 transition-colors">
                         Ver CV actual
                     </a>
                     {cvMessage && <span className="text-[var(--text-secondary)]">{cvMessage}</span>}
