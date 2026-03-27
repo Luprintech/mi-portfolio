@@ -17,6 +17,10 @@ export default function PostHeader({ postMeta }) {
         Volver al blog
       </Link>
 
+      <h1 className="mt-8 text-3xl font-extrabold leading-tight text-[var(--text-primary)] md:text-5xl">
+        {postMeta.title}
+      </h1>
+
       {postMeta.excerpt && (
         <p className="mt-6 max-w-3xl text-lg leading-8 text-justify text-[var(--text-secondary)] md:text-[1.05rem]">
           {postMeta.excerpt}

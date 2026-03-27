@@ -67,7 +67,7 @@ export default function BlogPostPreview() {
             >
                 {/* Cabecera */}
                 <div className="mb-10">
-                    <h1 className="mb-6 text-3xl font-extrabold leading-tight text-white md:text-5xl">
+                    <h1 className="mb-6 text-3xl font-extrabold leading-tight text-[var(--text-primary)] md:text-5xl">
                         {post.title || 'Sin título'}
                     </h1>
                     <div className="flex flex-wrap items-center gap-4 border-b border-[var(--border-color)] pb-8 text-sm font-mono text-[var(--text-muted)]">
@@ -88,7 +88,7 @@ export default function BlogPostPreview() {
                     {resolved.sourceContent ? (
                         <div
                             ref={contentRef}
-                            className="prose prose-blog prose-invert prose-sm md:prose-base lg:prose-lg max-w-none"
+                            className="prose prose-blog dark:prose-invert prose-sm md:prose-base lg:prose-lg max-w-none"
                         >
                             <PostRichContent post={post} />
                         </div>
