@@ -13,7 +13,7 @@
   "hero": {
     "title": "Dev Web Full Stack Junior",
     "subtitle": "React · Laravel · WordPress · Integración de Sistemas",
-    "description": "Diseño y desarrollo experiencias web modernas, funcionales y bien resueltas. Trabajo entre frontend, backend, integraciones e inteligencia artificial para convertir ideas en productos reales con acabado profesional.",
+    "description": "Diseño y desarrollo experiencias web modernas, funcionales y bien resueltas. Trabajo entre frontend, backend, integraciones e inteligencia artificial para convertir ideas en productos reales con acabado profesional. También me formo activamente en ciberseguridad y redes — porque construir bien implica construir seguro.",
     "greeting": "Hola, soy Lupe",
     "cv": "Descargar CV",
     "photo_badge": "Frontend · Backend · IA",
@@ -23,6 +23,7 @@
     "roles": [
       "Desarrolladora Web Full Stack",
       "Pedagoga Digital",
+      "Entusiasta de la Ciberseguridad",
       "Apasionada en IA"
     ]
   },
@@ -97,12 +98,13 @@
     "btn_enabled": "¡Mensaje Enviado!"
   },
   "about": {
-    "tagline": "Construyo aplicaciones. Integro IA. Automatizo el resto.",
-    "summary": "Desarrolladora Full Stack con enfoque en arquitectura e infraestructura real. Construyo aplicaciones completas, integro inteligencia artificial y automatizo procesos para que funcionen en entornos productivos",
+    "tagline": "Construyo aplicaciones. Integro IA. Construyo seguro.",
+    "summary": "Desarrolladora Full Stack con enfoque en arquitectura e infraestructura real. Construyo aplicaciones completas, integro inteligencia artificial y automatizo procesos. Me formo activamente en ciberseguridad y redes — MOOC 350h (UMA), Cisco CCST en curso y especialidad universitaria en 2026.",
     "badge_fullstack": "Full Stack",
     "badge_self": "Autodidacta",
     "badge_infra": "Infraestructura real",
     "badge_ai": "IA \u0026 Automatización",
+    "badge_security": "Ciberseguridad",
     "badge_n8n": "n8n",
     "badge_wordpress": "WordPress & Divi",
     "stat1_value": "5+",
@@ -131,9 +133,11 @@
     "story_block_1_title": "De entender a construir",
     "story_block_2_title": "Tecnología vivida",
     "story_block_3_title": "Lo que hago hoy",
+    "story_block_4_title": "Especialidad en Ciberseguridad",
     "story_short_1": "Empecé en Pedagogía, aprendiendo a estructurar lo complejo. Después entendí que no solo quería comprender sistemas: quería construirlos.",
     "story_short_2": "Tecnología vivida, foros, reparación de ordenadores, servidores, Raspberry Pi y redes formaron mi base mucho antes de la formación formal. DAW puso orden a esa práctica.",
     "story_short_3": "Hoy desarrollo aplicaciones full stack, automatizo procesos e integro IA con una idea clara: que todo funcione bien también en producción.",
+    "story_short_4": "Cursaré la especialidad universitaria en Ciberseguridad en las Tecnologías de la Información. Complementa el MOOC de 350h (UMA) y la certificación Cisco CCST en curso.",
     "story_p1": "No llegué al desarrollo por casualidad.\nSiempre he tenido la necesidad de entender cómo funcionan las cosas por dentro.",
     "story_p2": "Empecé estudiando Pedagogía, donde aprendí a analizar, estructurar y explicar lo complejo hasta que tiene sentido. Más tarde descubrí que, además de entender sistemas, necesitaba construirlos.",
     "story_p3": "Desde muy joven he explorado la tecnología por iniciativa propia: foros, servidores, Raspberry Pi, Docker y automatizaciones. Con DAW puse estructura formal a años de práctica y confirmé que lo mío no es solo programar, sino crear sistemas completos.",

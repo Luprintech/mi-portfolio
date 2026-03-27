@@ -10,15 +10,17 @@ const BADGE_KEYS = [
   { key: "badge_self", color: "violet" },
   { key: "badge_infra", color: "fuchsia" },
   { key: "badge_ai", color: "emerald" },
+  { key: "badge_security", color: "amber" },
   { key: "badge_wordpress", color: "blue" },
 ];
 
 const BADGE_STYLES = {
-  cyan: "bg-[var(--accent-secondary-dim)] text-[var(--accent-secondary)] border-[var(--accent-secondary)]/30",
-  fuchsia: "bg-[var(--accent-primary-dim)] text-[var(--accent-primary)] border-[var(--accent-primary)]/30",
+  cyan:   "bg-[var(--accent-secondary-dim)] text-[var(--accent-secondary)] border-[var(--accent-secondary)]/30",
+  fuchsia:"bg-[var(--accent-primary-dim)] text-[var(--accent-primary)] border-[var(--accent-primary)]/30",
   violet: "bg-violet-500/10 text-violet-400 border-violet-500/20",
-  emerald: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-  blue: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  emerald:"bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  amber:  "bg-amber-500/10 text-amber-400 border-amber-500/20",
+  blue:   "bg-blue-500/10 text-blue-400 border-blue-500/20",
 };
 
 const STATS_CONFIG = [

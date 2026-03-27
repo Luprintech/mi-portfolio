@@ -8,6 +8,7 @@ const STORY_STEPS = [
   { year: "2011", color: "from-fuchsia-500 to-violet-500", titleKey: "story_block_1_title", bodyKey: "story_short_1" },
   { year: "2015", color: "from-violet-500 to-cyan-500",    titleKey: "story_block_2_title", bodyKey: "story_short_2" },
   { year: "Hoy",  color: "from-cyan-400  to-emerald-400",  titleKey: "story_block_3_title", bodyKey: "story_short_3" },
+  { year: "2026", color: "from-amber-400  to-orange-400",  titleKey: "story_block_4_title", bodyKey: "story_short_4", upcoming: true },
 ];
 
 const DIFF_POINTS = [
@@ -100,7 +101,7 @@ export default function ProfileStorySection({ id, className = "" }) {
               {/* Línea vertical */}
               <div className="absolute left-[19px] top-4 bottom-4 w-px bg-gradient-to-b from-fuchsia-500/40 via-violet-500/30 to-cyan-500/20" />
 
-              {STORY_STEPS.map(({ year, color, titleKey, bodyKey }, i) => (
+              {STORY_STEPS.map(({ year, color, titleKey, bodyKey, upcoming }, i) => (
                 <motion.div
                   key={titleKey}
                   variants={fadeUp}
@@ -112,16 +113,23 @@ export default function ProfileStorySection({ id, className = "" }) {
                 >
                   {/* Nodo */}
                   <div className="relative z-10 shrink-0">
-                    <div className={`flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br ${color} shadow-[0_0_12px_rgba(139,92,246,0.3)]`}>
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br ${color} ${upcoming ? "opacity-60 ring-2 ring-dashed ring-amber-400/50" : "shadow-[0_0_12px_rgba(139,92,246,0.3)]"}`}>
                       <span className="text-[10px] font-black text-white leading-none">{year}</span>
                     </div>
                   </div>
 
                   {/* Contenido */}
-                  <div className="flex-1 pt-1.5">
-                    <h3 className="text-sm font-bold text-[var(--text-primary)] md:text-base">
-                      {t(`about.${titleKey}`)}
-                    </h3>
+                  <div className={`flex-1 pt-1.5 ${upcoming ? "opacity-70" : ""}`}>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-bold text-[var(--text-primary)] md:text-base">
+                        {t(`about.${titleKey}`)}
+                      </h3>
+                      {upcoming && (
+                        <span className="rounded-full border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-400">
+                          Próximo
+                        </span>
+                      )}
+                    </div>
                     <p className="mt-1 text-sm leading-relaxed text-[var(--text-secondary)]">
                       {t(`about.${bodyKey}`)}
                     </p>
