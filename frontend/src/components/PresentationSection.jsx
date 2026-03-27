@@ -3,6 +3,7 @@ import { motion as Motion } from "framer-motion";
 import Tilt from "react-parallax-tilt";
 import { Rocket, Calendar, Layers, GraduationCap } from "lucide-react";
 import miFoto from "../assets/pc-optimized.jpg";
+import TerminalWidget from "./TerminalWidget";
 
 const BADGE_KEYS = [
   { key: "badge_fullstack", color: "cyan" },
@@ -112,6 +113,9 @@ export default function PresentationSection({ id, className = "" }) {
             </Motion.div>
           ))}
         </Motion.div>
+
+        {/* ── Terminal interactiva ─────────────────────────────── */}
+        <TerminalWidget />
 
       </div>
     </div>

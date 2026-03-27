@@ -318,5 +318,28 @@
   },
   "footer": {
     "rights": "All rights reserved."
+  },
+  "terminal": {
+    "aria_label": "Interactive terminal",
+    "input_label": "Type a command",
+    "tab_hint": "Tab to autocomplete · ↑↓ history",
+    "welcome_1": "Welcome to Lupe's terminal! Type 'help' to see available commands.",
+    "welcome_2": "Try: help · whoami · skills · projects · contact",
+    "cmd_whoami_hint": "Who I am",
+    "cmd_skills_hint": "Technologies I work with",
+    "cmd_proyectos_hint": "Featured projects",
+    "cmd_contacto_hint": "How to reach me",
+    "cmd_ayuda_hint": "Show this help",
+    "cmd_clear_hint": "Clear screen",
+    "whoami_1": "Guadalupe Cano — Full Stack Developer",
+    "whoami_2": "Digital pedagogue · Self-taught · AI enthusiast",
+    "whoami_3": "Open to projects · Spain / Remote",
+    "proyectos_portfolio": "Portfolio     →  This very site (React + Node.js + custom CMS)",
+    "proyectos_more": "→ /proyectos to see all",
+    "contacto_available": "✓  Open to new projects",
+    "ayuda_header": "Available commands:",
+    "help_alias": "→ Use 'help' (or 'ayuda')",
+    "not_found_1": "Command not found:",
+    "not_found_2": "Type 'help' to see available commands."
   }
 }
