@@ -41,7 +41,7 @@ export default function ProfileStorySection({ id, className = "" }) {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_20%_50%,rgba(232,121,249,0.07),transparent_65%)]" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_50%_45%_at_80%_55%,rgba(34,211,238,0.07),transparent_65%)]" />
 
-      <div className="relative z-10 mx-auto flex h-full w-full max-w-[1060px] flex-col justify-center gap-10 py-8 md:gap-14">
+        <div className="relative z-10 mx-auto flex h-full w-full max-w-[1060px] flex-col justify-center gap-6 py-6 md:gap-10">
 
         {/* ── Frase apertura ───────────────────────────────────────── */}
         <motion.div
@@ -58,7 +58,7 @@ export default function ProfileStorySection({ id, className = "" }) {
             }
           `}</style>
           <p
-            className="mx-auto max-w-2xl text-xl font-semibold leading-snug md:text-2xl lg:text-3xl"
+            className="mx-auto max-w-2xl text-lg font-semibold leading-snug md:text-xl lg:text-2xl"
             style={{
               backgroundImage: "linear-gradient(110deg,#e879f9 0%,#22d3ee 38%,rgba(255,255,255,0.9) 50%,#22d3ee 62%,#e879f9 100%)",
               backgroundSize: "200% auto",
@@ -73,7 +73,7 @@ export default function ProfileStorySection({ id, className = "" }) {
         </motion.div>
 
         {/* ── Dos columnas ─────────────────────────────────────────── */}
-        <div className="grid gap-10 lg:grid-cols-2 lg:gap-14 lg:items-start">
+        <div className="grid gap-8 lg:grid-cols-2 lg:gap-12 lg:items-start">
 
           {/* ── Columna izquierda: Mi historia (timeline) ─────────── */}
           <motion.div
@@ -84,22 +84,19 @@ export default function ProfileStorySection({ id, className = "" }) {
             custom={0}
           >
             {/* Cabecera */}
-            <div className="mb-7">
+            <div className="mb-5">
               <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--accent-primary)]">
                 {t("about.story_intro_label")}
               </span>
-              <h2 className="mt-2 text-2xl font-extrabold leading-tight text-[var(--text-primary)] md:text-3xl">
+              <h2 className="mt-1.5 text-xl font-extrabold leading-tight text-[var(--text-primary)] md:text-2xl">
                 {t("about.story_lead")}
               </h2>
-              <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)] md:text-base">
-                {t("about.story_intro")}
-              </p>
             </div>
 
             {/* Timeline */}
             <div className="relative flex flex-col gap-0">
               {/* Línea vertical */}
-              <div className="absolute left-[19px] top-4 bottom-4 w-px bg-gradient-to-b from-fuchsia-500/40 via-violet-500/30 to-cyan-500/20" />
+              <div className="absolute left-[17px] top-4 bottom-4 w-px bg-gradient-to-b from-fuchsia-500/40 via-violet-500/30 to-amber-400/20" />
 
               {STORY_STEPS.map(({ year, color, titleKey, bodyKey, upcoming }, i) => (
                 <motion.div
@@ -109,12 +106,12 @@ export default function ProfileStorySection({ id, className = "" }) {
                   whileInView="visible"
                   viewport={{ once: true }}
                   custom={i + 1}
-                  className="relative flex gap-5 pb-8 last:pb-0"
+                  className="relative flex gap-4 pb-5 last:pb-0"
                 >
                   {/* Nodo */}
                   <div className="relative z-10 shrink-0">
-                    <div className={`flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br ${color} ${upcoming ? "opacity-60 ring-2 ring-dashed ring-amber-400/50" : "shadow-[0_0_12px_rgba(139,92,246,0.3)]"}`}>
-                      <span className="text-[10px] font-black text-white leading-none">{year}</span>
+                    <div className={`flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br ${color} ${upcoming ? "opacity-60 ring-2 ring-dashed ring-amber-400/50" : "shadow-[0_0_10px_rgba(139,92,246,0.25)]"}`}>
+                      <span className="text-[9px] font-black text-white leading-none">{year}</span>
                     </div>
                   </div>
 
@@ -126,7 +123,7 @@ export default function ProfileStorySection({ id, className = "" }) {
                       </h3>
                       {upcoming && (
                         <span className="rounded-full border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-400">
-                          Próximo
+                          {t("about.story_upcoming")}
                         </span>
                       )}
                     </div>
