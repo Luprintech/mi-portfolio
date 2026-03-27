@@ -87,11 +87,13 @@ export default function TerminalWidget() {
   const [input, setInput]           = useState("");
   const [cmdHistory, setCmdHistory] = useState([]);
   const [histIdx, setHistIdx]       = useState(-1);
-  const bottomRef = useRef(null);
+  const outputRef = useRef(null);
   const inputRef  = useRef(null);
 
+  // Scroll interno del terminal — NUNCA mueve la página, solo el contenedor
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = outputRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
   }, [history]);
 
   const runCommand = useCallback((raw) => {
@@ -179,6 +181,7 @@ export default function TerminalWidget() {
 
       {/* ── Contenido del terminal ── */}
       <div
+        ref={outputRef}
         className="h-56 overflow-y-auto p-4 space-y-0.5 cursor-text"
         style={{ scrollbarWidth: "thin", scrollbarColor: "var(--border-default) transparent" }}
       >
@@ -220,7 +223,6 @@ export default function TerminalWidget() {
             aria-label={t("terminal.input_label")}
           />
         </div>
-        <div ref={bottomRef} />
       </div>
     </motion.div>
   );

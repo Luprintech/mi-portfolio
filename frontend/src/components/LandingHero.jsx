@@ -108,7 +108,7 @@ export default function LandingHero({ id, className = "" }) {
           <motion.div
             animate={shouldReduceMotion ? undefined : { y: [0, -10, 0], rotate: [0, 1.1, 0] }}
             transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-            className="relative w-[230px] flex-shrink-0 sm:w-[255px] lg:w-[265px]"
+            className="relative w-[260px] flex-shrink-0 sm:w-[300px] lg:w-[320px]"
           >
             <div className="pointer-events-none absolute -inset-8 rounded-[3rem] bg-[radial-gradient(circle,_rgba(34,211,238,0.16),_transparent_58%)] blur-3xl" />
             <div className="pointer-events-none absolute -left-6 top-8 h-20 w-20 rounded-full border border-white/10 bg-fuchsia-400/18 blur-2xl" />
@@ -133,7 +133,7 @@ export default function LandingHero({ id, className = "" }) {
                   <img
                     src={portraitImage}
                     alt="Retrato de Guadalupe Cano"
-                    className="h-[280px] w-full object-cover object-center sm:h-[310px] lg:h-[360px]"
+                    className="h-[320px] w-full object-cover object-top sm:h-[360px] lg:h-[420px]"
                     loading="eager"
                     fetchPriority="high"
                   />
