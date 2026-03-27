@@ -1,235 +1,200 @@
-import { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Eye, Zap, BookOpen } from "lucide-react";
 
-const TABS = [
-  { id: "story", labelKey: "about.tab_story" },
-  { id: "diff", labelKey: "about.tab_diff" },
-];
+// ─── Datos ────────────────────────────────────────────────────────────────────
 
-const STORY_BLOCKS = [
-  {
-    titleKey: "story_block_1_title",
-    bodyKeys: ["story_short_1"],
-  },
-  {
-    titleKey: "story_block_2_title",
-    bodyKeys: ["story_short_2"],
-  },
-  {
-    titleKey: "story_block_3_title",
-    bodyKeys: ["story_short_3"],
-  },
+const STORY_STEPS = [
+  { year: "2018", color: "from-fuchsia-500 to-violet-500", titleKey: "story_block_1_title", bodyKey: "story_short_1" },
+  { year: "2021", color: "from-violet-500 to-cyan-500",    titleKey: "story_block_2_title", bodyKey: "story_short_2" },
+  { year: "Hoy",  color: "from-cyan-400  to-emerald-400",  titleKey: "story_block_3_title", bodyKey: "story_short_3" },
 ];
 
 const DIFF_POINTS = [
-  { titleKey: "diff_detail_title", bodyKey: "diff_detail", fallback: "Atencion al detalle", Icon: Eye, color: "text-cyan-400" },
-  { titleKey: "diff_selflearner_title", bodyKey: "diff_selflearner", fallback: "Aprendizaje autonomo", Icon: Zap, color: "text-violet-400" },
-  { titleKey: "diff_pedagogy_title", bodyKey: "diff_pedagogy", fallback: "Vision pedagogica", Icon: BookOpen, color: "text-pink-400" },
+  { n: "01", Icon: Eye,      color: "text-cyan-400",    glow: "rgba(34,211,238,0.15)",   titleKey: "diff_detail_title",     bodyKey: "diff_detail"      },
+  { n: "02", Icon: Zap,      color: "text-violet-400",  glow: "rgba(139,92,246,0.15)",   titleKey: "diff_selflearner_title", bodyKey: "diff_selflearner" },
+  { n: "03", Icon: BookOpen, color: "text-fuchsia-400", glow: "rgba(232,121,249,0.15)",  titleKey: "diff_pedagogy_title",   bodyKey: "diff_pedagogy"    },
 ];
 
-const panelVariants = {
-  enter: { opacity: 0, y: 12 },
-  center: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -12 },
+// ─── Animaciones ──────────────────────────────────────────────────────────────
+
+const fadeUp = {
+  hidden:  { opacity: 0, y: 22 },
+  visible: (i = 0) => ({
+    opacity: 1, y: 0,
+    transition: { duration: 0.5, ease: "easeOut", delay: i * 0.1 },
+  }),
 };
 
-function StoryPanel({ t }) {
-  return (
-    <motion.div
-      initial="enter"
-      animate="center"
-      variants={{
-        enter: { opacity: 0, y: 18 },
-        center: {
-          opacity: 1,
-          y: 0,
-          transition: {
-            duration: 0.45,
-            ease: "easeOut",
-            staggerChildren: 0.08,
-          },
-        },
-      }}
-      className="flex h-full flex-col gap-3.5"
-    >
-      <style>{`
-        @keyframes shimmerText {
-          0% { background-position: 200% center; }
-          100% { background-position: -200% center; }
-        }
-      `}</style>
-      <motion.div
-        variants={panelVariants}
-        className="relative flex flex-1 flex-col justify-center overflow-hidden rounded-[24px] border border-[var(--border-color)] bg-[linear-gradient(135deg,rgba(232,121,249,0.08),rgba(34,211,238,0.05))] p-2 md:p-5 shadow-[var(--shadow-sm)]"
-      >
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-24 bg-[radial-gradient(circle_at_center,rgba(34,211,238,0.16),transparent_70%)] blur-2xl" />
-        <span className="inline-flex self-center rounded-full border border-[var(--accent-primary)]/25 bg-[var(--accent-primary-dim)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--accent-primary)]">
-          {t("about.story_intro_label")}
-        </span>
-        <h3 className="mt-2.5 w-full text-xl font-semibold leading-tight text-[var(--text-primary)] md:text-[1.6rem]">
-          {t("about.story_lead")}
-        </h3>
-        <p className="mt-2.5 w-full text-[13px] leading-[1.5] text-[var(--text-secondary)] text-justify md:text-sm">
-          {t("about.story_intro")}
-        </p>
-      </motion.div>
-
-      <div className="grid gap-2 md:grid-cols-3">
-        {STORY_BLOCKS.map(({ titleKey, bodyKeys }) => (
-          <motion.article
-            key={titleKey}
-            variants={panelVariants}
-            className="rounded-[22px] border border-[var(--border-color)] bg-[var(--bg-surface)]/90 p-3.5 shadow-[var(--shadow-sm)] backdrop-blur-sm md:p-4"
-          >
-            <h4 className="text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-secondary)] md:text-xs">
-              {t(`about.${titleKey}`)}
-            </h4>
-            <div className="mt-2 space-y-1.5 text-[13px] leading-[1.5] text-[var(--text-secondary)] text-justify md:text-[13px]">
-              {bodyKeys.map((key) => (
-                <p key={key}>{t(`about.${key}`)}</p>
-              ))}
-            </div>
-          </motion.article>
-        ))}
-      </div>
-
-      <motion.blockquote
-        variants={panelVariants}
-        className="rounded-[24px] border border-[var(--accent-secondary)]/20 bg-[color-mix(in_srgb,var(--bg-elevated)_84%,transparent)] px-5 py-2.5 text-center text-[15px] font-medium leading-[1.4] text-[var(--text-primary)] shadow-[var(--shadow-md)] md:px-6 md:py-3 md:text-base"
-      >
-        <span 
-          className="inline-block bg-clip-text text-transparent"
-          style={{
-            backgroundImage: "linear-gradient(110deg, #e879f9 0%, #22d3ee 40%, rgba(255,255,255,0.8) 50%, #22d3ee 60%, #e879f9 100%)",
-            backgroundSize: "200% auto",
-            animation: "shimmerText 3s linear infinite"
-          }}
-        >
-          {t("about.story_p7")}
-        </span>
-      </motion.blockquote>
-    </motion.div>
-  );
-}
-
-function DiffPanel({ t }) {
-  const [hasRevealed, setHasRevealed] = useState(false);
-  const containerRef = useRef(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setHasRevealed(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.1 }
-    );
-    
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
-    }
-    
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <div ref={containerRef}>
-      <div className="mb-5 text-center md:mb-6">
-        <h3 className="text-xl font-bold text-[var(--text-primary)] md:text-2xl md:text-[var(--accent-secondary)]">
-          {t("about.diff_panel_title")}
-        </h3>
-        <p className="mt-2 text-sm text-[var(--text-secondary)] md:text-base">
-          {t("about.diff_panel_subtitle")}
-        </p>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-3">
-        {DIFF_POINTS.map(({ titleKey, bodyKey, fallback, Icon, color }, index) => (
-          <div
-            key={bodyKey}
-            className={`transition-all duration-700 ease-out ${
-              hasRevealed ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-            }`}
-            style={{ transitionDelay: `${index * 150}ms` }}
-          >
-            <div
-              className={`flex h-full flex-col items-center rounded-2xl border border-[var(--accent-secondary)]/20 bg-[var(--bg-surface)] p-5 text-center transition-all duration-300 ease-out hover:-translate-y-[6px] hover:scale-[1.02] hover:border-cyan-400/50 hover:shadow-[0_0_15px_rgba(34,211,238,0.3),0_0_15px_rgba(232,121,249,0.3)] md:p-6`}
-            >
-              <div className={`mb-3 flex items-center justify-center ${color}`}>
-                <Icon className="h-8 w-8" strokeWidth={1.8} />
-              </div>
-              <h3 className="mb-2 text-lg font-bold text-[var(--text-primary)]">
-                {t(`about.${titleKey}`, fallback)}
-              </h3>
-              <p className="text-sm leading-snug text-[var(--text-secondary)] md:text-[15px] md:leading-relaxed">
-                {t(`about.${bodyKey}`)}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+// ─── Componente ───────────────────────────────────────────────────────────────
 
 export default function ProfileStorySection({ id, className = "" }) {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState("story");
 
   return (
-    <div id={id} className={`relative flex h-full w-full items-center justify-center overflow-hidden ${className}`.trim()}>
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-fuchsia-900/10 via-transparent to-transparent" />
+    <div
+      id={id}
+      className={`relative flex h-full w-full items-center justify-center overflow-hidden ${className}`.trim()}
+    >
+      {/* Fondo ambiental */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_20%_50%,rgba(232,121,249,0.07),transparent_65%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_50%_45%_at_80%_55%,rgba(34,211,238,0.07),transparent_65%)]" />
 
-      <div className="profile-story-shell relative z-10 flex h-full w-full max-w-[1000px] flex-col py-6 md:py-8">
-        <div className="mb-2.5 flex w-full rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-1 shadow-[var(--shadow-sm)] md:mb-3">
-          {TABS.map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`
-                  relative min-w-0 flex-1 basis-1/2 overflow-hidden rounded-xl px-3 py-2.5 text-xs font-medium transition-colors duration-200 xs:px-4 xs:text-sm md:px-6 md:py-3 md:text-base
-                  focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-secondary)]
-                  ${isActive
-                    ? "text-[var(--text-primary)]"
-                    : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
-                  }
-                `}
-              >
-                {isActive && (
-                  <motion.span
-                    layoutId="profile-tab-bg"
-                    className="absolute inset-0 rounded-lg border border-[var(--accent-secondary)]/40 bg-[var(--accent-secondary-dim)]"
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+      <div className="relative z-10 mx-auto flex h-full w-full max-w-[1060px] flex-col justify-center gap-10 py-8 md:gap-14">
+
+        {/* ── Frase apertura ───────────────────────────────────────── */}
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          className="text-center"
+        >
+          <style>{`
+            @keyframes shimmerText {
+              0%   { background-position: 200% center; }
+              100% { background-position: -200% center; }
+            }
+          `}</style>
+          <p
+            className="mx-auto max-w-2xl text-xl font-semibold leading-snug md:text-2xl lg:text-3xl"
+            style={{
+              backgroundImage: "linear-gradient(110deg,#e879f9 0%,#22d3ee 38%,rgba(255,255,255,0.9) 50%,#22d3ee 62%,#e879f9 100%)",
+              backgroundSize: "200% auto",
+              animation: "shimmerText 4s linear infinite",
+              WebkitBackgroundClip: "text",
+              backgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}
+          >
+            "{t("about.story_p7")}"
+          </p>
+        </motion.div>
+
+        {/* ── Dos columnas ─────────────────────────────────────────── */}
+        <div className="grid gap-10 lg:grid-cols-2 lg:gap-14 lg:items-start">
+
+          {/* ── Columna izquierda: Mi historia (timeline) ─────────── */}
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            custom={0}
+          >
+            {/* Cabecera */}
+            <div className="mb-7">
+              <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--accent-primary)]">
+                {t("about.story_intro_label")}
+              </span>
+              <h2 className="mt-2 text-2xl font-extrabold leading-tight text-[var(--text-primary)] md:text-3xl">
+                {t("about.story_lead")}
+              </h2>
+              <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)] md:text-base">
+                {t("about.story_intro")}
+              </p>
+            </div>
+
+            {/* Timeline */}
+            <div className="relative flex flex-col gap-0">
+              {/* Línea vertical */}
+              <div className="absolute left-[19px] top-4 bottom-4 w-px bg-gradient-to-b from-fuchsia-500/40 via-violet-500/30 to-cyan-500/20" />
+
+              {STORY_STEPS.map(({ year, color, titleKey, bodyKey }, i) => (
+                <motion.div
+                  key={titleKey}
+                  variants={fadeUp}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  custom={i + 1}
+                  className="relative flex gap-5 pb-8 last:pb-0"
+                >
+                  {/* Nodo */}
+                  <div className="relative z-10 shrink-0">
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br ${color} shadow-[0_0_12px_rgba(139,92,246,0.3)]`}>
+                      <span className="text-[10px] font-black text-white leading-none">{year}</span>
+                    </div>
+                  </div>
+
+                  {/* Contenido */}
+                  <div className="flex-1 pt-1.5">
+                    <h3 className="text-sm font-bold text-[var(--text-primary)] md:text-base">
+                      {t(`about.${titleKey}`)}
+                    </h3>
+                    <p className="mt-1 text-sm leading-relaxed text-[var(--text-secondary)]">
+                      {t(`about.${bodyKey}`)}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* ── Columna derecha: Qué me diferencia (numerado) ──────── */}
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            custom={1}
+          >
+            {/* Cabecera */}
+            <div className="mb-7">
+              <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--accent-secondary)]">
+                {t("about.tab_diff")}
+              </span>
+              <h2 className="mt-2 text-2xl font-extrabold leading-tight text-[var(--text-primary)] md:text-3xl">
+                {t("about.diff_panel_title")}
+              </h2>
+              <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)] md:text-base">
+                {t("about.diff_panel_subtitle")}
+              </p>
+            </div>
+
+            {/* Bloques numerados */}
+            <div className="flex flex-col gap-4">
+              {DIFF_POINTS.map(({ n, Icon, color, glow, titleKey, bodyKey }, i) => (
+                <motion.div
+                  key={titleKey}
+                  variants={fadeUp}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  custom={i + 2}
+                  className="group relative flex gap-5 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--border-color)]/80"
+                  style={{
+                    "--glow": glow,
+                  }}
+                >
+                  {/* Halo en hover */}
+                  <div
+                    className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                    style={{ boxShadow: `inset 0 0 0 1px ${glow}, 0 0 24px ${glow}` }}
                   />
-                )}
-                <span className="relative z-10 block overflow-hidden text-ellipsis whitespace-nowrap">{t(tab.labelKey)}</span>
-              </button>
-            );
-          })}
-        </div>
 
-        <div className="flex flex-1 min-h-0 flex-col w-full rounded-[28px] border border-[var(--border-color)] bg-[var(--bg-surface)] p-3 shadow-[var(--shadow-sm)] md:p-4 lg:p-[1.125rem]">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              className="flex flex-1 min-h-0 flex-col w-full"
-              variants={panelVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ duration: 0.25, ease: "easeOut" }}
-            >
-              {activeTab === "story" && <StoryPanel t={t} />}
-              {activeTab === "diff" && <DiffPanel t={t} />}
-            </motion.div>
-          </AnimatePresence>
+                  {/* Número + icono */}
+                  <div className="shrink-0 flex flex-col items-center gap-1 pt-0.5">
+                    <span className="text-2xl font-black leading-none text-[var(--border-color)] group-hover:text-[var(--text-muted)] transition-colors md:text-3xl">
+                      {n}
+                    </span>
+                    <Icon className={`h-5 w-5 ${color}`} strokeWidth={1.8} />
+                  </div>
+
+                  {/* Texto */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className={`text-base font-bold ${color} md:text-lg`}>
+                      {t(`about.${titleKey}`)}
+                    </h3>
+                    <p className="mt-1.5 text-sm leading-relaxed text-[var(--text-secondary)]">
+                      {t(`about.${bodyKey}`)}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
         </div>
       </div>
     </div>
