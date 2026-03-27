@@ -7,7 +7,7 @@ import { formatDate, getReadTime } from './markdownComponents';
 
 export default function PostSidebar({ postMeta, headings, activeHeadingId, hasToc }) {
   return (
-    <aside className="order-2 hidden self-start lg:block lg:sticky lg:top-24 max-h-[calc(100vh-8rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-[var(--border-default)] scrollbar-track-transparent">
+    <aside className="order-2 hidden self-start lg:block lg:sticky lg:top-24 max-h-[calc(100vh-8rem)] overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'var(--border-default) transparent' }}>
       <div className="space-y-4">
         {/* ToC panel */}
         {hasToc && (

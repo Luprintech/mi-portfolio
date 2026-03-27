@@ -354,6 +354,10 @@ export function sanitizePostInput(input, { partial = false } = {}) {
         data.tocTitles = tocTitles;
     }
 
+    if (input.showToc !== undefined) {
+        data.showToc = typeof input.showToc === 'boolean' ? input.showToc : true;
+    }
+
     if (input.revision !== undefined) {
         const revision = normalizeRevision(input.revision);
         if (revision === null) errors.push('La revision no es valida.');

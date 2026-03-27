@@ -152,6 +152,7 @@ function buildPersistedPost(currentRow, patch = {}) {
         canonicalUrl: patch.canonicalUrl ?? currentRow?.canonical_url ?? '',
         noindex: patch.noindex ?? Boolean(currentRow?.noindex),
         featured: patch.featured ?? Boolean(currentRow?.featured),
+        showToc: patch.showToc ?? (currentRow ? (currentRow.show_toc ?? true) : true),
         status: patch.status ?? currentRow?.status ?? 'draft',
         coverImage: metadata.coverImage,
         readingTime: metadata.readingTime,
@@ -220,6 +221,7 @@ function mapPostRow(row, { includeContent = false, includePresentation = false }
         canonicalUrl: row.canonical_url || '',
         noindex: Boolean(row.noindex),
         featured: Boolean(row.featured),
+        showToc: row.show_toc ?? true,
         status: row.status,
         format: contentFields.format,
         revision: getRevisionNumber(row.revision, contentFields.content ? 1 : 0),
@@ -326,6 +328,7 @@ export async function createPost(data) {
                 canonical_url,
                 noindex,
                 featured,
+                show_toc,
                 cover_image,
                 reading_time,
                 toc_titles,
@@ -333,7 +336,7 @@ export async function createPost(data) {
                 revision,
                 status
             ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18::jsonb, $19::jsonb, $20, $21
+                $1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19::jsonb, $20::jsonb, $21, $22
             )
             RETURNING *`,
             [
@@ -352,6 +355,7 @@ export async function createPost(data) {
                 persisted.canonicalUrl,
                 Boolean(persisted.noindex),
                 Boolean(persisted.featured),
+                Boolean(persisted.showToc),
                 persisted.coverImage,
                 persisted.readingTime,
                 JSON.stringify(persisted.tocTitles || []),
@@ -402,13 +406,14 @@ async function persistPostUpdate(slug, patch, { source = 'manual-save', touchAut
                   canonical_url = $13,
                   noindex = $14,
                   featured = $15,
-                  cover_image = $16,
-                  reading_time = $17,
-                  toc_titles = $18::jsonb,
-                  attachments_meta = $19::jsonb,
-                  revision = $20,
-                  status = $21,
-                  last_autosaved_at = CASE WHEN $22 THEN NOW() ELSE last_autosaved_at END,
+                  show_toc = $16,
+                  cover_image = $17,
+                  reading_time = $18,
+                  toc_titles = $19::jsonb,
+                  attachments_meta = $20::jsonb,
+                  revision = $21,
+                  status = $22,
+                  last_autosaved_at = CASE WHEN $23 THEN NOW() ELSE last_autosaved_at END,
                   updated_at = NOW()
                WHERE slug = $1
                RETURNING *`,
@@ -428,6 +433,7 @@ async function persistPostUpdate(slug, patch, { source = 'manual-save', touchAut
                 merged.canonicalUrl,
                 Boolean(merged.noindex),
                 Boolean(merged.featured),
+                Boolean(merged.showToc),
                 merged.coverImage,
                 merged.readingTime,
                 JSON.stringify(merged.tocTitles || []),

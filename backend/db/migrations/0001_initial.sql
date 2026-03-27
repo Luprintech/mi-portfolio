@@ -33,8 +33,9 @@ CREATE TABLE IF NOT EXISTS posts (
 );
 
 -- Columnas añadidas después del schema original (idempotentes)
-ALTER TABLE posts ADD COLUMN IF NOT EXISTS featured   BOOLEAN NOT NULL DEFAULT FALSE;
-ALTER TABLE posts ADD COLUMN IF NOT EXISTS toc_titles JSONB   NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS featured  BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS toc_titles JSONB  NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS show_toc  BOOLEAN NOT NULL DEFAULT TRUE;
 
 -- Índice de ordenación
 CREATE INDEX IF NOT EXISTS idx_posts_publication_date

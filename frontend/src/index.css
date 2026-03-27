@@ -569,11 +569,98 @@ body.home-scroll-snap #main-content {
 }
 
 .blog-cosmic-grid {
-  --blog-bg:
-    radial-gradient(ellipse 58% 46% at 14% 16%, color-mix(in srgb, var(--accent-primary) 14%, transparent), transparent 72%),
-    radial-gradient(ellipse 52% 44% at 84% 82%, color-mix(in srgb, var(--accent-secondary) 12%, transparent), transparent 72%),
-    linear-gradient(165deg, color-mix(in srgb, var(--bg-primary) 88%, transparent) 0%, color-mix(in srgb, var(--bg-secondary) 92%, transparent) 100%);
-  background-image: var(--blog-bg);
+  background-image:
+    /* Halo de lectura — foco suave detrás de la columna de texto */
+    radial-gradient(ellipse 55% 40% at 50% 38%, color-mix(in srgb, var(--accent-violet) 7%, transparent), transparent 70%),
+    /* Blob fuchsia top-left — más pronunciado que antes */
+    radial-gradient(ellipse 62% 50% at 10% 12%, color-mix(in srgb, var(--accent-primary) 18%, transparent), transparent 68%),
+    /* Blob cyan bottom-right */
+    radial-gradient(ellipse 56% 48% at 90% 88%, color-mix(in srgb, var(--accent-secondary) 16%, transparent), transparent 68%),
+    /* Estrellas capa 1 — puntos grandes dispersos (1.5 px aprox) */
+    radial-gradient(ellipse 1.5px 1.5px at 7%  9%,  rgba(255,255,255,0.55) 100%, transparent),
+    radial-gradient(ellipse 1.5px 1.5px at 23% 3%,  rgba(255,255,255,0.45) 100%, transparent),
+    radial-gradient(ellipse 1.5px 1.5px at 41% 7%,  rgba(232,121,249,0.60) 100%, transparent),
+    radial-gradient(ellipse 1.5px 1.5px at 58% 2%,  rgba(255,255,255,0.50) 100%, transparent),
+    radial-gradient(ellipse 1.5px 1.5px at 73% 5%,  rgba(34,211,238,0.55)  100%, transparent),
+    radial-gradient(ellipse 1.5px 1.5px at 89% 8%,  rgba(255,255,255,0.45) 100%, transparent),
+    radial-gradient(ellipse 1.5px 1.5px at 3%  28%, rgba(232,121,249,0.50) 100%, transparent),
+    radial-gradient(ellipse 1.5px 1.5px at 95% 22%, rgba(34,211,238,0.50)  100%, transparent),
+    radial-gradient(ellipse 1.5px 1.5px at 13% 47%, rgba(255,255,255,0.40) 100%, transparent),
+    radial-gradient(ellipse 1.5px 1.5px at 87% 43%, rgba(255,255,255,0.45) 100%, transparent),
+    radial-gradient(ellipse 1.5px 1.5px at 5%  68%, rgba(34,211,238,0.45)  100%, transparent),
+    radial-gradient(ellipse 1.5px 1.5px at 97% 62%, rgba(232,121,249,0.45) 100%, transparent),
+    radial-gradient(ellipse 1.5px 1.5px at 18% 82%, rgba(255,255,255,0.40) 100%, transparent),
+    radial-gradient(ellipse 1.5px 1.5px at 79% 79%, rgba(255,255,255,0.50) 100%, transparent),
+    radial-gradient(ellipse 1.5px 1.5px at 33% 93%, rgba(34,211,238,0.45)  100%, transparent),
+    radial-gradient(ellipse 1.5px 1.5px at 62% 96%, rgba(255,255,255,0.40) 100%, transparent),
+    /* Estrellas capa 2 — puntos pequeños (1px) más numerosos */
+    radial-gradient(ellipse 1px 1px at 15% 15%, rgba(255,255,255,0.35) 100%, transparent),
+    radial-gradient(ellipse 1px 1px at 31% 11%, rgba(255,255,255,0.30) 100%, transparent),
+    radial-gradient(ellipse 1px 1px at 49% 14%, rgba(232,121,249,0.38) 100%, transparent),
+    radial-gradient(ellipse 1px 1px at 66% 10%, rgba(255,255,255,0.32) 100%, transparent),
+    radial-gradient(ellipse 1px 1px at 82% 17%, rgba(34,211,238,0.35)  100%, transparent),
+    radial-gradient(ellipse 1px 1px at 9%  36%, rgba(255,255,255,0.28) 100%, transparent),
+    radial-gradient(ellipse 1px 1px at 92% 33%, rgba(255,255,255,0.30) 100%, transparent),
+    radial-gradient(ellipse 1px 1px at 26% 55%, rgba(34,211,238,0.32)  100%, transparent),
+    radial-gradient(ellipse 1px 1px at 71% 52%, rgba(232,121,249,0.30) 100%, transparent),
+    radial-gradient(ellipse 1px 1px at 44% 71%, rgba(255,255,255,0.28) 100%, transparent),
+    radial-gradient(ellipse 1px 1px at 85% 68%, rgba(255,255,255,0.32) 100%, transparent),
+    radial-gradient(ellipse 1px 1px at 11% 87%, rgba(232,121,249,0.30) 100%, transparent),
+    radial-gradient(ellipse 1px 1px at 55% 85%, rgba(255,255,255,0.28) 100%, transparent),
+    radial-gradient(ellipse 1px 1px at 76% 91%, rgba(34,211,238,0.32)  100%, transparent),
+    radial-gradient(ellipse 1px 1px at 37% 77%, rgba(255,255,255,0.25) 100%, transparent),
+    radial-gradient(ellipse 1px 1px at 60% 60%, rgba(255,255,255,0.22) 100%, transparent),
+    radial-gradient(ellipse 1px 1px at 20% 65%, rgba(34,211,238,0.28)  100%, transparent),
+    radial-gradient(ellipse 1px 1px at 93% 75%, rgba(232,121,249,0.28) 100%, transparent),
+    /* Base */
+    linear-gradient(165deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+}
+
+:root[data-theme="light"] .blog-cosmic-grid {
+  background-image:
+    /* Halo de lectura — muy sutil en claro */
+    radial-gradient(ellipse 55% 40% at 50% 38%, rgba(139, 92, 246, 0.05), transparent 70%),
+    /* Blobs en claro — más tenues */
+    radial-gradient(ellipse 62% 50% at 10% 12%, rgba(139, 92, 246, 0.09), transparent 68%),
+    radial-gradient(ellipse 56% 48% at 90% 88%, rgba(6, 182, 212, 0.08), transparent 68%),
+    /* Estrellas capa 1 — más oscuras para verse sobre fondo claro */
+    radial-gradient(ellipse 1.5px 1.5px at 7%  9%,  rgba(99,102,241,0.30) 100%, transparent),
+    radial-gradient(ellipse 1.5px 1.5px at 23% 3%,  rgba(99,102,241,0.22) 100%, transparent),
+    radial-gradient(ellipse 1.5px 1.5px at 41% 7%,  rgba(168,85,247,0.35) 100%, transparent),
+    radial-gradient(ellipse 1.5px 1.5px at 58% 2%,  rgba(99,102,241,0.25) 100%, transparent),
+    radial-gradient(ellipse 1.5px 1.5px at 73% 5%,  rgba(6,182,212,0.30)  100%, transparent),
+    radial-gradient(ellipse 1.5px 1.5px at 89% 8%,  rgba(99,102,241,0.22) 100%, transparent),
+    radial-gradient(ellipse 1.5px 1.5px at 3%  28%, rgba(168,85,247,0.28) 100%, transparent),
+    radial-gradient(ellipse 1.5px 1.5px at 95% 22%, rgba(6,182,212,0.28)  100%, transparent),
+    radial-gradient(ellipse 1.5px 1.5px at 13% 47%, rgba(99,102,241,0.20) 100%, transparent),
+    radial-gradient(ellipse 1.5px 1.5px at 87% 43%, rgba(99,102,241,0.22) 100%, transparent),
+    radial-gradient(ellipse 1.5px 1.5px at 5%  68%, rgba(6,182,212,0.25)  100%, transparent),
+    radial-gradient(ellipse 1.5px 1.5px at 97% 62%, rgba(168,85,247,0.25) 100%, transparent),
+    radial-gradient(ellipse 1.5px 1.5px at 18% 82%, rgba(99,102,241,0.20) 100%, transparent),
+    radial-gradient(ellipse 1.5px 1.5px at 79% 79%, rgba(99,102,241,0.25) 100%, transparent),
+    radial-gradient(ellipse 1.5px 1.5px at 33% 93%, rgba(6,182,212,0.22)  100%, transparent),
+    radial-gradient(ellipse 1.5px 1.5px at 62% 96%, rgba(99,102,241,0.20) 100%, transparent),
+    /* Estrellas capa 2 */
+    radial-gradient(ellipse 1px 1px at 15% 15%, rgba(99,102,241,0.18) 100%, transparent),
+    radial-gradient(ellipse 1px 1px at 31% 11%, rgba(99,102,241,0.15) 100%, transparent),
+    radial-gradient(ellipse 1px 1px at 49% 14%, rgba(168,85,247,0.20) 100%, transparent),
+    radial-gradient(ellipse 1px 1px at 66% 10%, rgba(99,102,241,0.16) 100%, transparent),
+    radial-gradient(ellipse 1px 1px at 82% 17%, rgba(6,182,212,0.18)  100%, transparent),
+    radial-gradient(ellipse 1px 1px at 9%  36%, rgba(99,102,241,0.14) 100%, transparent),
+    radial-gradient(ellipse 1px 1px at 92% 33%, rgba(99,102,241,0.15) 100%, transparent),
+    radial-gradient(ellipse 1px 1px at 26% 55%, rgba(6,182,212,0.16)  100%, transparent),
+    radial-gradient(ellipse 1px 1px at 71% 52%, rgba(168,85,247,0.15) 100%, transparent),
+    radial-gradient(ellipse 1px 1px at 44% 71%, rgba(99,102,241,0.14) 100%, transparent),
+    radial-gradient(ellipse 1px 1px at 85% 68%, rgba(99,102,241,0.16) 100%, transparent),
+    radial-gradient(ellipse 1px 1px at 11% 87%, rgba(168,85,247,0.15) 100%, transparent),
+    radial-gradient(ellipse 1px 1px at 55% 85%, rgba(99,102,241,0.14) 100%, transparent),
+    radial-gradient(ellipse 1px 1px at 76% 91%, rgba(6,182,212,0.16)  100%, transparent),
+    radial-gradient(ellipse 1px 1px at 37% 77%, rgba(99,102,241,0.12) 100%, transparent),
+    radial-gradient(ellipse 1px 1px at 60% 60%, rgba(99,102,241,0.11) 100%, transparent),
+    radial-gradient(ellipse 1px 1px at 20% 65%, rgba(6,182,212,0.14)  100%, transparent),
+    radial-gradient(ellipse 1px 1px at 93% 75%, rgba(168,85,247,0.14) 100%, transparent),
+    /* Base claro */
+    linear-gradient(165deg, #f4f7ff 0%, #eef2ff 56%, #f7f4ff 100%);
 }
 
 .blog-glass {

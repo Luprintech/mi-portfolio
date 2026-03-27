@@ -111,18 +111,6 @@ function TimelineView({ node, updateAttributes, selected, deleteNode }) {
     updateAttributes({ events: newEvents });
   }
 
-  const themeClasses = {
-    default: 'from-violet-900/10 to-fuchsia-900/10',
-    minimal: 'from-slate-900/5 to-slate-800/5',
-    bold: 'from-orange-900/20 to-red-900/20',
-  };
-
-  const lineColors = {
-    default: 'bg-gradient-to-b from-fuchsia-500 to-cyan-500',
-    minimal: 'bg-slate-400',
-    bold: 'bg-gradient-to-b from-orange-500 to-red-500',
-  };
-
   return (
     <RichBlockFrame
       alignment={node.attrs.textAlign}

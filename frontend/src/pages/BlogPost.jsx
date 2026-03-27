@@ -56,7 +56,7 @@ const BlogPost = () => {
     : '';
 
   return (
-    <div className="relative min-h-screen blog-cosmic-grid px-4 py-24 text-[var(--text-primary)] selection:bg-violet-500/30 sm:px-6 md:px-8 lg:px-12 xl:px-16">
+    <div className="relative min-h-screen blog-cosmic-grid py-24 text-[var(--text-primary)] selection:bg-violet-500/30" data-version="2.0">
       <Helmet>
         <title>{seoTitle} | Guadalupe Cano</title>
         <meta name="description" content={seoDescription} />
@@ -88,18 +88,18 @@ const BlogPost = () => {
         aria-label="Progreso de lectura"
       />
 
-      <div className="pointer-events-none absolute inset-0" style={{ background: 'var(--blog-bg)' }} />
-      <div className="pointer-events-none absolute inset-0 bg-noise opacity-[0.02] mix-blend-overlay" />
+      <div className="pointer-events-none absolute inset-0 bg-noise opacity-[0.03] mix-blend-overlay" />
 
-      <article className="relative z-10 mx-auto w-full max-w-7xl">
+      <article className="relative z-10 w-full">
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45 }}
+          className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12"
         >
           <PostHeader postMeta={postMeta} />
 
-          <div className={`mx-auto mt-10 grid gap-8 lg:gap-12 ${hasToc ? 'max-w-7xl lg:grid-cols-[minmax(0,1fr)_300px]' : 'max-w-4xl'} lg:items-start`}>
+          <div className={`mt-10 grid gap-8 lg:gap-12 ${hasToc ? 'lg:grid-cols-[minmax(0,1fr)_300px]' : 'mx-auto max-w-4xl'} lg:items-start`}>
             <PostSidebar
               postMeta={postMeta}
               headings={headings}

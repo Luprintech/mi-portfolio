@@ -9,7 +9,7 @@ export default function TableOfContents({ headings, activeId }) {
         {/* Línea vertical decorativa */}
         <div className="absolute left-1 top-2 bottom-2 w-[2px] bg-gradient-to-b from-[var(--accent-primary)]/30 via-[var(--accent-secondary)]/20 to-transparent rounded-full" />
         
-        {headings.map((h, index) => (
+        {headings.map((h) => (
           <li key={h.id} className="relative">
             <a
               href={`#${h.id}`}

@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { cmsApi } from '../../lib/cmsApi';
 import { IMAGE_INPUT_ACCEPT, IMAGE_UPLOAD_LABEL, validateImageFile } from '../../lib/mediaUploadPolicy';
 import { createPostContentPayload, inferPostContentFields, looksLikeHtmlContent } from '../../lib/postContentSource';
+import { extractHeadings } from '../../components/blog/markdownComponents';
 import TemplatePicker from '../../components/cms/editor/TemplatePicker';
 import EditorialChecklist from '../../components/cms/editor/EditorialChecklist';
 import CollapsibleSection from '../../components/cms/editor/CollapsibleSection';
@@ -208,6 +209,9 @@ export default function BitacoraPostEditor() {
     // Word count for content
     const wordCount = useMemo(() => countWords(form.content), [form.content]);
     const readingMinutes = Math.max(1, Math.ceil(wordCount / 200));
+
+    // Live heading preview for TOC feedback
+    const liveHeadings = useMemo(() => extractHeadings(form.content), [form.content]);
 
     function showToast(message, type = 'success') {
         clearTimeout(toastTimer.current);
@@ -863,6 +867,34 @@ export default function BitacoraPostEditor() {
                             <p className="mt-2 text-xs leading-relaxed text-[var(--text-muted)]">
                                 Muestra un índice fijo a la derecha con los títulos del post para navegación rápida. Se genera automáticamente desde los títulos H2 y H3.
                             </p>
+
+                            {/* Live heading preview — always visible as author feedback */}
+                            <div className="mt-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-3">
+                                <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-2">Títulos detectados en el contenido</p>
+                                {liveHeadings.length === 0 ? (
+                                    <p className="text-xs text-[var(--text-muted)] italic">No se han detectado títulos H1–H3 en el contenido todavía.</p>
+                                ) : (
+                                    <ol className="space-y-1">
+                                        {liveHeadings.map((heading, i) => (
+                                            <li
+                                                key={`${heading.id}-${i}`}
+                                                className="flex items-baseline gap-2 text-xs text-[var(--text-secondary)]"
+                                                style={{ paddingLeft: `${(heading.level - 1) * 0.75}rem` }}
+                                            >
+                                                <span className="shrink-0 rounded px-1 py-0.5 bg-[var(--bg-surface)] text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                                                    H{heading.level}
+                                                </span>
+                                                <span className="truncate">{heading.text}</span>
+                                            </li>
+                                        ))}
+                                    </ol>
+                                )}
+                                {liveHeadings.length > 0 && liveHeadings.length < 3 && (
+                                    <p className="mt-2 text-[10px] text-amber-400/80">
+                                        El TOC se mostrará cuando haya al menos 3 títulos ({liveHeadings.length}/3 detectados).
+                                    </p>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </CollapsibleSection>

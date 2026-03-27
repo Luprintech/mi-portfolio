@@ -1304,13 +1304,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
         editor.commands.updateAttributes('codeBlock', patch);
     }
 
-    if (!editor) return null;
-
-    const wordCount = editor.storage.characterCount?.words?.() ?? 0;
-    const charCount = editor.storage.characterCount?.characters?.() ?? 0;
-    const readMin   = Math.max(1, Math.ceil(wordCount / 200));
-    
-    // Keyboard hint contextual
+    // Keyboard hint contextual — debe estar ANTES del early return para respetar las reglas de hooks
     const contextHint = useMemo(() => {
         if (!editor) return '';
         if (editor.isActive('table')) 
@@ -1322,7 +1316,13 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
         if (editor.isActive('bold') || editor.isActive('italic'))
             return 'Ctrl+B: negrita · Ctrl+I: cursiva · Ctrl+U: subrayado';
         return 'Ctrl+B: negrita · Ctrl+K: enlace · "/" para insertar bloques';
-    }, [editor?.state]);
+    }, [editor]);
+
+    if (!editor) return null;
+
+    const wordCount = editor.storage.characterCount?.words?.() ?? 0;
+    const charCount = editor.storage.characterCount?.characters?.() ?? 0;
+    const readMin   = Math.max(1, Math.ceil(wordCount / 200));
     const richBlockAlignmentActive = isRichBlockNodeActive(editor);
     const justifyEnabled = canUseJustifyAlignment(editor);
     const plusMenuItems = filterInsertMenuItems(PLUS_MENU_ITEMS, insertMenuQuery);
@@ -1651,7 +1651,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                 {pinnedTools.length > 0 && (
                     <>
                         {pinnedTools.map(tool => {
-                            const toolItem = PLUS_MENU_ITEMS.find(item => item.action === tool.action) || INSERT_MENU_ITEMS.find(item => item.action === tool.action);
+                            const toolItem = PLUS_MENU_ITEMS.find(item => item.action === tool.action);
                             if (!toolItem) return null;
                             return (
                                 <div key={tool.action} className="relative group" onMouseDown={e => e.stopPropagation()}>

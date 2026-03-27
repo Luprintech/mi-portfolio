@@ -310,7 +310,7 @@ router.post('/upload-cv', verifyCmsToken, async (req, res, next) => {
         res.json({
             ok: true,
             file: {
-                url: `/CV_Guadalupe_Cano.pdf?v=${Date.now()}`,
+                url: `/CV_Guadalupe_Cano.pdf`,
                 filename: path.basename(CV_FILE),
                 fileSize: req.file.size,
             },
