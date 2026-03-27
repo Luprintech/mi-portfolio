@@ -1416,8 +1416,9 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                             if (!val) editor.chain().focus().unsetFontFamily().run();
                             else editor.chain().focus().setFontFamily(val).run();
                         }}
-                        className="text-xs h-7 px-2 rounded bg-[var(--bg-surface)] border border-[var(--border-color)] 
-                                   text-[var(--text-secondary)] hover:border-fuchsia-500/50 cursor-pointer outline-none"
+                        className="text-xs h-8 px-2 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border-color)] 
+                                   text-[var(--text-secondary)] hover:border-fuchsia-500/50 cursor-pointer outline-none
+                                   focus:border-fuchsia-500/60 w-[110px] shrink-0"
                         title="Familia tipográfica"
                     >
                         {FONT_FAMILIES.map(f => (
@@ -1835,7 +1836,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                             shouldShow={({ editor }) => editor.isActive('table')}
                             options={{
                                 placement: 'top',
-                                offset: 6,
+                                offset: [0, 12],
                             }}
                             className="flex flex-wrap items-center justify-center gap-1 px-3 py-1.5 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl text-xs z-50"
                         >
