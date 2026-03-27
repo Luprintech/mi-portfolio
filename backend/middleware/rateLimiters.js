@@ -10,6 +10,11 @@ export const cmsLoginLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     handler: jsonHandler,
+    // Usa la IP real del cliente cuando hay proxies delante (Nginx, Docker, CDN).
+    keyGenerator: (req) => {
+        const rawIp = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.ip;
+        return ipKeyGenerator(rawIp);
+    },
 });
 
 export const contactLimiter = rateLimit({
