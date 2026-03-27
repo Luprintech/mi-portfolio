@@ -34,6 +34,7 @@ const EMPTY_FORM = {
     canonicalUrl: '',
     noindex: false,
     featured: false,
+    showToc: true,
     status: 'draft',
 };
 
@@ -256,6 +257,7 @@ export default function BitacoraPostEditor() {
                     canonicalUrl: post.canonicalUrl || '',
                     noindex: post.noindex || false,
                     featured: post.featured || false,
+                    showToc: post.showToc !== false,
                     status: post.status || 'published',
                 };
                 const localDraft = getDraftSnapshot(`edit:${post.slug}`);
@@ -516,6 +518,7 @@ export default function BitacoraPostEditor() {
                 canonicalUrl: restored.canonicalUrl || '',
                 noindex: restored.noindex || false,
                 featured: restored.featured || false,
+                showToc: restored.showToc !== false,
                 status: restored.status || 'draft',
             };
 
@@ -839,6 +842,26 @@ export default function BitacoraPostEditor() {
                             </label>
                             <p className="mt-2 text-xs leading-relaxed text-[var(--text-muted)]">
                                 El blog mostrará este post en la zona destacada de la portada. Si activas esta opción en otro artículo, sustituirá al actual.
+                            </p>
+                        </div>
+
+                        <div className="lg:col-span-2 mt-4">
+                            <label className="flex items-center gap-3 cursor-pointer group w-fit">
+                                <div className={`relative h-5 w-10 rounded-full transition-colors ${form.showToc ? 'bg-cyan-500' : 'bg-[var(--text-secondary)] opacity-50'}`}>
+                                    <span className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${form.showToc ? 'translate-x-5' : ''}`} />
+                                    <input
+                                        type="checkbox"
+                                        checked={form.showToc}
+                                        onChange={handleChange('showToc')}
+                                        className="sr-only"
+                                    />
+                                </div>
+                                <span className="text-sm font-medium text-[var(--text-primary)] transition-colors group-hover:text-cyan-500">
+                                    Mostrar tabla de contenidos (TOC)
+                                </span>
+                            </label>
+                            <p className="mt-2 text-xs leading-relaxed text-[var(--text-muted)]">
+                                Muestra un índice fijo a la derecha con los títulos del post para navegación rápida. Se genera automáticamente desde los títulos H2 y H3.
                             </p>
                         </div>
                     </div>

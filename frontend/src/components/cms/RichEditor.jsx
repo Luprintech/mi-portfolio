@@ -13,6 +13,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
 import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table';
 import { Node, mergeAttributes } from '@tiptap/core';
+import { useTheme } from '../../hooks/useTheme';
 
 // ─── Custom TableCell / TableHeader con atributos de color ────────────────────
 const CustomTableCell = TableCell.extend({
@@ -874,6 +875,7 @@ const CODE_VARIANTS = [
 
 // ─── RichEditor ───────────────────────────────────────────────────────────────
 export default function RichEditor({ value, onChange, token, fullscreen, onToggleFullscreen }) {
+    const { isDark, toggleTheme } = useTheme();
     const fileInputRef  = useRef(null);
     const audioInputRef = useRef(null);
     const docInputRef   = useRef(null);
@@ -906,6 +908,14 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
 
     // Herramientas fijadas por el usuario
     const [pinnedTools, setPinnedTools] = useState(PINNED_TOOLS);
+
+    // Floating toolbar on scroll
+    const editorScrollRef = useRef(null);
+    const toolbarRef = useRef(null);
+    const toolbarPlaceholderRef = useRef(null);
+    const editorContainerRef = useRef(null);
+    const [toolbarFixed, setToolbarFixed] = useState(false);
+    const [toolbarPosition, setToolbarPosition] = useState({ width: 'auto', left: 'auto' });
 
     // Función para añadir herramienta a la barra de herramientas
     const handlePinTool = (tool) => {
@@ -1104,6 +1114,45 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
         return () => document.removeEventListener('keydown', onKey);
     }, [showPreview]);
 
+    // Floating toolbar on window scroll
+    useEffect(() => {
+        const toolbar = toolbarRef.current;
+        const container = editorContainerRef.current;
+        if (!toolbar || !container || fullscreen) return;
+
+        const handleScroll = () => {
+            const containerRect = container.getBoundingClientRect();
+            
+            // Si el contenedor del editor está por encima del viewport
+            if (containerRect.top <= 0) {
+                if (!toolbarFixed) {
+                    // Guardar posición y ancho exactos del toolbar
+                    setToolbarPosition({
+                        width: `${containerRect.width}px`,
+                        left: `${containerRect.left}px`,
+                    });
+                    setToolbarFixed(true);
+                }
+            } else {
+                // Si el contenedor vuelve a estar visible
+                if (toolbarFixed) {
+                    setToolbarFixed(false);
+                    setToolbarPosition({ width: 'auto', left: 'auto' });
+                }
+            }
+        };
+
+        // Ejecutar al montar para setear estado inicial
+        handleScroll();
+        
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        window.addEventListener('resize', handleScroll, { passive: true });
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            window.removeEventListener('resize', handleScroll);
+        };
+    }, [toolbarFixed, fullscreen]);
+
     const handleImageFile = useCallback(async (file) => {
         if (!file || !token) return;
         const validationError = validateImageFile(file);
@@ -1280,11 +1329,28 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
     const plusMenuGroups = groupInsertMenuItems(plusMenuItems);
 
     return (
-        <div className={`flex flex-col rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)]
-            ${fullscreen ? 'fixed inset-0 z-50 rounded-none' : ''}`}>
+        <div 
+            ref={editorContainerRef}
+            className={`flex flex-col rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)]
+            ${fullscreen ? 'fixed inset-0 z-50 rounded-none' : ''}`}
+        >
+
+            {/* Placeholder para evitar saltos cuando el toolbar se hace fixed */}
+            {toolbarFixed && <div ref={toolbarPlaceholderRef} style={{ height: toolbarRef.current?.offsetHeight || 0 }} />}
 
             {/* ── TOOLBAR ─────────────────────────────────────────────────── */}
-            <div className="relative z-20 flex flex-wrap items-center gap-1 px-3 py-2 border-b border-[var(--border-color)] bg-[var(--bg-surface)] rounded-t-2xl sticky top-0">
+            <div 
+                ref={toolbarRef}
+                className={`flex flex-wrap items-center gap-1 px-3 py-2 border-b border-[var(--border-color)] bg-[var(--bg-surface)] transition-all ${
+                    toolbarFixed ? 'shadow-2xl z-[100]' : 'relative z-20 rounded-t-2xl'
+                }`}
+                style={{
+                    position: toolbarFixed ? 'fixed' : 'relative',
+                    top: toolbarFixed ? 0 : 'auto',
+                    left: toolbarFixed ? toolbarPosition.left : 'auto',
+                    width: toolbarFixed ? toolbarPosition.width : 'auto',
+                }}
+            >
 
                 {/* Deshacer / Rehacer */}
                 <ToolBtn onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Deshacer (Ctrl+Z)">
@@ -1720,6 +1786,22 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
                 </ToolBtn>
 
+                {/* Theme toggle */}
+                <ToolBtn onClick={toggleTheme} title={`Cambiar a modo ${isDark ? 'claro' : 'oscuro'}`}>
+                    {isDark ? (
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                            <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                        </svg>
+                    ) : (
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                        </svg>
+                    )}
+                </ToolBtn>
+
                 {/* Preview y pantalla completa */}
                 <div className="ml-auto flex items-center gap-1">
                     <ToolBtn onClick={() => setShowPreview(true)} title="Vista previa (Ctrl+P)">
@@ -1789,13 +1871,14 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
 
             {/* ── ÁREA DE EDICIÓN ──────────────────────────────────────────── */}
             <div
+                ref={editorScrollRef}
                 className={`flex-1 overflow-y-auto bg-[var(--bg-primary)] focus-within:outline-none ${markdownMode ? 'hidden' : ''}`}
                 style={{ minHeight: fullscreen ? 'calc(100vh - 120px)' : '420px' }}
             >
                 {/* Columna central tipo Medium */}
                 <div className={`
                     mx-auto px-6 py-10
-                    prose prose-invert max-w-none
+                    prose ${isDark ? 'prose-invert' : ''} max-w-none
                     [&_.tiptap]:outline-none
                     [&_.tiptap]:max-w-full [&_.tiptap]:mx-auto [&_.tiptap]:px-4
                     [&_.tiptap]:text-[17px] [&_.tiptap]:leading-[1.8] [&_.tiptap]:text-[var(--text-primary)]
@@ -1804,6 +1887,8 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                     [&_.tiptap_h3]:text-[1.25em] [&_.tiptap_h3]:font-semibold [&_.tiptap_h3]:mt-7 [&_.tiptap_h3]:mb-2 [&_.tiptap_h3]:text-[var(--text-primary)]
                     [&_.tiptap_h4]:text-[1.05em] [&_.tiptap_h4]:font-semibold [&_.tiptap_h4]:mt-6 [&_.tiptap_h4]:mb-2 [&_.tiptap_h4]:text-[var(--text-secondary)]
                     [&_.tiptap_p]:mb-5 [&_.tiptap_p]:text-[var(--text-secondary)]
+                    [&_.tiptap_strong]:text-[var(--text-primary)] [&_.tiptap_strong]:font-bold
+                    [&_.tiptap_em]:text-[var(--text-primary)]
                     [&_.tiptap_blockquote]:border-l-[3px] [&_.tiptap_blockquote]:border-fuchsia-500 [&_.tiptap_blockquote]:pl-5 [&_.tiptap_blockquote]:my-6 [&_.tiptap_blockquote]:italic [&_.tiptap_blockquote]:text-[var(--text-muted)] [&_.tiptap_blockquote]:text-[1.05em]
                     [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-6 [&_.tiptap_ul]:mb-5 [&_.tiptap_ul]:space-y-1
                     [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-6 [&_.tiptap_ol]:mb-5 [&_.tiptap_ol]:space-y-1

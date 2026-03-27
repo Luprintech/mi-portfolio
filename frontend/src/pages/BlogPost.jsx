@@ -23,7 +23,7 @@ const BlogPost = () => {
 
   const resolvedContent = useMemo(() => inferPostContentFields(postMeta || { content }), [postMeta, content]);
   const headings = useMemo(() => extractHeadings(resolvedContent.sourceContent), [resolvedContent.sourceContent]);
-  const hasToc = headings.length >= 3;
+  const hasToc = postMeta?.showToc !== false && headings.length >= 3;
 
   const activeHeadingId = useActiveHeading(headings, hasToc);
 
@@ -56,7 +56,7 @@ const BlogPost = () => {
     : '';
 
   return (
-    <div className="relative min-h-screen blog-cosmic-grid px-6 py-24 text-[var(--text-primary)] selection:bg-violet-500/30 md:px-10 lg:px-10">
+    <div className="relative min-h-screen blog-cosmic-grid px-4 py-24 text-[var(--text-primary)] selection:bg-violet-500/30 sm:px-6 md:px-8 lg:px-12 xl:px-16">
       <Helmet>
         <title>{seoTitle} | Guadalupe Cano</title>
         <meta name="description" content={seoDescription} />
@@ -91,7 +91,7 @@ const BlogPost = () => {
       <div className="pointer-events-none absolute inset-0" style={{ background: 'var(--blog-bg)' }} />
       <div className="pointer-events-none absolute inset-0 bg-noise opacity-[0.02] mix-blend-overlay" />
 
-      <article className="relative z-10 mx-auto w-full max-w-6xl">
+      <article className="relative z-10 mx-auto w-full max-w-7xl">
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
@@ -99,7 +99,7 @@ const BlogPost = () => {
         >
           <PostHeader postMeta={postMeta} />
 
-          <div className="mx-auto mt-10 grid max-w-6xl gap-10 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
+          <div className={`mx-auto mt-10 grid gap-8 lg:gap-12 ${hasToc ? 'max-w-7xl lg:grid-cols-[minmax(0,1fr)_300px]' : 'max-w-4xl'} lg:items-start`}>
             <PostSidebar
               postMeta={postMeta}
               headings={headings}
@@ -108,7 +108,7 @@ const BlogPost = () => {
             />
 
             <div className="order-1 min-w-0">
-              <div className={hasToc ? '' : 'mx-auto max-w-3xl'}>
+              <div className="w-full">
                 <PostContent post={postMeta} />
                 <ShareButtons postMeta={postMeta} />
 
