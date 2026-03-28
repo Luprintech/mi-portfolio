@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { motion as Motion } from "framer-motion";
 import Tilt from "react-parallax-tilt";
-import { Rocket, Calendar, Layers, GraduationCap } from "lucide-react";
 import miFoto from "../assets/pc-optimized.jpg";
 import TerminalWidget from "./TerminalWidget";
 
@@ -22,13 +21,6 @@ const BADGE_STYLES = {
   amber:  "bg-amber-500/10 text-amber-400 border-amber-500/20",
   blue:   "bg-blue-500/10 text-blue-400 border-blue-500/20",
 };
-
-const STATS_CONFIG = [
-  { Icon: Rocket, iconColor: "text-[var(--accent-primary)]", valKey: "stat1_value", labelKey: "stat1_label" },
-  { Icon: Calendar, iconColor: "text-[var(--accent-secondary)]", valKey: "stat2_value", labelKey: "stat2_label" },
-  { Icon: Layers, iconColor: "text-[var(--accent-primary)]", valKey: "stat3_value", labelKey: "stat3_label" },
-  { Icon: GraduationCap, iconColor: "text-[var(--accent-secondary)]", valKey: "stat4_value", labelKey: "stat4_label" },
-];
 
 /**
  * PresentationSection — content only, no background layers.
@@ -86,34 +78,6 @@ export default function PresentationSection({ id, className = "" }) {
               ))}
             </div>
           </div>
-        </Motion.div>
-
-        {/* ── Bottom block: stats cards ───────────────────────────── */}
-        <Motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="grid grid-cols-2 gap-2 md:grid-cols-4"
-        >
-          {STATS_CONFIG.map(({ Icon, iconColor, valKey, labelKey }, index) => (
-            <Motion.div
-              key={valKey}
-              initial={{ opacity: 0, y: 12 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.08 }}
-              className="flex flex-col items-center gap-1 rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] px-3 py-3 text-center shadow-[var(--card-shadow)]"
-            >
-              <Icon size={20} className={iconColor} aria-hidden="true" />
-              <span className="typo-title bg-gradient-to-r from-cyan-400 to-fuchsia-400 bg-clip-text text-xl font-extrabold leading-none text-transparent">
-                {t(`about.${valKey}`)}
-              </span>
-              <span className="typo-label text-[10px] font-medium leading-tight text-[var(--text-muted)]">
-                {t(`about.${labelKey}`)}
-              </span>
-            </Motion.div>
-          ))}
         </Motion.div>
 
         {/* ── Terminal interactiva ─────────────────────────────── */}
