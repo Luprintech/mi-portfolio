@@ -412,16 +412,20 @@ body.home-scroll-snap #main-content {
 
 /* Mobile */
 @media (max-width: 768px) {
+  /* Mantener snap obligatorio igual que desktop — un swipe = una sección */
   .snap-root {
-    scroll-snap-type: y proximity;
+    scroll-snap-type: y mandatory;
   }
 
   .snap-page,
   .snap-page--scroll {
-    height: auto;
+    height: 100vh;
     min-height: 100vh;
     padding-top: var(--nav-height);
-    padding-bottom: 0.5rem;
+    padding-bottom: 0;
+    overflow-y: auto;
+    /* El contenido que no cabe hace scroll interno dentro de la sección */
+    overscroll-behavior-y: contain;
   }
 
   .section-inner,
@@ -432,17 +436,20 @@ body.home-scroll-snap #main-content {
   }
 
   .section-inner--scroll {
-    max-height: none;
-    overflow-y: visible;
+    max-height: calc(100vh - var(--nav-height));
+    overflow-y: auto;
   }
 
   .section-viewport {
     padding-inline: 1.25rem;
     padding-block: 0.5rem;
+    height: 100%;
+    overflow-y: auto;
   }
 
   .section-viewport__content {
     min-height: auto;
+    align-items: flex-start;
   }
 }
 
