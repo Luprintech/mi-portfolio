@@ -7,7 +7,6 @@ import TerminalWidget from "./TerminalWidget";
 const BADGE_KEYS = [
   { key: "badge_fullstack", color: "cyan" },
   { key: "badge_self", color: "violet" },
-  { key: "badge_infra", color: "fuchsia" },
   { key: "badge_ai", color: "emerald" },
   { key: "badge_security", color: "amber" },
   { key: "badge_wordpress", color: "blue" },
@@ -39,7 +38,7 @@ export default function PresentationSection({ id, className = "" }) {
           initial={{ opacity: 0, y: 32 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
-          className="flex flex-col items-center gap-10 md:flex-row md:items-start"
+          className="flex flex-col items-center gap-10 md:flex-row md:items-center"
         >
           <div className="shrink-0 flex justify-center md:justify-start">
             <Tilt tiltMaxAngleX={8} tiltMaxAngleY={8} scale={1.03} transitionSpeed={2000}>
