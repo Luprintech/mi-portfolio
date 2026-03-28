@@ -23,13 +23,18 @@ export default function PresentationSectionBg() {
   const reducedMotion = useReducedMotion();
 
   const base = isDark
-    ? "linear-gradient(160deg, #080e1c 0%, #0c1428 45%, #0e0c1e 100%)"
+    ? "linear-gradient(160deg, #090813 0%, #100c1f 45%, #141022 100%)"
     : "linear-gradient(160deg, #eef1ff 0%, #e8eeff 45%, #f0ebff 100%)";
 
   // blob colours
-  const blobA = isDark ? "rgba(139,92,246,0.28)"  : "rgba(139,92,246,0.14)";   // violet — top-left
-  const blobB = isDark ? "rgba(34,211,238,0.20)"  : "rgba(6,182,212,0.11)";    // cyan   — bottom-right
-  const blobC = isDark ? "rgba(232,121,249,0.18)" : "rgba(232,121,249,0.10)";  // fuchsia — top-right
+  const blobA = isDark ? "rgba(139,92,246,0.24)"  : "rgba(139,92,246,0.14)";   // violet — top-left
+  const blobB = isDark ? "rgba(34,211,238,0.16)"  : "rgba(6,182,212,0.11)";    // cyan   — bottom-right
+  const blobC = isDark ? "rgba(232,121,249,0.15)" : "rgba(232,121,249,0.10)";  // fuchsia — top-right
+
+  // Very soft central focus light for storytelling section
+  const centerFocus = isDark
+    ? "radial-gradient(ellipse 60% 45% at 50% 48%, rgba(255,255,255,0.05), transparent 72%)"
+    : "radial-gradient(ellipse 60% 45% at 50% 48%, rgba(255,255,255,0.20), transparent 72%)";
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none z-0" aria-hidden="true">
@@ -38,17 +43,17 @@ export default function PresentationSectionBg() {
         <style>{`
           @keyframes psbg-floatA {
             0%,100% { transform: translate(0,    0)    scale(1);    }
-            33%      { transform: translate(3%,   4%)   scale(1.06); }
-            66%      { transform: translate(-2%,  2%)   scale(0.96); }
+            33%      { transform: translate(2%,   3%)   scale(1.04); }
+            66%      { transform: translate(-1.5%, 1.5%) scale(0.98); }
           }
           @keyframes psbg-floatB {
             0%,100% { transform: translate(0,    0)    scale(1);    }
-            40%      { transform: translate(-4%,  -3%)  scale(1.07); }
-            70%      { transform: translate(2%,   -1%)  scale(0.95); }
+            40%      { transform: translate(-2.5%, -2%)  scale(1.05); }
+            70%      { transform: translate(1.5%, -1%)   scale(0.97); }
           }
           @keyframes psbg-floatC {
             0%,100% { transform: translate(0,    0)    scale(1);    opacity: 0.85; }
-            50%      { transform: translate(-3%,  3%)   scale(1.08); opacity: 1;    }
+            50%      { transform: translate(-2%,  2%)   scale(1.05); opacity: 0.96; }
           }
         `}</style>
       )}
@@ -67,8 +72,8 @@ export default function PresentationSectionBg() {
           top: "-18%",
           left: "-16%",
           background: `radial-gradient(circle, ${blobA} 0%, transparent 68%)`,
-          filter: "blur(72px)",
-          ...(reducedMotion ? {} : { animation: "psbg-floatA 22s ease-in-out infinite" }),
+          filter: "blur(88px)",
+          ...(reducedMotion ? {} : { animation: "psbg-floatA 28s ease-in-out infinite" }),
         }}
       />
 
@@ -83,8 +88,8 @@ export default function PresentationSectionBg() {
           bottom: "-20%",
           right: "-14%",
           background: `radial-gradient(circle, ${blobB} 0%, transparent 65%)`,
-          filter: "blur(80px)",
-          ...(reducedMotion ? {} : { animation: "psbg-floatB 28s ease-in-out infinite" }),
+          filter: "blur(96px)",
+          ...(reducedMotion ? {} : { animation: "psbg-floatB 34s ease-in-out infinite" }),
         }}
       />
 
@@ -99,13 +104,16 @@ export default function PresentationSectionBg() {
           top: "-10%",
           right: "-8%",
           background: `radial-gradient(circle, ${blobC} 0%, transparent 62%)`,
-          filter: "blur(64px)",
-          ...(reducedMotion ? {} : { animation: "psbg-floatC 18s ease-in-out infinite" }),
+          filter: "blur(78px)",
+          ...(reducedMotion ? {} : { animation: "psbg-floatC 24s ease-in-out infinite" }),
         }}
       />
 
-      {/* Layer 4 — noise grain */}
-      <div className="absolute inset-0 opacity-[0.028] mix-blend-overlay bg-noise" />
+      {/* Layer 4 — central soft focus light */}
+      <div className="absolute inset-0" style={{ background: centerFocus }} />
+
+      {/* Layer 5 — noise grain */}
+      <div className="absolute inset-0 mix-blend-overlay bg-noise" style={{ opacity: isDark ? 0.028 : 0.018 }} />
     </div>
   );
 }

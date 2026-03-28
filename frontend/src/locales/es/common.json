@@ -348,6 +348,7 @@
     "tab_hint": "Tab para autocompletar · ↑↓ historial",
     "welcome_1": "¡Bienvenida al terminal de Lupe! Escribe 'ayuda' para ver los comandos disponibles.",
     "welcome_2": "Prueba: ayuda · whoami · skills · proyectos · contacto",
+    "easter_hint": "🕵️ Pista: en el navbar hay un secreto si tocas varias veces mi nombre.",
     "cmd_whoami_hint": "Quién soy",
     "cmd_skills_hint": "Tecnologías que manejo",
     "cmd_proyectos_hint": "Proyectos destacados",

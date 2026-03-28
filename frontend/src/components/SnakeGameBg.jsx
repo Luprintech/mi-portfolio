@@ -1,3 +1,5 @@
+import { useTheme } from "../hooks/useTheme";
+
 /**
  * SnakeGameBg — Fondo retro/pixel para la sección del Snake.
  *
@@ -11,6 +13,32 @@
  *  6. Noise grain — textura orgánica
  */
 export default function SnakeGameBg() {
+  const { isDark } = useTheme();
+
+  const baseGradient = isDark
+    ? "linear-gradient(135deg, #020d06 0%, #040f0a 40%, #03080f 70%, #060310 100%)"
+    : "linear-gradient(135deg, #f2fbf5 0%, #eefaf4 38%, #eef5ff 72%, #f7f1ff 100%)";
+
+  const pixelDot = isDark
+    ? "rgba(52,211,153,0.9)"
+    : "rgba(16,185,129,0.42)";
+
+  const scanline = isDark
+    ? "repeating-linear-gradient(0deg, rgba(0,0,0,0.8) 0px, rgba(0,0,0,0.8) 2px, transparent 2px, transparent 4px)"
+    : "repeating-linear-gradient(0deg, rgba(79,70,229,0.08) 0px, rgba(79,70,229,0.08) 2px, transparent 2px, transparent 4px)";
+
+  const emeraldGlow = isDark
+    ? "radial-gradient(ellipse 50% 60% at 72% 52%, rgba(52,211,153,0.12), transparent 65%)"
+    : "radial-gradient(ellipse 50% 60% at 72% 52%, rgba(16,185,129,0.16), transparent 65%)";
+
+  const violetGlow = isDark
+    ? "radial-gradient(ellipse 45% 55% at 22% 50%, rgba(168,85,247,0.10), transparent 65%)"
+    : "radial-gradient(ellipse 45% 55% at 22% 50%, rgba(168,85,247,0.13), transparent 65%)";
+
+  const vignette = isDark
+    ? "radial-gradient(ellipse 85% 85% at 50% 50%, transparent 55%, rgba(0,0,0,0.72) 100%)"
+    : "radial-gradient(ellipse 85% 85% at 50% 50%, transparent 58%, rgba(99,102,241,0.16) 100%)";
+
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden z-0" aria-hidden="true">
 
@@ -34,24 +62,26 @@ export default function SnakeGameBg() {
       <div
         className="absolute inset-0"
         style={{
-          background: "linear-gradient(135deg, #020d06 0%, #040f0a 40%, #03080f 70%, #060310 100%)",
+          background: baseGradient,
         }}
       />
 
       {/* Layer 1 — grid de puntos pixelados tipo pantalla LCD antigua */}
       <div
-        className="absolute inset-0 opacity-[0.18]"
+        className="absolute inset-0"
         style={{
-          backgroundImage: `radial-gradient(circle, rgba(52,211,153,0.9) 1px, transparent 1px)`,
+          opacity: isDark ? 0.18 : 0.11,
+          backgroundImage: `radial-gradient(circle, ${pixelDot} 1px, transparent 1px)`,
           backgroundSize: "24px 24px",
         }}
       />
 
       {/* Layer 2 — scanlines CRT horizontales */}
       <div
-        className="absolute inset-0 opacity-[0.07]"
+        className="absolute inset-0"
         style={{
-          backgroundImage: "repeating-linear-gradient(0deg, rgba(0,0,0,0.8) 0px, rgba(0,0,0,0.8) 2px, transparent 2px, transparent 4px)",
+          opacity: isDark ? 0.07 : 0.045,
+          backgroundImage: scanline,
           animation: "scanline-move 0.1s steps(1) infinite",
         }}
       />
@@ -60,7 +90,7 @@ export default function SnakeGameBg() {
       <div
         className="absolute inset-0"
         style={{
-          background: "radial-gradient(ellipse 50% 60% at 72% 52%, rgba(52,211,153,0.12), transparent 65%)",
+          background: emeraldGlow,
         }}
       />
 
@@ -68,7 +98,7 @@ export default function SnakeGameBg() {
       <div
         className="absolute inset-0"
         style={{
-          background: "radial-gradient(ellipse 45% 55% at 22% 50%, rgba(168,85,247,0.10), transparent 65%)",
+          background: violetGlow,
         }}
       />
 
@@ -76,7 +106,7 @@ export default function SnakeGameBg() {
       <div
         className="absolute inset-0"
         style={{
-          background: "radial-gradient(ellipse 85% 85% at 50% 50%, transparent 55%, rgba(0,0,0,0.72) 100%)",
+          background: vignette,
         }}
       />
 
@@ -87,7 +117,7 @@ export default function SnakeGameBg() {
       />
 
       {/* Layer 7 — noise grain */}
-      <div className="absolute inset-0 opacity-[0.04] mix-blend-overlay bg-noise" />
+      <div className="absolute inset-0 mix-blend-overlay bg-noise" style={{ opacity: isDark ? 0.04 : 0.02 }} />
     </div>
   );
 }

@@ -61,6 +61,14 @@ vi.mock('../components/ServicesSectionBg', () => ({
   default: () => <div />,
 }));
 
+vi.mock('../components/SnakeGameBg', () => ({
+  default: () => <div />,
+}));
+
+vi.mock('../components/YoutubeSectionBg', () => ({
+  default: () => <div />,
+}));
+
 vi.mock('../components/ScrollSnapContainer', () => ({
   scrollToSection: vi.fn(),
 }));

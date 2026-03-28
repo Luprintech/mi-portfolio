@@ -2,16 +2,25 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
 import Particles, { initParticlesEngine } from "@tsparticles/react";
 import { loadSlim } from "@tsparticles/slim";
-import meowSound from "/sounds/meow.mp3";
 import luprincat from '/assets/meaow.webm';
 
+const CAT_FALLBACK_SRC = "/assets/luprincat-fallback.svg";
+
 const PARTICLES_OPTIONS = {
+  fullScreen: { enable: false },
   particles: {
     number: { value: 15 },
     move: { enable: true, speed: 1.5 },
     size: { value: 2 },
     opacity: { value: 0.4 },
     color: { value: "#00ffff" },
+  },
+  interactivity: {
+    events: {
+      onHover: { enable: false },
+      onClick: { enable: false },
+      resize: true,
+    },
   },
 };
 
@@ -20,16 +29,12 @@ export default function LuprinCat({ onClose }) {
   const [flip, setFlip] = useState(false);
   const [visible, setVisible] = useState(true);
   const [message, setMessage] = useState(null);
-  const [isMuted, setIsMuted] = useState(false);
+  const [useEmojiFallback, setUseEmojiFallback] = useState(false);
   const [catPosition, setCatPosition] = useState({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
-  const [achievement, setAchievement] = useState(false);
 
-  const meowInterval = useRef(null);
   const messageInterval = useRef(null);
   const lastMousePos = useRef({ x: 0, y: 0 });
   const lastTime = useRef(Date.now());
-  const clickCountRef = useRef(0);
-
   const x = useMotionValue(catPosition.x);
   const y = useMotionValue(catPosition.y);
   const stiffness = useRef(60);
@@ -45,8 +50,27 @@ export default function LuprinCat({ onClose }) {
     }).then(() => setEngineReady(true));
   }, []);
 
+  // Fallback para móviles/iOS: evita fondo negro de WEBM con alpha
+  useEffect(() => {
+    const coarsePointer = window.matchMedia?.("(pointer: coarse)")?.matches ?? false;
+    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+      || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+    if (coarsePointer || iOS) {
+      setUseEmojiFallback(true);
+      // Posición fija visible en móvil (no hay cursor)
+      const mobileX = Math.max(16, window.innerWidth - 140);
+      const mobileY = Math.max(80, window.innerHeight - 180);
+      x.set(mobileX);
+      y.set(mobileY);
+      setCatPosition({ x: mobileX, y: mobileY });
+    }
+  }, [x, y]);
+
   // 🐾 Movimiento con detección de velocidad
   useEffect(() => {
+    if (useEmojiFallback) return undefined;
+
     const handleMouseMove = (e) => {
       const now = Date.now();
       const dt = now - lastTime.current;
@@ -61,8 +85,9 @@ export default function LuprinCat({ onClose }) {
       stiffness.current = newStiffness;
       damping.current = newDamping;
 
-      const newX = e.clientX - 80;
-      const newY = e.clientY - 80;
+      // El gato va DETRÁS del cursor (offset + inercia), no encima
+      const newX = e.clientX + 20;
+      const newY = e.clientY + 16;
       x.set(newX);
       y.set(newY);
       setCatPosition({ x: newX, y: newY });
@@ -73,21 +98,7 @@ export default function LuprinCat({ onClose }) {
 
     window.addEventListener("mousemove", handleMouseMove);
     return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, [x, y]);
-
-  // 🧠 Maullidos automáticos
-  useEffect(() => {
-    const playMeow = () => {
-      if (isMuted) return;
-      const audio = new Audio(meowSound);
-      audio.volume = 0.3;
-      audio.playbackRate = 0.8 + Math.random() * 0.6;
-      audio.play();
-    };
-
-    meowInterval.current = setInterval(() => playMeow(), 3000);
-    return () => clearInterval(meowInterval.current);
-  }, [isMuted]);
+  }, [useEmojiFallback, x, y]);
 
   // 💬 Frases dinámicas
   useEffect(() => {
@@ -110,39 +121,9 @@ export default function LuprinCat({ onClose }) {
     return () => clearInterval(messageInterval.current);
   }, []);
 
-  // 🖱️ Click sobre el gato
-  const handleCatClick = () => {
-    if (!isMuted) {
-      const audio = new Audio(meowSound);
-      audio.volume = 0.4;
-      audio.play();
-    }
-
-    const clickMessages = [
-      "¡Oye humano! 😼",
-      "⚙️ Sistema felino alterado.",
-      "¡Eso hace cosquillas! 🐾",
-    ];
-    const random = clickMessages[Math.floor(Math.random() * clickMessages.length)];
-    setMessage(random);
-    setTimeout(() => setMessage(null), 2000);
-
-    // Logro secreto 🏆
-    clickCountRef.current += 1;
-    if (clickCountRef.current >= 3 && !achievement) {
-      clickCountRef.current = 0;
-      setAchievement(true);
-      setTimeout(() => setAchievement(false), 4000);
-    }
-  };
-
-  // 🔇 Silenciar
-  const toggleMute = () => setIsMuted((m) => !m);
-
   // 🧹 Cerrar
   const handleClose = () => {
     setVisible(false);
-    clearInterval(meowInterval.current);
     clearInterval(messageInterval.current);
     setTimeout(() => onClose?.(), 300);
   };
@@ -155,30 +136,48 @@ export default function LuprinCat({ onClose }) {
   return (
     <div className="fixed inset-0 z-9999 select-none pointer-events-none">
       {engineReady && (
-        <Particles
-          options={PARTICLES_OPTIONS}
-          particlesLoaded={particlesLoaded}
-        />
+        <div className="pointer-events-none absolute inset-0">
+          <Particles
+            id="luprincat-particles"
+            className="pointer-events-none absolute inset-0"
+            options={PARTICLES_OPTIONS}
+            particlesLoaded={particlesLoaded}
+          />
+        </div>
       )}
 
       {/* 🐈 Gato */}
-      <motion.video
-        src={luprincat}
-        alt ="LuprinCat"
-        autoPlay
-        loop
-        muted
-        playsInline
-        onClick={handleCatClick}
-        style={{
-          x: smoothX,
-          y: smoothY,
-          transform: `scaleX(${flip ? -1 : 1})`,
-          filter: "drop-shadow(0 0 25px cyan)",
-          mixBlendMode: "screen",
-        }}
-        className="absolute w-48 h-48 object-contain pointer-events-auto cursor-pointer"
-      />
+      {useEmojiFallback ? (
+        <motion.img
+          src={CAT_FALLBACK_SRC}
+          alt="LuprinCat fallback"
+          style={{
+            x: smoothX,
+            y: smoothY,
+            filter: "drop-shadow(0 0 18px rgba(34,211,238,0.7))",
+          }}
+          className="absolute h-28 w-28 object-contain pointer-events-none"
+          draggable={false}
+        />
+      ) : (
+        <motion.video
+          src={luprincat}
+          aria-label="LuprinCat"
+          autoPlay
+          loop
+          muted
+          playsInline
+          onError={() => setUseEmojiFallback(true)}
+          style={{
+            x: smoothX,
+            y: smoothY,
+            transform: `scaleX(${flip ? -1 : 1})`,
+            filter: "drop-shadow(0 0 25px cyan)",
+            mixBlendMode: "screen",
+          }}
+          className="absolute h-44 w-44 object-contain pointer-events-none"
+        />
+      )}
 
       {/* 💬 Frases */}
       <AnimatePresence>
@@ -202,34 +201,8 @@ export default function LuprinCat({ onClose }) {
         )}
       </AnimatePresence>
 
-      {/* 🏆 Logro */}
-      <AnimatePresence>
-        {achievement && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4 }}
-            className="fixed inset-0 flex items-center justify-center z-10000"
-          >
-            <div className="bg-gradient-to-r from-fuchsia-600 to-cyan-500 text-white px-6 py-4 rounded-2xl shadow-2xl font-semibold text-lg border border-white/20">
-              ✨ Logro desbloqueado: Amigo de los felinos cibernéticos 🐱💾
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* 🧩 Botones */}
       <div className="fixed bottom-6 right-6 flex gap-3 pointer-events-auto">
-        <button
-          onClick={toggleMute}
-          className={`${
-            isMuted ? "bg-red-500/20 text-red-300 hover:bg-red-500/40" : "bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/40"
-          } px-3 py-2 rounded-lg text-sm transition`}
-        >
-          {isMuted ? "🔇 Silenciado" : "🔊 Desactivar sonido"}
-        </button>
-
         <button
           onClick={handleClose}
           className="bg-cyan-500/20 text-cyan-300 px-3 py-2 rounded-lg text-sm hover:bg-cyan-500/40 transition"

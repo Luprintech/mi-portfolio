@@ -46,6 +46,7 @@ export default function SnakeGame() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
+    if (!ctx) return;
     const { snake, food } = stateRef.current;
 
     // Fondo
@@ -178,8 +179,15 @@ export default function SnakeGame() {
 
   // ── Swipe táctil ──────────────────────────────────────────────────────────
   const touchStart = useRef(null);
-  function onTouchStart(e) { touchStart.current = e.touches[0]; }
+  function onTouchStart(e) {
+    if (e.cancelable) e.preventDefault();
+    touchStart.current = e.touches[0];
+  }
+  function onTouchMove(e) {
+    if (e.cancelable) e.preventDefault();
+  }
   function onTouchEnd(e) {
+    if (e.cancelable) e.preventDefault();
     if (!touchStart.current) return;
     const dx = e.changedTouches[0].clientX - touchStart.current.clientX;
     const dy = e.changedTouches[0].clientY - touchStart.current.clientY;
@@ -243,7 +251,9 @@ export default function SnakeGame() {
         <div
           className="relative overflow-hidden rounded-2xl border border-[var(--border-color)] shadow-[0_0_40px_rgba(34,211,238,0.08)]"
           onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
+          style={{ touchAction: "none", overscrollBehavior: "contain" }}
         >
           <canvas
             ref={canvasRef}
@@ -275,7 +285,12 @@ export default function SnakeGame() {
         </div>
 
         {/* Controles táctiles — solo mobile */}
-        <div className="flex flex-col items-center gap-1 md:hidden">
+        <div
+          className="flex flex-col items-center gap-1 md:hidden"
+          onTouchStart={onTouchMove}
+          onTouchMove={onTouchMove}
+          style={{ touchAction: "none", overscrollBehavior: "contain" }}
+        >
           <button onClick={() => tap(DIR.UP)}    className="snake-btn">▲</button>
           <div className="flex gap-6">
             <button onClick={() => tap(DIR.LEFT)}  className="snake-btn">◄</button>

@@ -80,6 +80,7 @@ export default function TerminalWidget() {
   const WELCOME  = useMemo(() => [
     { text: t("terminal.welcome_1"), color: "text-emerald-400", type: "output" },
     { text: t("terminal.welcome_2"), color: "text-[var(--text-muted)]",  type: "output" },
+    { text: t("terminal.easter_hint"), color: "text-amber-300", type: "output" },
     { text: "", type: "output" },
   ], [t]);
 
