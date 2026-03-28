@@ -324,8 +324,8 @@ export default function Home() {
           </SectionViewport>
       </section>
 
-      {/* ========== SECTION 10: FINAL CTA — CONTACTO ========== */}
-      <section id="contact" className="snap-page--last overflow-hidden">
+      {/* ========== SECTION 10: FINAL CTA + FOOTER ========== */}
+      <section id="contact" className="snap-page overflow-hidden !pb-24">
         {/* Fondo oscuro base */}
         <div className="pointer-events-none absolute inset-0 bg-[var(--bg-primary)]" />
 
@@ -400,12 +400,13 @@ export default function Home() {
             </div>
           </motion.div>
         </SectionViewport>
-      </section>
 
-        {/* Footer dentro del snap-root para que no flote fuera del scroll */}
-        <div className="snap-footer">
+        {/* Footer integrado en la última sección */}
+        <div className="absolute bottom-0 left-0 right-0 z-10">
           <Footer />
         </div>
+      </section>
+
       </div>
     </>
   );
