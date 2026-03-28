@@ -40,7 +40,7 @@ export default function PresentationSection({ id, className = "" }) {
 
   return (
     <div id={id} className={`relative z-10 flex h-full w-full items-center ${className}`.trim()}>
-      <div className="mx-auto flex h-full w-full max-w-5xl flex-col justify-center gap-8 py-6 md:gap-10 md:py-8 lg:gap-12">
+        <div className="mx-auto flex h-full w-full max-w-5xl flex-col justify-center gap-5 py-4 md:gap-6 md:py-6">
 
         {/* ── Top block: photo + text ─────────────────────────────── */}
         <Motion.div
@@ -94,22 +94,22 @@ export default function PresentationSection({ id, className = "" }) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="grid grid-cols-2 gap-4 md:grid-cols-4"
+          className="grid grid-cols-2 gap-2 md:grid-cols-4"
         >
           {STATS_CONFIG.map(({ Icon, iconColor, valKey, labelKey }, index) => (
             <Motion.div
               key={valKey}
-              initial={{ opacity: 0, y: 16 }}
+              initial={{ opacity: 0, y: 12 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.08 }}
-              className="flex flex-col items-center gap-2 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-5 text-center shadow-[var(--card-shadow)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[var(--card-hover-shadow)]"
+              className="flex flex-col items-center gap-1 rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] px-3 py-3 text-center shadow-[var(--card-shadow)]"
             >
-              <Icon size={36} className={iconColor} aria-hidden="true" />
-              <span className="typo-title bg-gradient-to-r from-cyan-400 to-fuchsia-400 bg-clip-text text-3xl font-extrabold leading-none text-transparent">
+              <Icon size={20} className={iconColor} aria-hidden="true" />
+              <span className="typo-title bg-gradient-to-r from-cyan-400 to-fuchsia-400 bg-clip-text text-xl font-extrabold leading-none text-transparent">
                 {t(`about.${valKey}`)}
               </span>
-              <span className="typo-label text-xs font-medium leading-tight text-[var(--text-muted)]">
+              <span className="typo-label text-[10px] font-medium leading-tight text-[var(--text-muted)]">
                 {t(`about.${labelKey}`)}
               </span>
             </Motion.div>
