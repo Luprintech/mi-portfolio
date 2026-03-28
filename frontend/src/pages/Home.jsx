@@ -18,6 +18,7 @@ import LandingHero from "../components/LandingHero";
 import PresentationSection from "../components/PresentationSection";
 import ProfileStorySection from "../components/ProfileStorySection";
 import SectionViewport from "../components/SectionViewport";
+import SnakeGameBg from "../components/SnakeGameBg";
 
 import Timeline from "../components/Timeline";
 import SnakeGame from "../components/SnakeGame";
@@ -227,9 +228,7 @@ export default function Home() {
 
       {/* ========== SECTION 8: SNAKE GAME ========== */}
       <section id="snake" className="snap-page overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 bg-[var(--bg-primary)]" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_55%_50%_at_30%_50%,rgba(232,121,249,0.07),transparent_60%)]" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_45%_45%_at_75%_55%,rgba(34,211,238,0.07),transparent_60%)]" />
+        <SnakeGameBg />
 
         <SectionViewport width="wide" contentClassName="relative z-10">
           <SnakeGame />
