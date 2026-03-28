@@ -12,6 +12,7 @@ const H     = CELL * ROWS;
 const SPEED_INIT  = 150; // ms por tick
 const SPEED_MIN   =  60; // ms mínimo (máx velocidad)
 const SPEED_STEP  =   5; // ms que se resta cada 5 puntos
+const TAP_THRESHOLD = 10; // px: por debajo consideramos "tap" en lugar de swipe
 
 const DIR = { UP: [0,-1], DOWN: [0,1], LEFT: [-1,0], RIGHT: [1,0] };
 
@@ -199,22 +200,58 @@ export default function SnakeGame() {
 
   // ── Swipe táctil ──────────────────────────────────────────────────────────
   const touchStart = useRef(null);
+
+  function directionFromPoint(clientX, clientY) {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+
+    const rect = canvas.getBoundingClientRect();
+    const localX = clientX - rect.left;
+    const localY = clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+
+    const dx = localX - centerX;
+    const dy = localY - centerY;
+
+    if (Math.abs(dx) > Math.abs(dy)) {
+      return dx >= 0 ? DIR.RIGHT : DIR.LEFT;
+    }
+    return dy >= 0 ? DIR.DOWN : DIR.UP;
+  }
+
   function onTouchStart(e) {
-    touchStart.current = e.touches[0];
+    const t = e.touches[0];
+    touchStart.current = { x: t.clientX, y: t.clientY };
   }
   function onTouchMove() {}
   function onTouchEnd(e) {
     if (!touchStart.current) return;
-    const dx = e.changedTouches[0].clientX - touchStart.current.clientX;
-    const dy = e.changedTouches[0].clientY - touchStart.current.clientY;
+    const endX = e.changedTouches[0].clientX;
+    const endY = e.changedTouches[0].clientY;
+    const dx = endX - touchStart.current.x;
+    const dy = endY - touchStart.current.y;
     const cur = stateRef.current.dir;
     let next;
-    if (Math.abs(dx) > Math.abs(dy)) {
+
+    // Tap: decide por zona pulsada (izquierda/derecha/arriba/abajo)
+    if (Math.abs(dx) < TAP_THRESHOLD && Math.abs(dy) < TAP_THRESHOLD) {
+      next = directionFromPoint(touchStart.current.x, touchStart.current.y);
+    } else if (Math.abs(dx) > Math.abs(dy)) {
       next = dx > 0 ? DIR.RIGHT : DIR.LEFT;
     } else {
       next = dy > 0 ? DIR.DOWN : DIR.UP;
     }
-    if (next[0] === -cur[0] && next[1] === -cur[1]) return;
+
+    if (!next) {
+      touchStart.current = null;
+      return;
+    }
+
+    if (next[0] === -cur[0] && next[1] === -cur[1]) {
+      touchStart.current = null;
+      return;
+    }
     stateRef.current.nextDir = next;
     touchStart.current = null;
   }
