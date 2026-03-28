@@ -1074,6 +1074,29 @@ article tbody tr:hover,
   /* Los estilos inline toman precedencia */
 }
 
+/* Snake — botones de control táctil */
+.snake-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--bg-elevated) 80%, transparent);
+  color: var(--text-secondary);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.snake-btn:active {
+  background: var(--accent-secondary-dim);
+  color: var(--accent-secondary);
+  transform: scale(0.92);
+}
+
 /* Mejora visual: Primera celda en negrita en tablas sin header */
 .ProseMirror tbody tr td:first-child,
 article tbody tr td:first-child,

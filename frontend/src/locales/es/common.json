@@ -326,6 +326,19 @@
   "footer": {
     "rights": "Todos los derechos reservados."
   },
+  "snake": {
+    "eyebrow": "Mini juego",
+    "title": "Snake — mi juego favorito de siempre",
+    "desc": "De pequeña pasaba horas jugando al Snake en el móvil de mi madre. Ahora lo construyo yo. Está hecho con React y Canvas API, sin librerías de juegos — solo lógica, requestAnimationFrame y un poco de nostalgia.",
+    "score": "Puntuación",
+    "best": "Récord",
+    "controls": "Teclado: ↑ ↓ ← → o WASD · Móvil: desliza o usa los botones",
+    "play": "Jugar",
+    "play_again": "Jugar de nuevo",
+    "game_over": "Game Over",
+    "final_score": "Puntuación final:",
+    "speed": "Velocidad:"
+  },
   "terminal": {
     "aria_label": "Terminal interactiva",
     "input_label": "Escribe un comando",

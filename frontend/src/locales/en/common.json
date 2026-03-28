@@ -324,6 +324,19 @@
   "footer": {
     "rights": "All rights reserved."
   },
+  "snake": {
+    "eyebrow": "Mini game",
+    "title": "Snake — my all-time favourite game",
+    "desc": "As a kid I spent hours playing Snake on my mum's phone. Now I build it myself. Made with React and the Canvas API, no game libraries — just logic, requestAnimationFrame, and a bit of nostalgia.",
+    "score": "Score",
+    "best": "Best",
+    "controls": "Keyboard: ↑ ↓ ← → or WASD · Mobile: swipe or use the buttons",
+    "play": "Play",
+    "play_again": "Play again",
+    "game_over": "Game Over",
+    "final_score": "Final score:",
+    "speed": "Speed:"
+  },
   "terminal": {
     "aria_label": "Interactive terminal",
     "input_label": "Type a command",
