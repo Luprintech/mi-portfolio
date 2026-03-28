@@ -4,8 +4,6 @@ import Particles, { initParticlesEngine } from "@tsparticles/react";
 import { loadSlim } from "@tsparticles/slim";
 import luprincat from '/assets/meaow.webm';
 
-const CAT_FALLBACK_SRC = "/assets/luprincat-fallback.svg";
-
 const PARTICLES_OPTIONS = {
   fullScreen: { enable: false },
   particles: {
@@ -29,7 +27,6 @@ export default function LuprinCat({ onClose }) {
   const [flip, setFlip] = useState(false);
   const [visible, setVisible] = useState(true);
   const [message, setMessage] = useState(null);
-  const [useEmojiFallback, setUseEmojiFallback] = useState(false);
   const [catPosition, setCatPosition] = useState({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
 
   const messageInterval = useRef(null);
@@ -50,27 +47,20 @@ export default function LuprinCat({ onClose }) {
     }).then(() => setEngineReady(true));
   }, []);
 
-  // Fallback para móviles/iOS: evita fondo negro de WEBM con alpha
+  // En móvil: posición inicial flotante (esquina inferior derecha)
   useEffect(() => {
     const coarsePointer = window.matchMedia?.("(pointer: coarse)")?.matches ?? false;
-    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
-      || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-
-    if (coarsePointer || iOS) {
-      setUseEmojiFallback(true);
-      // Posición fija visible en móvil (no hay cursor)
+    if (coarsePointer) {
       const mobileX = Math.max(16, window.innerWidth - 140);
-      const mobileY = Math.max(80, window.innerHeight - 180);
+      const mobileY = Math.max(80, window.innerHeight - 220);
       x.set(mobileX);
       y.set(mobileY);
       setCatPosition({ x: mobileX, y: mobileY });
     }
   }, [x, y]);
 
-  // 🐾 Movimiento con detección de velocidad
+  // 🐾 Movimiento con detección de velocidad — mouse (desktop) + touch (móvil)
   useEffect(() => {
-    if (useEmojiFallback) return undefined;
-
     const handleMouseMove = (e) => {
       const now = Date.now();
       const dt = now - lastTime.current;
@@ -96,9 +86,28 @@ export default function LuprinCat({ onClose }) {
       lastTime.current = now;
     };
 
+    function handleTouchMove(e) {
+      const touch = e.touches[0];
+      if (!touch) return;
+      const now = Date.now();
+      const dx = touch.clientX - lastMousePos.current.x;
+      setFlip(dx < 0);
+      const newX = touch.clientX - 60;
+      const newY = touch.clientY - 60;
+      x.set(newX);
+      y.set(newY);
+      setCatPosition({ x: newX, y: newY });
+      lastMousePos.current = { x: touch.clientX, y: touch.clientY };
+      lastTime.current = now;
+    }
+
     window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, [useEmojiFallback, x, y]);
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("touchmove", handleTouchMove);
+    };
+  }, [x, y]);
 
   // 💬 Frases dinámicas
   useEffect(() => {
@@ -146,38 +155,24 @@ export default function LuprinCat({ onClose }) {
         </div>
       )}
 
-      {/* 🐈 Gato */}
-      {useEmojiFallback ? (
-        <motion.img
-          src={CAT_FALLBACK_SRC}
-          alt="LuprinCat fallback"
-          style={{
-            x: smoothX,
-            y: smoothY,
-            filter: "drop-shadow(0 0 18px rgba(34,211,238,0.7))",
-          }}
-          className="absolute h-28 w-28 object-contain pointer-events-none"
-          draggable={false}
-        />
-      ) : (
-        <motion.video
-          src={luprincat}
-          aria-label="LuprinCat"
-          autoPlay
-          loop
-          muted
-          playsInline
-          onError={() => setUseEmojiFallback(true)}
-          style={{
-            x: smoothX,
-            y: smoothY,
-            transform: `scaleX(${flip ? -1 : 1})`,
-            filter: "drop-shadow(0 0 25px cyan)",
-            mixBlendMode: "screen",
-          }}
-          className="absolute h-44 w-44 object-contain pointer-events-none"
-        />
-      )}
+      {/* 🐈 Gato — mismo video en todos los dispositivos
+           mixBlendMode:screen elimina el fondo negro en iOS/Safari sin alpha nativo */}
+      <motion.video
+        src={luprincat}
+        aria-label="LuprinCat"
+        autoPlay
+        loop
+        muted
+        playsInline
+        style={{
+          x: smoothX,
+          y: smoothY,
+          scaleX: flip ? -1 : 1,
+          filter: "drop-shadow(0 0 25px cyan)",
+          mixBlendMode: "screen",
+        }}
+        className="absolute h-44 w-44 object-contain pointer-events-none"
+      />
 
       {/* 💬 Frases */}
       <AnimatePresence>

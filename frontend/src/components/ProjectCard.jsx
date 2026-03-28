@@ -1,6 +1,11 @@
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 const ProjectCard = ({ project, index = 0, compact = false }) => {
+  const { i18n } = useTranslation();
+  const description = i18n.language === 'en' && project.description_en
+    ? project.description_en
+    : project.description;
   const imageClassName = compact
     ? "relative h-40 w-full overflow-hidden bg-[var(--bg-surface)] sm:h-44 lg:h-48"
     : "relative h-48 w-full overflow-hidden bg-[var(--bg-surface)] sm:h-52 lg:h-56";
@@ -65,7 +70,7 @@ const ProjectCard = ({ project, index = 0, compact = false }) => {
         </h3>
 
         <p className={descriptionClassName}>
-          {project.description}
+          {description}
         </p>
 
         {/* Tech Tags */}

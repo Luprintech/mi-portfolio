@@ -6,16 +6,26 @@ import { IMAGE_INPUT_ACCEPT, IMAGE_UPLOAD_LABEL, validateImageFile } from '../..
 import { slugify } from '../../utils/slugify';
 
 const EMPTY = {
-    id:          '',
-    title:       '',
-    description: '',
-    tech:        '',
-    github:      '',
-    demo:        '',
-    image:       '',
-    featured:    false,
-    category:    'code',
+    id:             '',
+    title:          '',
+    description:    '',
+    description_en: '',
+    tech:           '',
+    github:         '',
+    demo:           '',
+    image:          '',
+    featured:       false,
+    category:       'code',
 };
+
+async function autoTranslate(text) {
+    if (!text?.trim()) return '';
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=es|en`;
+    const res  = await fetch(url);
+    if (!res.ok) throw new Error('Error al traducir');
+    const data = await res.json();
+    return data?.responseData?.translatedText ?? '';
+}
 
 export default function BitacoraProjectEditor() {
     const { token }    = useAuth();
@@ -28,9 +38,25 @@ export default function BitacoraProjectEditor() {
     const [saving,        setSaving]        = useState(false);
     const [error,         setError]         = useState('');
     const [idManual,      setIdManual]      = useState(false);
-    const [imgUploading,  setImgUploading]  = useState(false);
-    const [imgError,      setImgError]      = useState('');
+    const [imgUploading,   setImgUploading]   = useState(false);
+    const [imgError,       setImgError]       = useState('');
+    const [translating,    setTranslating]    = useState(false);
+    const [translateError, setTranslateError] = useState('');
     const fileInputRef = useRef(null);
+
+    async function handleAutoTranslate() {
+        if (!form.description.trim()) return;
+        setTranslating(true);
+        setTranslateError('');
+        try {
+            const translated = await autoTranslate(form.description);
+            setForm(f => ({ ...f, description_en: translated }));
+        } catch {
+            setTranslateError('No se pudo traducir automáticamente. Escríbela manualmente.');
+        } finally {
+            setTranslating(false);
+        }
+    }
 
     useEffect(() => {
         if (!isEdit) return;
@@ -176,8 +202,11 @@ export default function BitacoraProjectEditor() {
                     />
                 </div>
 
+                {/* Descripción ES */}
                 <div>
-                    <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Descripción</label>
+                    <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">
+                        Descripción <span className="ml-1 text-[var(--text-muted)] font-normal">(Español)</span>
+                    </label>
                     <textarea
                         value={form.description}
                         onChange={handleChange('description')}
@@ -185,6 +214,45 @@ export default function BitacoraProjectEditor() {
                         placeholder="Descripción breve del proyecto…"
                         className={`${inputClass} resize-none`}
                     />
+                </div>
+
+                {/* Descripción EN */}
+                <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-medium text-[var(--text-secondary)]">
+                            Descripción <span className="ml-1 text-[var(--text-muted)] font-normal">(English)</span>
+                        </label>
+                        <button
+                            type="button"
+                            onClick={handleAutoTranslate}
+                            disabled={translating || !form.description.trim()}
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wide border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                        >
+                            {translating ? (
+                                <>
+                                    <div className="w-3 h-3 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin" />
+                                    Traduciendo…
+                                </>
+                            ) : (
+                                <>
+                                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M5 8l6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/>
+                                    </svg>
+                                    Auto-traducir
+                                </>
+                            )}
+                        </button>
+                    </div>
+                    <textarea
+                        value={form.description_en}
+                        onChange={handleChange('description_en')}
+                        rows={3}
+                        placeholder="Brief project description…"
+                        className={`${inputClass} resize-none`}
+                    />
+                    {translateError && (
+                        <p className="mt-1 text-xs text-amber-400">{translateError}</p>
+                    )}
                 </div>
 
                 <div>
