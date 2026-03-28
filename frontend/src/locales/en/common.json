@@ -50,7 +50,9 @@
     "cloud_title": "Deployment & Servers",
     "cloud_desc": "Configuration of production environments on Linux VPS. Domain management, SSL certificates (Let's Encrypt), and basic deployments with Docker and Nginx.",
     "wordpress_title": "WordPress & Divi",
-    "wordpress_desc": "Websites with WordPress and Divi Builder: corporate sites, custom web pages, landing pages and online stores. Visual, fast, and easy-to-manage solutions for clients."
+    "wordpress_desc": "Websites with WordPress and Divi Builder: corporate sites, custom web pages, landing pages and online stores. Visual, fast, and easy-to-manage solutions for clients.",
+    "security_title": "Cybersecurity & Networking",
+    "security_desc": "Actively training in information security, networking, and system protection. 350h MOOC (UMA), Cisco CCST in progress. Best practices applied to development: OWASP, CORS, secure authentication and environment hardening."
   },
   "projects": {
     "vocaccion_title": "VocAcción - Guidance Platform",

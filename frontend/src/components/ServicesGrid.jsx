@@ -49,6 +49,13 @@ const CARD_COLORS = {
     border:  "border-blue-500/30",
     accent:  "#60a5fa",
   },
+  amber: {
+    icon:    "text-amber-400",
+    glow:    "rgba(251,191,36,0.22)",
+    back:    "from-amber-900/80 to-orange-900/60",
+    border:  "border-amber-500/30",
+    accent:  "#fbbf24",
+  },
 };
 
 // Mapeado del color del servicio (extraído del iconColor) al token de CARD_COLORS
@@ -58,6 +65,7 @@ function resolveColor(iconColor = "") {
   if (iconColor.includes("cyan"))    return "cyan";
   if (iconColor.includes("emerald")) return "emerald";
   if (iconColor.includes("blue"))    return "blue";
+  if (iconColor.includes("amber"))   return "amber";
   return "fuchsia";
 }
 
@@ -162,15 +170,7 @@ export default function ServicesGrid({ services }) {
       {/* Grid: 1 col mobile → 2 col tablet → 3 col desktop, última card centrada si es 5 */}
       <div className="grid w-full max-w-5xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {services.map((service, index) => (
-          <div
-            key={service.id}
-            className={
-              // Si hay 5 servicios, la última card se centra ocupando 1 columna
-              services.length === 5 && index === 4
-                ? "sm:col-span-2 sm:mx-auto sm:w-1/2 lg:col-span-1 lg:mx-0 lg:w-full"
-                : ""
-            }
-          >
+          <div key={service.id}>
             <FlipCard service={service} index={index} />
           </div>
         ))}

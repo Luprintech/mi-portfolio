@@ -1,7 +1,7 @@
 // 🎯 SERVICIOS - DATOS CENTRALIZADOS
 // Este archivo gestiona TODOS los servicios ofrecidos compaginando perfil técnico con nivel Junior/Entry
 
-import { FaCode, FaServer, FaBrain, FaLinux, FaWordpress } from "react-icons/fa";
+import { FaCode, FaServer, FaBrain, FaLinux, FaWordpress, FaShieldAlt } from "react-icons/fa";
 
 export const services = [
     {
@@ -57,6 +57,17 @@ export const services = [
         iconColor: "text-blue-400",
         hoverShadow: "hover:shadow-blue-400/30",
         link: "/servicios/wordpress",
+        featured: true,
+    },
+    {
+        id: 6,
+        title: "services.security_title",
+        description: "services.security_desc",
+        icon: FaShieldAlt,
+        iconSize: 36,
+        iconColor: "text-amber-400",
+        hoverShadow: "hover:shadow-amber-400/30",
+        link: "/servicios/ciberseguridad",
         featured: true,
     },
 ];
