@@ -1079,7 +1079,7 @@ article tbody tr:hover,
     -webkit-overflow-scrolling: touch;
   }
   
-  .ProseMirror table,
+  /* Solo forzar min-width en contenido público, no dentro del editor CMS */
   article table,
   .post-content table {
     min-width: 600px;

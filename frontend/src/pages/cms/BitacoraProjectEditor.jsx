@@ -123,7 +123,7 @@ export default function BitacoraProjectEditor() {
     const inputClass = "w-full px-4 py-2.5 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-default)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-fuchsia-500/60 focus:ring-1 focus:ring-fuchsia-500/40 transition-all text-sm";
 
     return (
-        <div className="p-8 max-w-2xl bg-[var(--bg-primary)] min-h-screen w-full text-[var(--text-primary)]">
+        <div className="p-4 md:p-8 max-w-2xl bg-[var(--bg-primary)] min-h-screen w-full text-[var(--text-primary)]">
             <div className="flex items-center justify-between mb-8">
                 <div>
                     <h1 className="text-2xl font-bold text-[var(--text-primary)]">{isEdit ? 'Editar proyecto' : 'Nuevo proyecto'}</h1>
@@ -226,7 +226,7 @@ export default function BitacoraProjectEditor() {
                     <input type="text" value={form.tech} onChange={handleChange('tech')} placeholder="React, Node.js, Docker" className={inputClass} />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">GitHub URL</label>
                         <input type="url" value={form.github} onChange={handleChange('github')} placeholder="https://github.com/…" className={inputClass} />

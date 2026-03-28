@@ -1341,7 +1341,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             {/* ── TOOLBAR ─────────────────────────────────────────────────── */}
             <div 
                 ref={toolbarRef}
-                className={`flex flex-wrap items-center gap-1 px-3 py-2 border-b border-[var(--border-color)] bg-[var(--bg-surface)] transition-all ${
+                className={`flex flex-wrap items-center gap-1 px-2 py-1.5 border-b border-[var(--border-color)] bg-[var(--bg-surface)] transition-all overflow-x-auto ${
                     toolbarFixed ? 'shadow-2xl z-[100]' : 'relative z-20 rounded-t-2xl'
                 }`}
                 style={{
@@ -1377,7 +1377,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
 
                 {/* Tamaño fuente */}
                 <select title="Tamaño"
-                    className="h-8 px-1 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border-color)] text-[var(--text-secondary)] text-xs focus:outline-none focus:border-fuchsia-500/60 cursor-pointer w-[70px] shrink-0"
+                    className="h-8 px-1 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border-color)] text-[var(--text-secondary)] text-xs focus:outline-none focus:border-fuchsia-500/60 cursor-pointer w-[62px] shrink-0"
                     value={fontSize}
                     onChange={e => { setFontSize(e.target.value); editor.chain().focus().setFontSize(e.target.value).run(); }}>
                     {FONT_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
@@ -1385,7 +1385,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
 
                 {/* Interlineado */}
                 <select title="Interlineado"
-                    className="h-8 px-1 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border-color)] text-[var(--text-secondary)] text-xs focus:outline-none focus:border-fuchsia-500/60 cursor-pointer w-[54px] shrink-0"
+                    className="h-8 px-1 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border-color)] text-[var(--text-secondary)] text-xs focus:outline-none focus:border-fuchsia-500/60 cursor-pointer w-[50px] shrink-0"
                     value={lineHeight}
                     onChange={e => { setLineHeight(e.target.value); editor.chain().focus().setLineHeight(e.target.value).run(); }}>
                     {LINE_HEIGHTS.map(lh => <option key={lh} value={lh}>×{lh}</option>)}
@@ -1484,7 +1484,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                         }}
                         className="text-xs h-8 px-2 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border-color)] 
                                    text-[var(--text-secondary)] hover:border-fuchsia-500/50 cursor-pointer outline-none
-                                   focus:border-fuchsia-500/60 w-[110px] shrink-0"
+                                   focus:border-fuchsia-500/60 w-[96px] shrink-0"
                         title="Familia tipográfica"
                     >
                         {FONT_FAMILIES.map(f => (
@@ -1515,7 +1515,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                     </ToolBtn>
                     {showLinkMenu && (
-                        <div className="absolute top-10 left-0 z-50 p-3 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl flex gap-2 w-72"
+                        <div className="absolute top-10 left-0 z-50 p-3 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl flex gap-2 w-[min(18rem,calc(100vw-1.5rem))]"
                             onMouseDown={e => e.stopPropagation()}>
                             <input type="url" value={linkUrl} onChange={e => setLinkUrl(e.target.value)} onKeyDown={e => e.key === 'Enter' && applyLink()}
                                 placeholder="https://…"
@@ -1539,7 +1539,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M23 7s-.3-2-1.2-2.8c-1.1-1.2-2.4-1.2-3-1.3C16.5 2.8 12 2.8 12 2.8s-4.5 0-6.8.1c-.6.1-1.9.1-3 1.3C1.3 5 1 7 1 7S.7 9.1.7 11.2v1.9c0 2.1.3 4.2.3 4.2s.3 2 1.2 2.8c1.1 1.2 2.6 1.1 3.3 1.2C7.5 21.4 12 21.5 12 21.5s4.5 0 6.8-.2c.6-.1 1.9-.1 3-1.3.9-.8 1.2-2.8 1.2-2.8s.3-2.1.3-4.2v-1.9C23.3 9.1 23 7 23 7z" opacity=".85"/><polygon points="9.5,15.5 15.5,12 9.5,8.5" fill="white"/></svg>
                     </ToolBtn>
                     {showYoutubeMenu && (
-                        <div className="absolute top-10 left-0 z-50 p-3 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl flex gap-2 w-80"
+                        <div className="absolute top-10 left-0 z-50 p-3 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl flex gap-2 w-[min(20rem,calc(100vw-1.5rem))]"
                             onMouseDown={e => e.stopPropagation()}>
                             <input type="url" value={youtubeUrl} onChange={e => setYoutubeUrl(e.target.value)} onKeyDown={e => e.key === 'Enter' && applyYoutube()}
                                 placeholder="https://youtube.com/watch?v=…"
@@ -1556,7 +1556,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
                     </ToolBtn>
                     {showAudioMenu && (
-                        <div className="absolute top-10 left-0 z-50 p-3 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl w-80 space-y-2"
+                        <div className="absolute top-10 left-0 z-50 p-3 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl w-[min(20rem,calc(100vw-1.5rem))] space-y-2"
                             onMouseDown={e => e.stopPropagation()}>
                             <div className="flex gap-2">
                                 <input type="url" value={audioUrl} onChange={e => setAudioUrl(e.target.value)} onKeyDown={e => e.key === 'Enter' && applyAudio()}

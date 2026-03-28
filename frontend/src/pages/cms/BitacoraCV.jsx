@@ -36,7 +36,7 @@ export default function BitacoraCV() {
     }
 
     return (
-        <div className="p-8 max-w-5xl">
+        <div className="p-4 md:p-8 max-w-5xl">
             <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-1">CV público</h1>
             <p className="text-sm text-[var(--text-secondary)] mb-8">
                 Gestiona el PDF que se descarga desde la home y el chatbot.
@@ -99,7 +99,7 @@ export default function BitacoraCV() {
                     src={cvUrl}
                     title="Vista previa del CV"
                     className="w-full border-0"
-                    style={{ height: '80vh', minHeight: '600px' }}
+                    style={{ height: '70vh', minHeight: 'min(600px, 55vh)' }}
                 />
             </div>
         </div>

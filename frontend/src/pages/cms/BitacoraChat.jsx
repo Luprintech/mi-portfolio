@@ -112,7 +112,7 @@ export default function BitacoraChat() {
     }, [fetchStats]);
 
     return (
-        <div className="p-8 max-w-5xl">
+        <div className="p-4 md:p-8 max-w-5xl">
             <div className="flex items-start justify-between mb-1">
                 <div>
                     <h1 className="text-2xl font-bold text-[var(--text-primary)]">Chat IA</h1>
@@ -217,7 +217,7 @@ export default function BitacoraChat() {
                                                 key={i}
                                                 className="border-b border-[var(--border-default)] last:border-0 hover:bg-[var(--bg-elevated)] transition-colors"
                                             >
-                                                <td className="px-5 py-3 text-[var(--text-secondary)] text-xs whitespace-nowrap">{formatTs(ev.ts)}</td>
+                                                <td className="px-3 py-3 text-[var(--text-secondary)] text-xs">{formatTs(ev.ts)}</td>
                                                 <td className="px-5 py-3 font-mono text-xs text-[var(--text-muted)]">{maskIp(ev.ip)}</td>
                                                 <td className="px-5 py-3"><OutcomeBadge outcome={ev.outcome} /></td>
                                                 <td className="px-5 py-3 text-right text-[var(--text-muted)] tabular-nums">{ev.messageLength}</td>

@@ -59,7 +59,7 @@ export default function BitacoraHome() {
     }, [token]);
 
     return (
-        <div className="p-8 max-w-4xl">
+        <div className="p-4 md:p-8 max-w-4xl">
             <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-1">Resumen</h1>
             <p className="text-sm text-[var(--text-secondary)] mb-8">Estado actual del contenido</p>
 
@@ -70,7 +70,7 @@ export default function BitacoraHome() {
             )}
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-4 mb-10">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
                 <StatCard label="Posts"             value={stats.posts}    to="/bitacora/posts"     color="border-fuchsia-500/20" />
                 <StatCard label="Proyectos"          value={stats.projects} to="/bitacora/proyectos" color="border-cyan-500/20" />
                 <StatCard label="Imágenes"           value={stats.images}   to="/bitacora/imagenes"  color="border-violet-500/20" />

@@ -559,12 +559,12 @@ export default function BitacoraPostEditor() {
     const excerptLen = form.excerpt.length;
 
     return (
-        <div className={`min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] p-6 transition-colors duration-300 ${fullscreen ? 'overflow-hidden' : ''}`}>
+        <div className={`min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] p-3 md:p-6 transition-colors duration-300 ${fullscreen ? 'overflow-hidden' : ''}`}>
 
             {/* ── Header ───────────────────────────────────────────────────── */}
-            <div className="flex items-center justify-between mb-6 max-w-7xl mx-auto">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 max-w-7xl mx-auto">
                 <div>
-                    <h1 className="text-2xl font-bold text-[var(--text-primary)]">{isEdit ? 'Editar post' : 'Nuevo post'}</h1>
+                    <h1 className="text-xl md:text-2xl font-bold text-[var(--text-primary)]">{isEdit ? 'Editar post' : 'Nuevo post'}</h1>
                     {isEdit && <p className="text-sm text-[var(--text-muted)] mt-0.5">/{editSlug}</p>}
                     {!isEdit && draftSaved && !availableDraft && (
                         <p className="text-xs text-cyan-400/80 mt-0.5 animate-pulse">Borrador guardado localmente</p>
@@ -605,7 +605,7 @@ export default function BitacoraPostEditor() {
                         </p>
                     )}
                 </div>
-                <div className="flex items-center gap-2 flex-wrap justify-end">
+                <div className="flex items-center gap-2 flex-wrap justify-start sm:justify-end">
                     <button
                         type="button"
                         onClick={handlePreview}

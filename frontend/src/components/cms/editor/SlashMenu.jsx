@@ -88,7 +88,7 @@ export default function SlashMenu({ editor, coords, query, onClose, onAction }) 
     return (
         <div
             ref={menuRef}
-            className="fixed z-[9999] bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-2xl shadow-2xl shadow-black/40 w-[320px] max-h-[380px] overflow-y-auto overflow-x-hidden backdrop-blur-sm"
+            className="fixed z-[9999] bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-2xl shadow-2xl shadow-black/40 w-[min(320px,calc(100vw-1.5rem))] max-h-[380px] overflow-y-auto overflow-x-hidden backdrop-blur-sm"
             style={{ top: coords.top, left: coords.left }}
             onMouseDown={e => e.preventDefault()}
         >
