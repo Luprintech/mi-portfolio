@@ -19,6 +19,7 @@ import PresentationSection from "../components/PresentationSection";
 import ProfileStorySection from "../components/ProfileStorySection";
 import SectionViewport from "../components/SectionViewport";
 import SnakeGameBg from "../components/SnakeGameBg";
+import YoutubeSectionBg from "../components/YoutubeSectionBg";
 
 import Timeline from "../components/Timeline";
 import SnakeGame from "../components/SnakeGame";
@@ -237,12 +238,9 @@ export default function Home() {
 
       {/* ========== SECTION 9: YOUTUBE — antes del CTA final ========== */}
       <section id="youtube" className="snap-page">
-          {/* Fondo sutil */}
-          <div className="pointer-events-none absolute inset-0 bg-[var(--bg-primary)]" />
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_28%_50%,rgba(239,68,68,0.07),transparent_60%)]" />
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_50%_45%_at_78%_55%,rgba(139,92,246,0.07),transparent_60%)]" />
+        <YoutubeSectionBg />
 
-          <SectionViewport width="wide" contentClassName="relative z-10">
+        <SectionViewport width="wide" contentClassName="relative z-10">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
