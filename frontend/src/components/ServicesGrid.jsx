@@ -72,8 +72,8 @@ function resolveColor(iconColor = "") {
 function FlipCard({ service, index }) {
   const { t } = useTranslation();
   const [flipped, setFlipped] = useState(false);
-  const Icon   = service.icon;
-  const color  = CARD_COLORS[resolveColor(service.iconColor)];
+  const Icon  = service.icon;
+  const color = CARD_COLORS[resolveColor(service.iconColor)];
 
   return (
     <motion.div
@@ -81,71 +81,112 @@ function FlipCard({ service, index }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: index * 0.08 }}
-      // Hover en desktop voltea; en mobile el estado flipped lo controla el click
-      className="group h-[160px] w-full cursor-pointer select-none [perspective:1000px] md:h-[180px]"
+      className="group w-full cursor-pointer select-none"
       onClick={() => setFlipped(f => !f)}
       role="button"
       aria-pressed={flipped}
       tabIndex={0}
       onKeyDown={e => (e.key === "Enter" || e.key === " ") && setFlipped(f => !f)}
     >
-      {/* Contenedor que rota */}
-      <div
-        className={`relative h-full w-full transition-transform duration-500 [transform-style:preserve-3d]
-          ${flipped ? "[transform:rotateY(180deg)]" : ""}
-          md:group-hover:[transform:rotateY(180deg)]
-        `}
-      >
-        {/* ── FRENTE ─────────────────────────────────────────── */}
-        <div
-          className={`absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-2xl border bg-[var(--bg-surface)] p-4 [backface-visibility:hidden] transition-shadow duration-300 ${color.border}`}
-          style={{ boxShadow: `0 4px 24px ${color.glow}` }}
-        >
-          {/* Halo de fondo */}
+      {/* ── MOBILE: sin flip 3D, muestra frente u reverso directamente ── */}
+      <div className="md:hidden">
+        {!flipped ? (
+          /* FRENTE mobile */
           <div
-            className="pointer-events-none absolute inset-0 rounded-2xl opacity-30"
-            style={{ background: `radial-gradient(ellipse 70% 60% at 50% 40%, ${color.glow}, transparent)` }}
-          />
+            className={`flex flex-col items-center justify-center gap-3 rounded-2xl border bg-[var(--bg-surface)] p-5 relative transition-shadow duration-300 ${color.border}`}
+            style={{ boxShadow: `0 4px 24px ${color.glow}` }}
+          >
+            <div
+              className="pointer-events-none absolute inset-0 rounded-2xl opacity-30"
+              style={{ background: `radial-gradient(ellipse 70% 60% at 50% 40%, ${color.glow}, transparent)` }}
+            />
+            <div className={`relative z-10 ${color.icon}`}>
+              <Icon size={36} />
+            </div>
+            <h3 className="relative z-10 text-center text-sm font-bold leading-tight text-[var(--text-primary)]">
+              {t(service.title)}
+            </h3>
+            <span
+              className="text-[9px] font-medium uppercase tracking-wider opacity-40"
+              style={{ color: color.accent }}
+            >
+              Toca para ver más
+            </span>
+          </div>
+        ) : (
+          /* REVERSO mobile */
+          <div
+            className={`flex flex-col gap-3 rounded-2xl border bg-gradient-to-br p-5 relative ${color.back} ${color.border}`}
+          >
+            <div
+              className="pointer-events-none absolute right-3 top-3 opacity-15"
+              style={{ color: color.accent }}
+            >
+              <Icon size={40} />
+            </div>
+            <h4
+              className="text-[10px] font-bold uppercase tracking-wider"
+              style={{ color: color.accent }}
+            >
+              {t(service.title)}
+            </h4>
+            <p className="relative z-10 text-[11px] leading-relaxed text-white/85">
+              {t(service.description)}
+            </p>
+            <span
+              className="text-[9px] font-medium uppercase tracking-wider opacity-40"
+              style={{ color: color.accent }}
+            >
+              Toca para volver
+            </span>
+          </div>
+        )}
+      </div>
 
-          <div className={`relative z-10 ${color.icon}`}>
-            <Icon size={36} />
+      {/* ── DESKTOP: flip 3D con hover ─────────────────────────────── */}
+      <div className="hidden md:block h-[180px] [perspective:1000px]">
+        <div
+          className={`relative h-full w-full transition-transform duration-500 [transform-style:preserve-3d]
+            group-hover:[transform:rotateY(180deg)]
+          `}
+        >
+          {/* FRENTE desktop */}
+          <div
+            className={`absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-2xl border bg-[var(--bg-surface)] p-4 [backface-visibility:hidden] transition-shadow duration-300 ${color.border}`}
+            style={{ boxShadow: `0 4px 24px ${color.glow}` }}
+          >
+            <div
+              className="pointer-events-none absolute inset-0 rounded-2xl opacity-30"
+              style={{ background: `radial-gradient(ellipse 70% 60% at 50% 40%, ${color.glow}, transparent)` }}
+            />
+            <div className={`relative z-10 ${color.icon}`}>
+              <Icon size={36} />
+            </div>
+            <h3 className="relative z-10 text-center text-base font-bold leading-tight text-[var(--text-primary)]">
+              {t(service.title)}
+            </h3>
           </div>
 
-          <h3 className="relative z-10 text-center text-sm font-bold leading-tight text-[var(--text-primary)] md:text-base">
-            {t(service.title)}
-          </h3>
-
-          {/* Indicador "toca para ver más" — solo mobile */}
-          <span
-            className="absolute bottom-2 right-3 text-[9px] font-medium uppercase tracking-wider opacity-40 md:hidden"
-            style={{ color: color.accent }}
-          >
-            Ver más
-          </span>
-        </div>
-
-        {/* ── REVERSO ────────────────────────────────────────── */}
-        <div
-          className={`absolute inset-0 flex flex-col items-start justify-center rounded-2xl border bg-gradient-to-br p-4 [backface-visibility:hidden] [transform:rotateY(180deg)] ${color.back} ${color.border}`}
-        >
-          {/* Icono pequeño como marca de agua */}
+          {/* REVERSO desktop */}
           <div
-            className="pointer-events-none absolute right-3 top-3 opacity-15"
-            style={{ color: color.accent }}
+            className={`absolute inset-0 flex flex-col items-start justify-center rounded-2xl border bg-gradient-to-br p-4 [backface-visibility:hidden] [transform:rotateY(180deg)] ${color.back} ${color.border}`}
           >
-            <Icon size={40} />
+            <div
+              className="pointer-events-none absolute right-3 top-3 opacity-15"
+              style={{ color: color.accent }}
+            >
+              <Icon size={40} />
+            </div>
+            <h4
+              className="mb-2 text-[10px] font-bold uppercase tracking-wider"
+              style={{ color: color.accent }}
+            >
+              {t(service.title)}
+            </h4>
+            <p className="relative z-10 text-[11px] leading-relaxed text-white/85">
+              {t(service.description)}
+            </p>
           </div>
-
-          <h4
-            className="mb-2 text-[10px] font-bold uppercase tracking-wider"
-            style={{ color: color.accent }}
-          >
-            {t(service.title)}
-          </h4>
-
-          <p className="relative z-10 text-[11px] leading-relaxed text-white/85">
-            {t(service.description)}
-          </p>
         </div>
       </div>
     </motion.div>
