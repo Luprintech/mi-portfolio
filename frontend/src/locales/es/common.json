@@ -336,8 +336,12 @@
     "score": "Puntuación",
     "best": "Récord",
     "controls": "Teclado: ↑ ↓ ← → o WASD · Móvil: desliza o usa los botones",
+    "pause_hint": "Pausa: pulsa ESPACIO en web · usa el botón Pausa en móvil",
     "play": "Jugar",
     "play_again": "Jugar de nuevo",
+    "pause": "Pausa",
+    "resume": "Continuar",
+    "paused": "Se ha pausado el juego",
     "game_over": "Game Over",
     "final_score": "Puntuación final:",
     "speed": "Velocidad:"

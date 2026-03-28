@@ -37,7 +37,7 @@ export default function SnakeGame() {
   const loopRef   = useRef(null);
   const [score, setScore]         = useState(0);
   const [best,  setBest]          = useState(() => parseInt(localStorage.getItem("snake_best") || "0", 10));
-  const [phase, setPhase]         = useState("idle"); // idle | playing | dead
+  const [phase, setPhase]         = useState("idle"); // idle | playing | paused | dead
   const [speed, setSpeed]         = useState(SPEED_INIT);
   const speedRef = useRef(SPEED_INIT);
 
@@ -137,6 +137,20 @@ export default function SnakeGame() {
     loopRef.current = setInterval(tick, SPEED_INIT);
   }, [draw, tick]);
 
+  const togglePause = useCallback(() => {
+    if (phase === "playing") {
+      clearInterval(loopRef.current);
+      setPhase("paused");
+      return;
+    }
+
+    if (phase === "paused") {
+      setPhase("playing");
+      clearInterval(loopRef.current);
+      loopRef.current = setInterval(tick, speedRef.current);
+    }
+  }, [phase, tick]);
+
   // ── Parar al morir ─────────────────────────────────────────────────────────
   useEffect(() => {
     if (phase === "dead") {
@@ -165,6 +179,12 @@ export default function SnakeGame() {
       ArrowRight: DIR.RIGHT, d: DIR.RIGHT, D: DIR.RIGHT,
     };
     function handleKey(e) {
+      if (e.code === "Space") {
+        e.preventDefault();
+        togglePause();
+        return;
+      }
+
       const next = MAP[e.key];
       if (!next) return;
       e.preventDefault();
@@ -175,19 +195,15 @@ export default function SnakeGame() {
     }
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, []);
+  }, [togglePause]);
 
   // ── Swipe táctil ──────────────────────────────────────────────────────────
   const touchStart = useRef(null);
   function onTouchStart(e) {
-    if (e.cancelable) e.preventDefault();
     touchStart.current = e.touches[0];
   }
-  function onTouchMove(e) {
-    if (e.cancelable) e.preventDefault();
-  }
+  function onTouchMove() {}
   function onTouchEnd(e) {
-    if (e.cancelable) e.preventDefault();
     if (!touchStart.current) return;
     const dx = e.changedTouches[0].clientX - touchStart.current.clientX;
     const dy = e.changedTouches[0].clientY - touchStart.current.clientY;
@@ -208,6 +224,11 @@ export default function SnakeGame() {
     const cur = stateRef.current.dir;
     if (dir[0] === -cur[0] && dir[1] === -cur[1]) return;
     stateRef.current.nextDir = dir;
+  }
+
+  function tapTouch(dir, e) {
+    if (e.cancelable) e.preventDefault();
+    tap(dir);
   }
 
   return (
@@ -243,6 +264,7 @@ export default function SnakeGame() {
         </div>
 
         <p className="typo-label text-xs text-[var(--text-muted)]">{t("snake.controls")}</p>
+        <p className="typo-label text-xs text-[var(--text-muted)]">{t("snake.pause_hint")}</p>
       </div>
 
       {/* ── Columna derecha: juego ────────────────────────────────────────── */}
@@ -274,11 +296,20 @@ export default function SnakeGame() {
                   </p>
                 </div>
               )}
+
+              {phase === "paused" && (
+                <div className="text-center">
+                  <p className="typo-title text-2xl font-bold text-amber-300">{t("snake.paused")}</p>
+                  <p className="typo-label mt-1 text-sm text-[var(--text-muted)]">{t("snake.pause_hint")}</p>
+                </div>
+              )}
+
               <button
-                onClick={startGame}
+                type="button"
+                onClick={phase === "paused" ? togglePause : startGame}
                 className="rounded-xl bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-500 px-8 py-3 text-sm font-bold text-white shadow-[0_0_24px_rgba(139,92,246,0.35)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_36px_rgba(139,92,246,0.55)]"
               >
-                {phase === "dead" ? t("snake.play_again") : t("snake.play")}
+                {phase === "paused" ? t("snake.resume") : (phase === "dead" ? t("snake.play_again") : t("snake.play"))}
               </button>
             </div>
           )}
@@ -287,15 +318,22 @@ export default function SnakeGame() {
         {/* Controles táctiles — solo mobile */}
         <div
           className="flex flex-col items-center gap-1 md:hidden"
-          onTouchStart={onTouchMove}
-          onTouchMove={onTouchMove}
           style={{ touchAction: "none", overscrollBehavior: "contain" }}
         >
-          <button onClick={() => tap(DIR.UP)}    className="snake-btn">▲</button>
+          {(phase === "playing" || phase === "paused") && (
+            <button
+              type="button"
+              onClick={togglePause}
+              className="snake-btn snake-btn--pause"
+            >
+              {phase === "paused" ? t("snake.resume") : t("snake.pause")}
+            </button>
+          )}
+          <button type="button" onClick={() => tap(DIR.UP)} onTouchStart={(e) => tapTouch(DIR.UP, e)} className="snake-btn">▲</button>
           <div className="flex gap-6">
-            <button onClick={() => tap(DIR.LEFT)}  className="snake-btn">◄</button>
-            <button onClick={() => tap(DIR.DOWN)}  className="snake-btn">▼</button>
-            <button onClick={() => tap(DIR.RIGHT)} className="snake-btn">►</button>
+            <button type="button" onClick={() => tap(DIR.LEFT)} onTouchStart={(e) => tapTouch(DIR.LEFT, e)} className="snake-btn">◄</button>
+            <button type="button" onClick={() => tap(DIR.DOWN)} onTouchStart={(e) => tapTouch(DIR.DOWN, e)} className="snake-btn">▼</button>
+            <button type="button" onClick={() => tap(DIR.RIGHT)} onTouchStart={(e) => tapTouch(DIR.RIGHT, e)} className="snake-btn">►</button>
           </div>
         </div>
 

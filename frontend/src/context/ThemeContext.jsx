@@ -5,16 +5,10 @@ const ThemeContext = createContext(null)
 
 // ─── Utilidades ───────────────────────────────────────────────────────────────
 /**
- * Devuelve el tema guardado en localStorage, o 'dark' por defecto.
+ * Fuerza modo oscuro como tema inicial siempre.
  */
 function getInitialTheme() {
-  try {
-    const saved = localStorage.getItem('theme')
-    if (saved === 'light' || saved === 'dark') return saved
-  } catch {
-    // localStorage puede no estar disponible (modo privado muy restringido)
-  }
-  // Tema predeterminado: modo oscuro
+  // Tema forzado: modo oscuro (ignora localStorage al iniciar)
   return 'dark'
 }
 

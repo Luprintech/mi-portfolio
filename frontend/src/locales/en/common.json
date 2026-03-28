@@ -334,8 +334,12 @@
     "score": "Score",
     "best": "Best",
     "controls": "Keyboard: ↑ ↓ ← → or WASD · Mobile: swipe or use the buttons",
+    "pause_hint": "Pause: press SPACE on web · use the Pause button on mobile",
     "play": "Play",
     "play_again": "Play again",
+    "pause": "Pause",
+    "resume": "Resume",
+    "paused": "Game paused",
     "game_over": "Game Over",
     "final_score": "Final score:",
     "speed": "Speed:"

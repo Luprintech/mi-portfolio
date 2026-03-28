@@ -1116,6 +1116,16 @@ article tbody tr:hover,
   transform: scale(0.92);
 }
 
+.snake-btn--pause {
+  width: auto;
+  min-width: 7.5rem;
+  padding-inline: 1rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
 /* Mejora visual: Primera celda en negrita en tablas sin header */
 .ProseMirror tbody tr td:first-child,
 article tbody tr td:first-child,
