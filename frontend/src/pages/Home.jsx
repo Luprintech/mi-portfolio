@@ -164,7 +164,7 @@ export default function Home() {
         <ServicesSectionBg />
         <SectionViewport width="full" contentClassName="relative z-10">
           <div className="flex w-full max-w-[1180px] flex-col justify-center gap-10 md:gap-20">
-            <ServicesGrid services={getFeaturedServices()} showLinks={false} compact />
+            <ServicesGrid services={getFeaturedServices()} />
 
             <div id="tech" className="w-full overflow-hidden [mask-image:linear-gradient(to_right,transparent_0%,black_12%,black_88%,transparent_100%)]">
               <div className="tech-track flex w-max items-center gap-10">

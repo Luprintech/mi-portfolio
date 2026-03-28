@@ -1,59 +1,179 @@
-import { motion } from "framer-motion";
-import Tilt from "react-parallax-tilt";
-import { Link } from "react-router-dom";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { motion } from "framer-motion";
 
 /**
- * Grid de servicios reutilizable
- * @param {Array} services - Array de servicios a mostrar
- * @param {boolean} showLinks - Si true, las tarjetas son clicables
+ * ServicesGrid — flip cards
+ *
+ * Frente: icono + título
+ * Reverso: descripción completa con fondo de color de la card
+ *
+ * Interacción:
+ *   - Desktop: hover voltea la card
+ *   - Mobile:  tap voltea, segundo tap vuelve
  */
-export default function ServicesGrid({ services, showLinks = false, compact = false }) {
+
+const CARD_COLORS = {
+  fuchsia: {
+    icon:    "text-fuchsia-400",
+    glow:    "rgba(232,121,249,0.25)",
+    back:    "from-fuchsia-900/80 to-fuchsia-800/60",
+    border:  "border-fuchsia-500/30",
+    accent:  "#e879f9",
+  },
+  purple: {
+    icon:    "text-purple-400",
+    glow:    "rgba(168,85,247,0.25)",
+    back:    "from-purple-900/80 to-violet-800/60",
+    border:  "border-purple-500/30",
+    accent:  "#a855f7",
+  },
+  cyan: {
+    icon:    "text-cyan-400",
+    glow:    "rgba(34,211,238,0.25)",
+    back:    "from-cyan-900/80 to-sky-800/60",
+    border:  "border-cyan-500/30",
+    accent:  "#22d3ee",
+  },
+  emerald: {
+    icon:    "text-emerald-400",
+    glow:    "rgba(52,211,153,0.25)",
+    back:    "from-emerald-900/80 to-teal-800/60",
+    border:  "border-emerald-500/30",
+    accent:  "#34d399",
+  },
+  blue: {
+    icon:    "text-blue-400",
+    glow:    "rgba(96,165,250,0.25)",
+    back:    "from-blue-900/80 to-indigo-800/60",
+    border:  "border-blue-500/30",
+    accent:  "#60a5fa",
+  },
+};
+
+// Mapeado del color del servicio (extraído del iconColor) al token de CARD_COLORS
+function resolveColor(iconColor = "") {
+  if (iconColor.includes("fuchsia")) return "fuchsia";
+  if (iconColor.includes("purple") || iconColor.includes("violet")) return "purple";
+  if (iconColor.includes("cyan"))    return "cyan";
+  if (iconColor.includes("emerald")) return "emerald";
+  if (iconColor.includes("blue"))    return "blue";
+  return "fuchsia";
+}
+
+function FlipCard({ service, index }) {
+  const { t } = useTranslation();
+  const [flipped, setFlipped] = useState(false);
+  const Icon   = service.icon;
+  const color  = CARD_COLORS[resolveColor(service.iconColor)];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, delay: index * 0.08 }}
+      // Hover en desktop voltea; en mobile el estado flipped lo controla el click
+      className="group h-[200px] w-full cursor-pointer select-none [perspective:1000px] md:h-[220px]"
+      onClick={() => setFlipped(f => !f)}
+      role="button"
+      aria-pressed={flipped}
+      tabIndex={0}
+      onKeyDown={e => (e.key === "Enter" || e.key === " ") && setFlipped(f => !f)}
+    >
+      {/* Contenedor que rota */}
+      <div
+        className={`relative h-full w-full transition-transform duration-500 [transform-style:preserve-3d]
+          ${flipped ? "[transform:rotateY(180deg)]" : ""}
+          md:group-hover:[transform:rotateY(180deg)]
+        `}
+      >
+        {/* ── FRENTE ─────────────────────────────────────────── */}
+        <div
+          className={`absolute inset-0 flex flex-col items-center justify-center gap-4 rounded-2xl border bg-[var(--bg-surface)] p-6 [backface-visibility:hidden] transition-shadow duration-300 ${color.border}`}
+          style={{ boxShadow: `0 4px 24px ${color.glow}` }}
+        >
+          {/* Halo de fondo */}
+          <div
+            className="pointer-events-none absolute inset-0 rounded-2xl opacity-30"
+            style={{ background: `radial-gradient(ellipse 70% 60% at 50% 40%, ${color.glow}, transparent)` }}
+          />
+
+          <div className={`relative z-10 ${color.icon}`}>
+            <Icon size={44} />
+          </div>
+
+          <h3 className="relative z-10 text-center text-base font-bold leading-tight text-[var(--text-primary)] md:text-lg">
+            {t(service.title)}
+          </h3>
+
+          {/* Indicador "toca para ver más" — solo mobile */}
+          <span
+            className="absolute bottom-3 right-3 text-[10px] font-medium uppercase tracking-wider opacity-40 md:hidden"
+            style={{ color: color.accent }}
+          >
+            Ver más
+          </span>
+        </div>
+
+        {/* ── REVERSO ────────────────────────────────────────── */}
+        <div
+          className={`absolute inset-0 flex flex-col items-start justify-center rounded-2xl border bg-gradient-to-br p-6 [backface-visibility:hidden] [transform:rotateY(180deg)] ${color.back} ${color.border}`}
+        >
+          {/* Icono pequeño como marca de agua */}
+          <div
+            className="pointer-events-none absolute right-4 top-4 opacity-15"
+            style={{ color: color.accent }}
+          >
+            <Icon size={52} />
+          </div>
+
+          <h4
+            className="mb-3 text-sm font-bold uppercase tracking-wider"
+            style={{ color: color.accent }}
+          >
+            {t(service.title)}
+          </h4>
+
+          <p className="relative z-10 text-sm leading-relaxed text-white/85">
+            {t(service.description)}
+          </p>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+export default function ServicesGrid({ services }) {
   const { t } = useTranslation();
 
   return (
-    <div className={`flex w-full flex-col items-center justify-center ${compact ? "max-w-6xl" : "max-w-7xl"}`}>
-      <div className={`${compact ? "mb-6 md:mb-8" : "mb-10 md:mb-12"} text-center`}>
-        <h2 className={`bg-gradient-to-r from-fuchsia-400 to-cyan-400 bg-clip-text font-extrabold text-transparent ${compact ? "text-[1.65rem] md:text-[2.05rem]" : "text-3xl md:text-4xl"}`}>
+    <div className="flex w-full flex-col items-center">
+      {/* Título */}
+      <div className="mb-8 text-center md:mb-10">
+        <h2 className="bg-gradient-to-r from-fuchsia-400 to-cyan-400 bg-clip-text text-[1.65rem] font-extrabold text-transparent md:text-[2.05rem]">
           {t("services.section_title")}
         </h2>
+        <p className="mt-2 text-sm text-[var(--text-muted)] md:text-base">
+          {t("services.section_hint")}
+        </p>
       </div>
 
-      <div className={`grid w-full grid-cols-1 ${compact ? "gap-3 sm:grid-cols-2 lg:grid-cols-5" : "gap-5 xs:grid-cols-2 md:grid-cols-3 xl:grid-cols-5"}`}>
-        {services.map((service, index) => {
-          const Icon = service.icon;
-          const iconSize = compact ? 24 : service.iconSize;
-
-          const CardContent = (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1, duration: 0.5 }}
-              whileHover={{ scale: 1.05 }}
-              className={`flex h-full flex-col items-center rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)] text-center shadow-[var(--shadow-sm)] transition-all hover:shadow-[var(--shadow-md)] ${compact ? "min-h-[136px] p-3.5 lg:min-h-[146px]" : "min-h-[168px] p-5 md:min-h-[188px]"} ${service.hoverShadow} ${showLinks ? "cursor-pointer" : ""}`}
-            >
-              <div className={`${compact ? "mb-2" : "mb-3"} flex shrink-0 items-center justify-center ${service.iconColor}`}>
-                <Icon size={iconSize} />
-              </div>
-              <div className="flex w-full flex-col">
-                <h3 className={`shrink-0 font-bold text-[var(--text-primary)] ${compact ? "mb-1 text-[15px] leading-tight" : "mb-2 text-lg"}`}>{t(service.title)}</h3>
-                <p className={`${compact ? "text-[12px] leading-[1.45]" : "text-sm"} text-[var(--text-secondary)]`}>{t(service.description)}</p>
-              </div>
-            </motion.div>
-          );
-
-          return (
-            <Tilt key={service.id} tiltEnable scale={1.03} className="flex h-full flex-col">
-              {showLinks ? (
-                <Link to={service.link} className="block h-full">
-                  {CardContent}
-                </Link>
-              ) : (
-                CardContent
-              )}
-            </Tilt>
-          );
-        })}
+      {/* Grid: 1 col mobile → 2 col tablet → 3 col desktop, última card centrada si es 5 */}
+      <div className="grid w-full max-w-5xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {services.map((service, index) => (
+          <div
+            key={service.id}
+            className={
+              // Si hay 5 servicios, la última card se centra ocupando 1 columna
+              services.length === 5 && index === 4
+                ? "sm:col-span-2 sm:mx-auto sm:w-1/2 lg:col-span-1 lg:mx-0 lg:w-full"
+                : ""
+            }
+          >
+            <FlipCard service={service} index={index} />
+          </div>
+        ))}
       </div>
     </div>
   );

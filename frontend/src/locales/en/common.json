@@ -40,6 +40,7 @@
   },
   "services": {
     "section_title": "What I build",
+    "section_hint": "Tap or hover to explore each area",
     "fullstack_title": "Full Stack Development",
     "fullstack_desc": "Construction of complete web applications (SPA/SSR). Specialized in React for dynamic interfaces and Laravel/Node.js for structured and secure business logic.",
     "apis_title": "APIs & Integrations",
