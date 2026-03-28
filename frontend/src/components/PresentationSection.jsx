@@ -65,7 +65,7 @@ export default function PresentationSection({ id, className = "" }) {
               {t("about.summary")}
             </p>
 
-            <div className="flex flex-wrap gap-2 pt-1" role="list" aria-label={t("about.tagline")}>
+            <div className="flex flex-wrap justify-center gap-2 pt-1 md:justify-start" role="list" aria-label={t("about.tagline")}>
               {BADGE_KEYS.map(({ key, color }) => (
                 <span
                   key={key}

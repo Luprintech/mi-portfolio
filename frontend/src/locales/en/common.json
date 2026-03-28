@@ -99,8 +99,8 @@
     "success": "Thanks for reaching out. I'll reply as soon as possible."
   },
   "about": {
-    "tagline": "I build applications. I integrate AI. I build secure.",
-    "summary": "Full Stack developer focused on real architecture and infrastructure. I build complete applications, integrate AI, and automate processes. Actively training in cybersecurity and networking — 350h MOOC (UMA), Cisco CCST in progress, and a university cybersecurity specialization in 2026.",
+    "tagline": "I build applications. I integrate AI. I automate the rest.",
+    "summary": "Full Stack developer focused on real architecture and infrastructure. I build complete applications, integrate AI, and automate processes. Actively training in cybersecurity and networking.",
     "badge_fullstack": "Full Stack",
     "badge_self": "Self-Taught",
     "badge_infra": "Real Infrastructure",
