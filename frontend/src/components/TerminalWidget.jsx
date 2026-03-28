@@ -156,6 +156,15 @@ export default function TerminalWidget() {
     }
   }
 
+  function handleTerminalClick(e) {
+    // En iOS el foco desde un handler externo puede ser ignorado fuera de un
+    // gesto directo. Usamos setTimeout(0) para diferirlo al siguiente tick,
+    // lo que garantiza que el navegador lo trate como acción de usuario.
+    if (e.target !== inputRef.current) {
+      setTimeout(() => inputRef.current?.focus(), 0);
+    }
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -163,7 +172,7 @@ export default function TerminalWidget() {
       viewport={{ once: true }}
       transition={{ duration: 0.6, delay: 0.1 }}
       className="w-full rounded-2xl border border-[var(--border-color)] bg-[var(--bg-elevated)] overflow-hidden shadow-[var(--shadow-md)] font-mono text-sm"
-      onClick={() => inputRef.current?.focus()}
+      onClick={handleTerminalClick}
       role="region"
       aria-label={t("terminal.aria_label")}
     >
@@ -218,9 +227,13 @@ export default function TerminalWidget() {
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKey}
             className="flex-1 bg-transparent text-[var(--text-primary)] outline-none caret-cyan-400 min-w-0"
-            autoCapitalize="off"
+            style={{ fontSize: "16px" }}
+            autoCapitalize="none"
             autoCorrect="off"
+            autoComplete="off"
             spellCheck={false}
+            inputMode="text"
+            enterKeyHint="send"
             aria-label={t("terminal.input_label")}
           />
         </div>
