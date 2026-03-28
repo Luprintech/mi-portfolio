@@ -402,8 +402,11 @@ export default function Home() {
         </SectionViewport>
       </section>
 
+        {/* Footer dentro del snap-root para que no flote fuera del scroll */}
+        <div className="snap-footer">
+          <Footer />
+        </div>
       </div>
-      <Footer />
     </>
   );
 }

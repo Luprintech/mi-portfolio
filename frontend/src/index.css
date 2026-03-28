@@ -320,6 +320,13 @@ body.home-scroll-snap #main-content {
   overflow: hidden;
 }
 
+/* ── Footer: dentro del snap-root pero sin snap propio ─── */
+.snap-footer {
+  width: 100%;
+  flex-shrink: 0;
+  /* NO scroll-snap-align → no participa en el snap, fluye al final */
+}
+
 /* ── Sección con scroll interno ────────────── */
 .snap-page--scroll {
   height: 100vh;
