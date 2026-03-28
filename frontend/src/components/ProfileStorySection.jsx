@@ -8,7 +8,6 @@ const STORY_STEPS = [
   { year: "2011", color: "from-fuchsia-500 to-violet-500", titleKey: "story_block_1_title", bodyKey: "story_short_1" },
   { year: "2015", color: "from-violet-500 to-cyan-500",    titleKey: "story_block_2_title", bodyKey: "story_short_2" },
   { year: "Hoy",  color: "from-cyan-400  to-emerald-400",  titleKey: "story_block_3_title", bodyKey: "story_short_3" },
-  { year: "2026", color: "from-amber-400  to-orange-400",  titleKey: "story_block_4_title", bodyKey: "story_short_4", upcoming: true },
 ];
 
 const DIFF_POINTS = [
