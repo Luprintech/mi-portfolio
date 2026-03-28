@@ -82,7 +82,7 @@ function FlipCard({ service, index }) {
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: index * 0.08 }}
       // Hover en desktop voltea; en mobile el estado flipped lo controla el click
-      className="group h-[200px] w-full cursor-pointer select-none [perspective:1000px] md:h-[220px]"
+      className="group h-[160px] w-full cursor-pointer select-none [perspective:1000px] md:h-[180px]"
       onClick={() => setFlipped(f => !f)}
       role="button"
       aria-pressed={flipped}
@@ -98,7 +98,7 @@ function FlipCard({ service, index }) {
       >
         {/* ── FRENTE ─────────────────────────────────────────── */}
         <div
-          className={`absolute inset-0 flex flex-col items-center justify-center gap-4 rounded-2xl border bg-[var(--bg-surface)] p-6 [backface-visibility:hidden] transition-shadow duration-300 ${color.border}`}
+          className={`absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-2xl border bg-[var(--bg-surface)] p-4 [backface-visibility:hidden] transition-shadow duration-300 ${color.border}`}
           style={{ boxShadow: `0 4px 24px ${color.glow}` }}
         >
           {/* Halo de fondo */}
@@ -108,16 +108,16 @@ function FlipCard({ service, index }) {
           />
 
           <div className={`relative z-10 ${color.icon}`}>
-            <Icon size={44} />
+            <Icon size={36} />
           </div>
 
-          <h3 className="relative z-10 text-center text-base font-bold leading-tight text-[var(--text-primary)] md:text-lg">
+          <h3 className="relative z-10 text-center text-sm font-bold leading-tight text-[var(--text-primary)] md:text-base">
             {t(service.title)}
           </h3>
 
           {/* Indicador "toca para ver más" — solo mobile */}
           <span
-            className="absolute bottom-3 right-3 text-[10px] font-medium uppercase tracking-wider opacity-40 md:hidden"
+            className="absolute bottom-2 right-3 text-[9px] font-medium uppercase tracking-wider opacity-40 md:hidden"
             style={{ color: color.accent }}
           >
             Ver más
@@ -126,24 +126,24 @@ function FlipCard({ service, index }) {
 
         {/* ── REVERSO ────────────────────────────────────────── */}
         <div
-          className={`absolute inset-0 flex flex-col items-start justify-center rounded-2xl border bg-gradient-to-br p-6 [backface-visibility:hidden] [transform:rotateY(180deg)] ${color.back} ${color.border}`}
+          className={`absolute inset-0 flex flex-col items-start justify-center rounded-2xl border bg-gradient-to-br p-4 [backface-visibility:hidden] [transform:rotateY(180deg)] ${color.back} ${color.border}`}
         >
           {/* Icono pequeño como marca de agua */}
           <div
-            className="pointer-events-none absolute right-4 top-4 opacity-15"
+            className="pointer-events-none absolute right-3 top-3 opacity-15"
             style={{ color: color.accent }}
           >
-            <Icon size={52} />
+            <Icon size={40} />
           </div>
 
           <h4
-            className="mb-3 text-sm font-bold uppercase tracking-wider"
+            className="mb-2 text-[10px] font-bold uppercase tracking-wider"
             style={{ color: color.accent }}
           >
             {t(service.title)}
           </h4>
 
-          <p className="relative z-10 text-sm leading-relaxed text-white/85">
+          <p className="relative z-10 text-[11px] leading-relaxed text-white/85">
             {t(service.description)}
           </p>
         </div>
