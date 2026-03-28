@@ -88,8 +88,27 @@ export default function TerminalWidget() {
   const [input, setInput]           = useState("");
   const [cmdHistory, setCmdHistory] = useState([]);
   const [histIdx, setHistIdx]       = useState(-1);
-  const outputRef = useRef(null);
-  const inputRef  = useRef(null);
+  const outputRef  = useRef(null);
+  const inputRef   = useRef(null);
+  const snapRootRef = useRef(null);
+
+  // Cuando el input está activo en móvil, desactivamos el snap del contenedor
+  // padre para que el teclado iOS no interfiera con la escritura
+  useEffect(() => {
+    snapRootRef.current = document.getElementById("snap-root");
+  }, []);
+
+  function handleInputFocus() {
+    if (snapRootRef.current) {
+      snapRootRef.current.style.overscrollBehavior = "none";
+    }
+  }
+
+  function handleInputBlur() {
+    if (snapRootRef.current) {
+      snapRootRef.current.style.overscrollBehavior = "";
+    }
+  }
 
   // Scroll interno del terminal — NUNCA mueve la página, solo el contenedor
   useEffect(() => {
@@ -157,10 +176,10 @@ export default function TerminalWidget() {
   }
 
   function handleTerminalClick(e) {
-    // En iOS el foco desde un handler externo puede ser ignorado fuera de un
-    // gesto directo. Usamos setTimeout(0) para diferirlo al siguiente tick,
-    // lo que garantiza que el navegador lo trate como acción de usuario.
-    if (e.target !== inputRef.current) {
+    // Solo enfocar si el tap fue FUERA del input.
+    // Nunca interrumpir si el input ya tiene el foco (evita cortar
+    // la composición de texto en iOS con teclado predictivo).
+    if (e.target !== inputRef.current && document.activeElement !== inputRef.current) {
       setTimeout(() => inputRef.current?.focus(), 0);
     }
   }
@@ -226,6 +245,8 @@ export default function TerminalWidget() {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKey}
+            onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
             className="flex-1 bg-transparent text-[var(--text-primary)] outline-none caret-cyan-400 min-w-0"
             style={{ fontSize: "16px" }}
             autoCapitalize="none"
