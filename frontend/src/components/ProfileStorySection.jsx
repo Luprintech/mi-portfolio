@@ -72,7 +72,7 @@ export default function ProfileStorySection({ id, className = "" }) {
         </motion.div>
 
         {/* ── Dos columnas ─────────────────────────────────────────── */}
-        <div className="grid gap-8 lg:grid-cols-2 lg:gap-12 lg:items-start">
+        <div className="grid gap-8 lg:grid-cols-2 lg:gap-12 lg:items-center">
 
           {/* ── Columna izquierda: Mi historia (timeline) ─────────── */}
           <motion.div
