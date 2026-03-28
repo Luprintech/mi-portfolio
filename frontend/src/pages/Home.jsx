@@ -325,7 +325,7 @@ export default function Home() {
       </section>
 
       {/* ========== SECTION 10: FINAL CTA — CONTACTO ========== */}
-      <section id="contact" className="snap-page overflow-hidden">
+      <section id="contact" className="snap-page--last overflow-hidden">
         {/* Fondo oscuro base */}
         <div className="pointer-events-none absolute inset-0 bg-[var(--bg-primary)]" />
 
