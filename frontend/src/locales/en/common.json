@@ -327,7 +327,7 @@
   "snake": {
     "eyebrow": "Mini game",
     "title": "Snake — my all-time favourite game",
-    "desc": "As a kid I spent hours playing Snake on my mum's phone. Now I build it myself. Made with React and the Canvas API, no game libraries — just logic, requestAnimationFrame, and a bit of nostalgia.",
+    "desc": "As a kid I spent hours playing Snake on my first Nokia 3310. Now I build it myself. Made with React and the Canvas API, no game libraries — just logic, requestAnimationFrame, and a bit of nostalgia.",
     "score": "Score",
     "best": "Best",
     "controls": "Keyboard: ↑ ↓ ← → or WASD · Mobile: swipe or use the buttons",

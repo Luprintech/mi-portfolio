@@ -329,7 +329,7 @@
   "snake": {
     "eyebrow": "Mini juego",
     "title": "Snake — mi juego favorito de siempre",
-    "desc": "De pequeña pasaba horas jugando al Snake en el móvil de mi madre. Ahora lo construyo yo. Está hecho con React y Canvas API, sin librerías de juegos — solo lógica, requestAnimationFrame y un poco de nostalgia.",
+    "desc": "De pequeña pasaba horas jugando al Snake en mi primer móvil Nokia 3310. Ahora lo construyo yo. Está hecho con React y Canvas API, sin librerías de juegos — solo lógica, requestAnimationFrame y un poco de nostalgia.",
     "score": "Puntuación",
     "best": "Récord",
     "controls": "Teclado: ↑ ↓ ← → o WASD · Móvil: desliza o usa los botones",
