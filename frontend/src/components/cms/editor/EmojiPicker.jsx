@@ -60,7 +60,12 @@ const EMOJI_DATA = {
     ],
 };
 
-export default function EmojiPicker({ onSelect, onClose }) {
+export default function EmojiPicker({
+    onSelect,
+    onClose,
+    className = 'absolute top-10 left-0 z-50 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl w-[320px] overflow-hidden',
+    style,
+}) {
     const [activeCategory, setActiveCategory] = useState(Object.keys(EMOJI_DATA)[0]);
     const [search, setSearch] = useState('');
     const ref = useRef(null);
@@ -84,7 +89,8 @@ export default function EmojiPicker({ onSelect, onClose }) {
     return (
         <div
             ref={ref}
-            className="absolute top-10 left-0 z-50 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl w-[320px] overflow-hidden"
+            className={className}
+            style={style}
             onMouseDown={e => e.stopPropagation()}
         >
             {/* Search */}

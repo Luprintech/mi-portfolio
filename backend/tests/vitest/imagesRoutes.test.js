@@ -7,7 +7,10 @@ import request from 'supertest';
 
 vi.mock('../../middleware/auth.js', () => ({
     verifyCmsToken: (req, _res, next) => {
-        req.user = { username: 'vitest-admin' };
+        req.user = { username: 'vitest-admin', role: 'admin' };
+        next();
+    },
+    requireAdmin: (_req, _res, next) => {
         next();
     },
 }));

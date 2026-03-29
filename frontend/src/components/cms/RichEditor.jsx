@@ -89,6 +89,7 @@ import Subscript from '@tiptap/extension-subscript';
 import 'highlight.js/styles/github-dark.css';
 import mermaid from 'mermaid';
 import { useCallback, useRef, useEffect, useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { LineHeight, AccordionExtension, ContentButtonExtension, DocumentAttachmentExtension, ImageGridExtension, VideoGalleryExtension, GifExtension, QuoteCardExtension, StatsCounterExtension, TimelineExtension, ComparisonSliderExtension, CountdownTimerExtension, SpotifyEmbedExtension, ProgressBarsExtension, SocialShareExtension, TabsExtension, ToggleExtension, QuizExtension, PollExtension } from './editor/extensions';
 import RichBlockFrame from './editor/RichBlockFrame';
 import { TooltipMark } from './editor/extensions/tooltipMark';
@@ -914,8 +915,114 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
     const toolbarRef = useRef(null);
     const toolbarPlaceholderRef = useRef(null);
     const editorContainerRef = useRef(null);
+    const colorToolRef = useRef(null);
+    const highlightToolRef = useRef(null);
+    const linkToolRef = useRef(null);
+    const youtubeToolRef = useRef(null);
+    const audioToolRef = useRef(null);
+    const calloutToolRef = useRef(null);
+    const mermaidToolRef = useRef(null);
+    const emojiToolRef = useRef(null);
+    const insertToolRef = useRef(null);
     const [toolbarFixed, setToolbarFixed] = useState(false);
     const [toolbarPosition, setToolbarPosition] = useState({ width: 'auto', left: 'auto' });
+    const [floatingMenuPosition, setFloatingMenuPosition] = useState({
+        color: { top: 0, left: 0 },
+        highlight: { top: 0, left: 0 },
+        link: { top: 0, left: 0 },
+        youtube: { top: 0, left: 0 },
+        audio: { top: 0, left: 0 },
+        callout: { top: 0, left: 0 },
+        mermaid: { top: 0, left: 0 },
+        emoji: { top: 0, left: 0 },
+        insert: { top: 0, left: 0 },
+    });
+
+    const getFloatingPickerPosition = useCallback((anchorEl, menuWidth) => {
+        if (!anchorEl || typeof window === 'undefined') return { top: 0, left: 0 };
+        const rect = anchorEl.getBoundingClientRect();
+        const margin = 12;
+        const viewportWidth = window.innerWidth;
+        const left = Math.min(
+            Math.max(margin, rect.left),
+            Math.max(margin, viewportWidth - menuWidth - margin),
+        );
+
+        return {
+            top: rect.bottom + 8,
+            left,
+        };
+    }, []);
+
+    const updateFloatingMenuPosition = useCallback((key, anchorEl, menuWidth) => {
+        setFloatingMenuPosition(prev => ({
+            ...prev,
+            [key]: getFloatingPickerPosition(anchorEl, menuWidth),
+        }));
+    }, [getFloatingPickerPosition]);
+
+    const refreshOpenFloatingMenus = useCallback(() => {
+        if (showColorPick) updateFloatingMenuPosition('color', colorToolRef.current, 192);
+        if (showHighPick) updateFloatingMenuPosition('highlight', highlightToolRef.current, 176);
+        if (showLinkMenu) updateFloatingMenuPosition('link', linkToolRef.current, 288);
+        if (showYoutubeMenu) updateFloatingMenuPosition('youtube', youtubeToolRef.current, 320);
+        if (showAudioMenu) updateFloatingMenuPosition('audio', audioToolRef.current, 320);
+        if (showCalloutMenu) updateFloatingMenuPosition('callout', calloutToolRef.current, 144);
+        if (showMermaidMenu) updateFloatingMenuPosition('mermaid', mermaidToolRef.current, 192);
+        if (showEmojiPicker) updateFloatingMenuPosition('emoji', emojiToolRef.current, 320);
+        if (showInsertMenu) updateFloatingMenuPosition('insert', insertToolRef.current, 416);
+    }, [
+        showColorPick,
+        showHighPick,
+        showLinkMenu,
+        showYoutubeMenu,
+        showAudioMenu,
+        showCalloutMenu,
+        showMermaidMenu,
+        showEmojiPicker,
+        showInsertMenu,
+        updateFloatingMenuPosition,
+    ]);
+
+    useEffect(() => {
+        const anyFloatingMenuOpen = showColorPick
+            || showHighPick
+            || showLinkMenu
+            || showYoutubeMenu
+            || showAudioMenu
+            || showCalloutMenu
+            || showMermaidMenu
+            || showEmojiPicker
+            || showInsertMenu;
+
+        if (!anyFloatingMenuOpen) return;
+
+        refreshOpenFloatingMenus();
+
+        const toolbarEl = toolbarRef.current;
+        const handleReposition = () => refreshOpenFloatingMenus();
+
+        window.addEventListener('resize', handleReposition);
+        window.addEventListener('scroll', handleReposition, true);
+        toolbarEl?.addEventListener('scroll', handleReposition);
+
+        return () => {
+            window.removeEventListener('resize', handleReposition);
+            window.removeEventListener('scroll', handleReposition, true);
+            toolbarEl?.removeEventListener('scroll', handleReposition);
+        };
+    }, [
+        showColorPick,
+        showHighPick,
+        showLinkMenu,
+        showYoutubeMenu,
+        showAudioMenu,
+        showCalloutMenu,
+        showMermaidMenu,
+        showEmojiPicker,
+        showInsertMenu,
+        refreshOpenFloatingMenus,
+    ]);
 
     // Función para añadir herramienta a la barra de herramientas
     const handlePinTool = (tool) => {
@@ -1405,16 +1512,23 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                 <Divider />
 
                 {/* Color de texto — popup sobre el toolbar */}
-                <div className="relative" onMouseDown={e => e.stopPropagation()}>
-                    <ToolBtn onClick={() => { setShowColorPick(p => !p); setShowHighPick(false); }} title="Color de texto">
+                <div ref={colorToolRef} className="relative" onMouseDown={e => e.stopPropagation()}>
+                    <ToolBtn onClick={() => {
+                        if (!showColorPick) updateFloatingMenuPosition('color', colorToolRef.current, 192);
+                        setShowColorPick(p => !p);
+                        setShowHighPick(false);
+                    }} title="Color de texto">
                         <div className="flex flex-col items-center gap-0.5">
                             <span className="text-xs font-bold leading-none">A</span>
                             <div className="w-4 h-1 rounded-full" style={{ background: editor.getAttributes('textStyle').color || '#e2e8f0' }} />
                         </div>
                     </ToolBtn>
-                    {showColorPick && (
-                        <div className="absolute top-10 left-0 z-50 p-3 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl w-48"
-                            onMouseDown={e => e.stopPropagation()}>
+                    {showColorPick && typeof document !== 'undefined' && createPortal(
+                        <div
+                            className="fixed z-[220] p-3 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl w-48"
+                            style={{ top: `${floatingMenuPosition.color.top}px`, left: `${floatingMenuPosition.color.left}px` }}
+                            onMouseDown={e => e.stopPropagation()}
+                        >
                             <button type="button" className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] mb-2 w-full text-left px-1"
                                 onClick={() => { editor.chain().focus().unsetColor().run(); setShowColorPick(false); }}>
                                 Quitar color
@@ -1436,18 +1550,26 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                                 />
                                 <span className="text-xs text-gray-400">Color personalizado</span>
                             </div>
-                        </div>
+                        </div>,
+                        document.body,
                     )}
                 </div>
 
                 {/* Resaltado */}
-                <div className="relative" onMouseDown={e => e.stopPropagation()}>
-                    <ToolBtn onClick={() => { setShowHighPick(p => !p); setShowColorPick(false); }} active={editor.isActive('highlight')} title="Color de fondo">
+                <div ref={highlightToolRef} className="relative" onMouseDown={e => e.stopPropagation()}>
+                    <ToolBtn onClick={() => {
+                        if (!showHighPick) updateFloatingMenuPosition('highlight', highlightToolRef.current, 176);
+                        setShowHighPick(p => !p);
+                        setShowColorPick(false);
+                    }} active={editor.isActive('highlight')} title="Color de fondo">
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
                     </ToolBtn>
-                    {showHighPick && (
-                        <div className="absolute top-10 left-0 z-50 p-3 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl w-44"
-                            onMouseDown={e => e.stopPropagation()}>
+                    {showHighPick && typeof document !== 'undefined' && createPortal(
+                        <div
+                            className="fixed z-[220] p-3 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl w-44"
+                            style={{ top: `${floatingMenuPosition.highlight.top}px`, left: `${floatingMenuPosition.highlight.left}px` }}
+                            onMouseDown={e => e.stopPropagation()}
+                        >
                             <button type="button" className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] mb-2 w-full text-left px-1"
                                 onClick={() => { editor.chain().focus().unsetHighlight().run(); setShowHighPick(false); }}>
                                 Quitar fondo
@@ -1469,7 +1591,8 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                                 />
                                 <span className="text-xs text-gray-400">Color personalizado</span>
                             </div>
-                        </div>
+                        </div>,
+                        document.body,
                     )}
                 </div>
 
@@ -1510,12 +1633,19 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                 <Divider />
 
                 {/* Enlace */}
-                <div className="relative" onMouseDown={e => e.stopPropagation()}>
-                    <ToolBtn onClick={() => { setShowLinkMenu(p => !p); setLinkUrl(editor.getAttributes('link').href || ''); setShowYoutubeMenu(false); setShowAudioMenu(false); }} active={editor.isActive('link')} title="Enlace">
+                <div ref={linkToolRef} className="relative" onMouseDown={e => e.stopPropagation()}>
+                    <ToolBtn onClick={() => {
+                        if (!showLinkMenu) updateFloatingMenuPosition('link', linkToolRef.current, 288);
+                        setShowLinkMenu(p => !p);
+                        setLinkUrl(editor.getAttributes('link').href || '');
+                        setShowYoutubeMenu(false);
+                        setShowAudioMenu(false);
+                    }} active={editor.isActive('link')} title="Enlace">
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                     </ToolBtn>
-                    {showLinkMenu && (
-                        <div className="absolute top-10 left-0 z-50 p-3 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl flex gap-2 w-[min(18rem,calc(100vw-1.5rem))]"
+                    {showLinkMenu && typeof document !== 'undefined' && createPortal(
+                        <div className="fixed z-[220] p-3 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl flex gap-2 w-[min(18rem,calc(100vw-1.5rem))]"
+                            style={{ top: `${floatingMenuPosition.link.top}px`, left: `${floatingMenuPosition.link.left}px` }}
                             onMouseDown={e => e.stopPropagation()}>
                             <input type="url" value={linkUrl} onChange={e => setLinkUrl(e.target.value)} onKeyDown={e => e.key === 'Enter' && applyLink()}
                                 placeholder="https://…"
@@ -1523,7 +1653,8 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                                 autoFocus />
                             <button type="button" onClick={applyLink} className="px-3 py-1.5 bg-fuchsia-600 hover:bg-fuchsia-500 text-white text-sm rounded-lg">OK</button>
                             {editor.isActive('link') && <button type="button" onClick={() => { editor.chain().focus().unsetLink().run(); setShowLinkMenu(false); }} className="px-2 py-1.5 text-red-400 text-sm">✕</button>}
-                        </div>
+                        </div>,
+                        document.body,
                     )}
                 </div>
 
@@ -1534,29 +1665,42 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                 <input ref={fileInputRef} type="file" accept={IMAGE_INPUT_ACCEPT} className="hidden" onChange={handleImageInputChange} />
 
                 {/* YouTube */}
-                <div className="relative" onMouseDown={e => e.stopPropagation()}>
-                    <ToolBtn onClick={() => { setShowYoutubeMenu(p => !p); setShowLinkMenu(false); setShowAudioMenu(false); }} title="Vídeo YouTube">
+                <div ref={youtubeToolRef} className="relative" onMouseDown={e => e.stopPropagation()}>
+                    <ToolBtn onClick={() => {
+                        if (!showYoutubeMenu) updateFloatingMenuPosition('youtube', youtubeToolRef.current, 320);
+                        setShowYoutubeMenu(p => !p);
+                        setShowLinkMenu(false);
+                        setShowAudioMenu(false);
+                    }} title="Vídeo YouTube">
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M23 7s-.3-2-1.2-2.8c-1.1-1.2-2.4-1.2-3-1.3C16.5 2.8 12 2.8 12 2.8s-4.5 0-6.8.1c-.6.1-1.9.1-3 1.3C1.3 5 1 7 1 7S.7 9.1.7 11.2v1.9c0 2.1.3 4.2.3 4.2s.3 2 1.2 2.8c1.1 1.2 2.6 1.1 3.3 1.2C7.5 21.4 12 21.5 12 21.5s4.5 0 6.8-.2c.6-.1 1.9-.1 3-1.3.9-.8 1.2-2.8 1.2-2.8s.3-2.1.3-4.2v-1.9C23.3 9.1 23 7 23 7z" opacity=".85"/><polygon points="9.5,15.5 15.5,12 9.5,8.5" fill="white"/></svg>
                     </ToolBtn>
-                    {showYoutubeMenu && (
-                        <div className="absolute top-10 left-0 z-50 p-3 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl flex gap-2 w-[min(20rem,calc(100vw-1.5rem))]"
+                    {showYoutubeMenu && typeof document !== 'undefined' && createPortal(
+                        <div className="fixed z-[220] p-3 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl flex gap-2 w-[min(20rem,calc(100vw-1.5rem))]"
+                            style={{ top: `${floatingMenuPosition.youtube.top}px`, left: `${floatingMenuPosition.youtube.left}px` }}
                             onMouseDown={e => e.stopPropagation()}>
                             <input type="url" value={youtubeUrl} onChange={e => setYoutubeUrl(e.target.value)} onKeyDown={e => e.key === 'Enter' && applyYoutube()}
                                 placeholder="https://youtube.com/watch?v=…"
                                 className="flex-1 px-3 py-1.5 text-sm bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-fuchsia-500/60"
                                 autoFocus />
                             <button type="button" onClick={applyYoutube} className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white text-sm rounded-lg">Insertar</button>
-                        </div>
+                        </div>,
+                        document.body,
                     )}
                 </div>
 
                 {/* Audio */}
-                <div className="relative" onMouseDown={e => e.stopPropagation()}>
-                    <ToolBtn onClick={() => { setShowAudioMenu(p => !p); setShowLinkMenu(false); setShowYoutubeMenu(false); }} title="Insertar audio">
+                <div ref={audioToolRef} className="relative" onMouseDown={e => e.stopPropagation()}>
+                    <ToolBtn onClick={() => {
+                        if (!showAudioMenu) updateFloatingMenuPosition('audio', audioToolRef.current, 320);
+                        setShowAudioMenu(p => !p);
+                        setShowLinkMenu(false);
+                        setShowYoutubeMenu(false);
+                    }} title="Insertar audio">
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
                     </ToolBtn>
-                    {showAudioMenu && (
-                        <div className="absolute top-10 left-0 z-50 p-3 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl w-[min(20rem,calc(100vw-1.5rem))] space-y-2"
+                    {showAudioMenu && typeof document !== 'undefined' && createPortal(
+                        <div className="fixed z-[220] p-3 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl w-[min(20rem,calc(100vw-1.5rem))] space-y-2"
+                            style={{ top: `${floatingMenuPosition.audio.top}px`, left: `${floatingMenuPosition.audio.left}px` }}
                             onMouseDown={e => e.stopPropagation()}>
                             <div className="flex gap-2">
                                 <input type="url" value={audioUrl} onChange={e => setAudioUrl(e.target.value)} onKeyDown={e => e.key === 'Enter' && applyAudio()}
@@ -1570,7 +1714,8 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                                 Subir archivo de audio
                             </button>
                             <input ref={audioInputRef} type="file" accept={AUDIO_INPUT_ACCEPT} className="hidden" onChange={handleAudioFile} />
-                        </div>
+                        </div>,
+                        document.body,
                     )}
                 </div>
 
@@ -1580,9 +1725,12 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                 </ToolBtn>
 
                 {/* Callout */}
-                <div className="relative" onMouseDown={e => e.stopPropagation()}>
+                <div ref={calloutToolRef} className="relative" onMouseDown={e => e.stopPropagation()}>
                     <ToolBtn
-                        onClick={() => setShowCalloutMenu(p => !p)}
+                        onClick={() => {
+                            if (!showCalloutMenu) updateFloatingMenuPosition('callout', calloutToolRef.current, 144);
+                            setShowCalloutMenu(p => !p);
+                        }}
                         active={editor.isActive('callout')}
                         title="Insertar callout (TIP / NOTE / WARNING / INFO)"
                     >
@@ -1592,9 +1740,10 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                             <line x1="12" y1="16" x2="12.01" y2="16"/>
                         </svg>
                     </ToolBtn>
-                    {showCalloutMenu && (
+                    {showCalloutMenu && typeof document !== 'undefined' && createPortal(
                         <div
-                            className="absolute top-10 left-0 z-50 p-2 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl flex flex-col gap-1 w-36"
+                            className="fixed z-[220] p-2 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl flex flex-col gap-1 w-36"
+                            style={{ top: `${floatingMenuPosition.callout.top}px`, left: `${floatingMenuPosition.callout.left}px` }}
                             onMouseDown={e => e.stopPropagation()}
                         >
                             {Object.entries(CALLOUT_CONFIG).map(([k, v]) => (
@@ -1607,13 +1756,17 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                                     <span style={{ color: v.border, fontWeight: 700, fontSize: 11 }}>{v.label}</span>
                                 </button>
                             ))}
-                        </div>
+                        </div>,
+                        document.body,
                     )}
                 </div>
 
                 {/* Mermaid / Diagrama */}
-                <div className="relative" onMouseDown={e => e.stopPropagation()}>
-                    <ToolBtn onClick={() => setShowMermaidMenu(p => !p)} title="Insertar diagrama (flowchart, mapa mental, secuencia)">
+                <div ref={mermaidToolRef} className="relative" onMouseDown={e => e.stopPropagation()}>
+                    <ToolBtn onClick={() => {
+                        if (!showMermaidMenu) updateFloatingMenuPosition('mermaid', mermaidToolRef.current, 192);
+                        setShowMermaidMenu(p => !p);
+                    }} title="Insertar diagrama (flowchart, mapa mental, secuencia)">
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <rect x="3" y="3" width="5" height="4" rx="1"/><rect x="16" y="3" width="5" height="4" rx="1"/>
                             <rect x="9" y="17" width="6" height="4" rx="1"/>
@@ -1621,8 +1774,12 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                             <line x1="5.5" y1="10" x2="18.5" y2="10"/><line x1="12" y1="10" x2="12" y2="17"/>
                         </svg>
                     </ToolBtn>
-                    {showMermaidMenu && (
-                        <div className="absolute top-10 left-0 z-50 p-2 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl flex flex-col gap-1 w-48" onMouseDown={e => e.stopPropagation()}>
+                    {showMermaidMenu && typeof document !== 'undefined' && createPortal(
+                        <div
+                            className="fixed z-[220] p-2 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl flex flex-col gap-1 w-48"
+                            style={{ top: `${floatingMenuPosition.mermaid.top}px`, left: `${floatingMenuPosition.mermaid.left}px` }}
+                            onMouseDown={e => e.stopPropagation()}
+                        >
                             {[
                                 ...MERMAID_TEMPLATE_OPTIONS,
                             ].map(({ key, icon, label }) => (
@@ -1634,7 +1791,8 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                                     <span>{label}</span>
                                 </button>
                             ))}
-                        </div>
+                        </div>,
+                        document.body,
                     )}
                 </div>
 
@@ -1677,21 +1835,27 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                 )}
 
                 {/* Emoji */}
-                <div className="relative" onMouseDown={e => e.stopPropagation()}>
-                    <ToolBtn onClick={() => setShowEmojiPicker(p => !p)} title="Insertar emoji">
+                <div ref={emojiToolRef} className="relative" onMouseDown={e => e.stopPropagation()}>
+                    <ToolBtn onClick={() => {
+                        if (!showEmojiPicker) updateFloatingMenuPosition('emoji', emojiToolRef.current, 320);
+                        setShowEmojiPicker(p => !p);
+                    }} title="Insertar emoji">
                         <span className="text-sm">😀</span>
                     </ToolBtn>
                     {showEmojiPicker && (
                         <EmojiPicker
                             onSelect={emoji => editor?.chain().focus().insertContent(emoji).run()}
                             onClose={() => setShowEmojiPicker(false)}
+                            className="fixed z-[220] bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl w-[320px] overflow-hidden"
+                            style={{ top: `${floatingMenuPosition.emoji.top}px`, left: `${floatingMenuPosition.emoji.left}px` }}
                         />
                     )}
                 </div>
 
                 {/* Insertar bloque especial */}
-                <div className="relative" onMouseDown={e => e.stopPropagation()}>
+                <div ref={insertToolRef} className="relative" onMouseDown={e => e.stopPropagation()}>
                     <ToolBtn onClick={() => {
+                        if (!showInsertMenu) updateFloatingMenuPosition('insert', insertToolRef.current, 416);
                         setShowInsertMenu(prev => {
                             const next = !prev;
                             if (!next) setInsertMenuQuery('');
@@ -1700,8 +1864,9 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                     }} title="Insertar bloque especial (+)">
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     </ToolBtn>
-                    {showInsertMenu && (
-                        <div className="absolute top-10 left-0 z-50 flex max-h-[min(78vh,36rem)] w-[min(26rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-2xl border border-[var(--border-color)] bg-[var(--bg-elevated)] shadow-2xl"
+                    {showInsertMenu && typeof document !== 'undefined' && createPortal(
+                        <div className="fixed z-[220] flex max-h-[min(78vh,36rem)] w-[min(26rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-2xl border border-[var(--border-color)] bg-[var(--bg-elevated)] shadow-2xl"
+                             style={{ top: `${floatingMenuPosition.insert.top}px`, left: `${floatingMenuPosition.insert.left}px` }}
                              onMouseDown={e => e.stopPropagation()}>
                             <div className="border-b border-[var(--border-default)] bg-[var(--bg-elevated)] px-4 pt-3 pb-3">
                                 <div className="flex items-start justify-between gap-3">
@@ -1777,7 +1942,8 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                             <div className="border-t border-[var(--border-default)] bg-[var(--bg-elevated)] px-4 py-2 text-[10px] text-[var(--text-muted)]">
                                 Tip: tambien podes escribir <span className="font-semibold text-[var(--text-primary)]">/</span> dentro del editor para abrir estas mismas herramientas.
                             </div>
-                        </div>
+                        </div>,
+                        document.body,
                     )}
                 </div>
 
