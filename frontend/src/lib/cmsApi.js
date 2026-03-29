@@ -97,4 +97,10 @@ export const cmsApi = {
 
     // Chat stats
     getChatStats: (token) => request('/api/bitacora/chat-stats', { token }),
+
+    // Users
+    getUsers:   (token)              => request('/api/bitacora/users', { token }),
+    createUser: (token, data)        => request('/api/bitacora/users', { token, method: 'POST', body: data }),
+    updateUser: (token, id, data)    => request(`/api/bitacora/users/${id}`, { token, method: 'PUT', body: data }),
+    deleteUser: (token, id)          => request(`/api/bitacora/users/${id}`, { token, method: 'DELETE' }),
 };

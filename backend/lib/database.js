@@ -1,6 +1,7 @@
 import fsExtra from 'fs-extra';
 import path from 'path';
 import { Pool } from 'pg';
+import bcrypt from 'bcrypt';
 import {
     CONTENT_PATH,
     POSTS_DIR,
@@ -225,6 +226,34 @@ async function runInitialImport(client) {
     });
 }
 
+/**
+ * Si la tabla cms_users está vacía, crea el usuario admin inicial
+ * usando las credenciales de las variables de entorno CMS_USERNAME / CMS_PASSWORD.
+ * Esto sólo corre una vez; a partir de ahí los usuarios se gestionan desde el CMS.
+ */
+async function seedAdminUserIfNeeded(client) {
+    const { rows } = await client.query('SELECT COUNT(*)::int AS count FROM cms_users');
+    if (rows[0].count > 0) return;
+
+    const username = process.env.CMS_USERNAME;
+    const password = process.env.CMS_PASSWORD;
+
+    if (!username || !password) {
+        dbLogger.warn('Cannot seed admin user: CMS_USERNAME or CMS_PASSWORD not set');
+        return;
+    }
+
+    const hash = await bcrypt.hash(password, 12);
+    await client.query(
+        `INSERT INTO cms_users (username, password_hash, role, active)
+         VALUES ($1, $2, 'admin', true)
+         ON CONFLICT (username) DO NOTHING`,
+        [username, hash]
+    );
+
+    dbLogger.info('Admin user seeded from env credentials', { username });
+}
+
 export function getPool() {
     if (!pool) {
         pool = new Pool({
@@ -378,6 +407,21 @@ async function ensureSchema() {
 
         CREATE INDEX IF NOT EXISTS idx_projects_sort_order
             ON projects (sort_order ASC, created_at ASC);
+
+        -- ── Tabla de usuarios CMS ──────────────────────────────────────────────
+        CREATE TABLE IF NOT EXISTS cms_users (
+            id         BIGSERIAL    PRIMARY KEY,
+            username   VARCHAR(80)  UNIQUE NOT NULL,
+            password_hash TEXT       NOT NULL,
+            role       VARCHAR(20)  NOT NULL DEFAULT 'editor',
+            active     BOOLEAN      NOT NULL DEFAULT TRUE,
+            created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+            CONSTRAINT cms_users_role_check CHECK (role IN ('admin', 'editor'))
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_cms_users_username
+            ON cms_users (username);
     `);
 }
 
@@ -385,4 +429,5 @@ export async function ensureDatabaseReady() {
     await waitForDatabase();
     await ensureSchema();
     await withTransaction(runInitialImport);
+    await withTransaction(seedAdminUserIfNeeded);
 }

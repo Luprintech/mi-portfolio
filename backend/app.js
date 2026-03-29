@@ -21,6 +21,7 @@ import ogMetaRoutes from './routes/ogMeta.js';
 import postsRoutes from './routes/posts.js';
 import projectsRoutes from './routes/projects.js';
 import publicContentRoutes from './routes/publicContent.js';
+import usersRoutes from './routes/users.js';
 
 const REQUIRED_ENV = ['JWT_SECRET', 'CMS_USERNAME', 'CMS_PASSWORD'];
 
@@ -87,6 +88,7 @@ export async function createApp() {
     app.use('/api/bitacora', authRoutes);
     app.use('/api/bitacora/posts', postsRoutes);
     app.use('/api/bitacora/projects', projectsRoutes);
+    app.use('/api/bitacora/users', usersRoutes);
     app.use('/api/bitacora', imagesRoutes);
     app.use('/api/bitacora', chatStatsRoutes);
     app.use('/api/og', ogMetaRoutes);
