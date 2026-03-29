@@ -39,3 +39,13 @@ export function verifyCmsToken(req, res, next) {
         return res.status(401).json({ error: 'Token invalido o expirado' });
     }
 }
+
+/**
+ * Middleware que exige rol 'admin'. Debe usarse DESPUÉS de verifyCmsToken.
+ */
+export function requireAdmin(req, res, next) {
+    if (req.user?.role !== 'admin') {
+        return res.status(403).json({ error: 'Acción reservada para administradores' });
+    }
+    next();
+}

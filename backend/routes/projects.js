@@ -6,7 +6,7 @@ import {
     listProjectsForCms,
     updateProject,
 } from '../lib/contentRepository.js';
-import { verifyCmsToken } from '../middleware/auth.js';
+import { verifyCmsToken, requireAdmin } from '../middleware/auth.js';
 import { sanitizeProjectInput, validateRouteSlug } from '../utils/contentValidation.js';
 import { createHttpError } from '../utils/httpErrors.js';
 
@@ -23,7 +23,7 @@ router.get('/', async (_req, res, next) => {
     }
 });
 
-router.post('/', async (req, res, next) => {
+router.post('/', requireAdmin, async (req, res, next) => {
     try {
         const { errors, data } = sanitizeProjectInput(req.body);
         if (errors.length) {
@@ -73,7 +73,7 @@ router.put('/:id', async (req, res, next) => {
     }
 });
 
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', requireAdmin, async (req, res, next) => {
     try {
         const id = validateRouteSlug(req.params.id);
         if (!id) return res.status(400).json({ error: 'ID de proyecto no valido' });

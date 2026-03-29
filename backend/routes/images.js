@@ -4,7 +4,7 @@ import multer from 'multer';
 import fsExtra from 'fs-extra';
 import { logger } from '../lib/logger.js';
 import { AUDIO_DIR, CV_FILE, DOCS_DIR, IMAGES_DIR } from '../config/paths.js';
-import { verifyCmsToken } from '../middleware/auth.js';
+import { verifyCmsToken, requireAdmin } from '../middleware/auth.js';
 import { createHttpError } from '../utils/httpErrors.js';
 
 const router = Router();
@@ -284,7 +284,7 @@ router.post('/upload-audio', verifyCmsToken, async (req, res, next) => {
     }
 });
 
-router.post('/upload-cv', verifyCmsToken, async (req, res, next) => {
+router.post('/upload-cv', verifyCmsToken, requireAdmin, async (req, res, next) => {
     try {
         await runUpload(req, res, cvUpload.single('cv'));
         if (!req.file) {
@@ -325,7 +325,7 @@ router.post('/upload-cv', verifyCmsToken, async (req, res, next) => {
     }
 });
 
-router.get('/images', verifyCmsToken, async (req, res, next) => {
+router.get('/images', verifyCmsToken, requireAdmin, async (req, res, next) => {
     try {
         await fsExtra.ensureDir(IMAGES_DIR);
         const files = await fsExtra.readdir(IMAGES_DIR);
@@ -339,7 +339,7 @@ router.get('/images', verifyCmsToken, async (req, res, next) => {
     }
 });
 
-router.delete('/images/:filename', verifyCmsToken, async (req, res, next) => {
+router.delete('/images/:filename', verifyCmsToken, requireAdmin, async (req, res, next) => {
     try {
         const filename = path.basename(req.params.filename);
         const ext = path.extname(filename).toLowerCase();

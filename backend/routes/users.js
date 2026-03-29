@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import { query } from '../lib/database.js';
-import { verifyCmsToken } from '../middleware/auth.js';
+import { verifyCmsToken, requireAdmin } from '../middleware/auth.js';
 import { logger } from '../lib/logger.js';
 
 const router = Router();
@@ -9,8 +9,9 @@ const usersLogger = logger.child({ route: 'users' });
 
 const BCRYPT_ROUNDS = 12;
 
-// Todos los endpoints requieren autenticación
+// Todos los endpoints requieren autenticación y rol admin
 router.use(verifyCmsToken);
+router.use(requireAdmin);
 
 // ── GET /api/bitacora/users — lista todos los usuarios (sin hash) ─────────────
 router.get('/', async (req, res, next) => {
