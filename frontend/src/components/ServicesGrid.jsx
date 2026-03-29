@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 
@@ -72,18 +72,10 @@ function resolveColor(iconColor = "") {
 function FlipCard({ service, index }) {
   const { t } = useTranslation();
   const [flipped, setFlipped] = useState(false);
-  const frontRef = useRef(null);
-  const backRef  = useRef(null);
-  const [height, setHeight] = useState(160);
   const Icon  = service.icon;
   const color = CARD_COLORS[resolveColor(service.iconColor)];
 
-  // Calcula la altura mínima necesaria para que tanto frente como reverso quepan
-  useEffect(() => {
-    const frontH = frontRef.current?.scrollHeight ?? 0;
-    const backH  = backRef.current?.scrollHeight  ?? 0;
-    setHeight(Math.max(frontH, backH, 160));
-  }, []);
+  const toggle = () => setFlipped(f => !f);
 
   return (
     <motion.div
@@ -91,65 +83,118 @@ function FlipCard({ service, index }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: index * 0.08 }}
-      className="group w-full cursor-pointer select-none [perspective:1000px]"
-      style={{ height }}
-      onClick={() => setFlipped(f => !f)}
-      role="button"
-      aria-pressed={flipped}
-      tabIndex={0}
-      onKeyDown={e => (e.key === "Enter" || e.key === " ") && setFlipped(f => !f)}
     >
-      {/* Contenedor que rota — tap en mobile, hover en desktop */}
+      {/* ── MOBILE: toggle sin 3D (altura natural, sin superposición) ── */}
       <div
-        className={`relative h-full w-full transition-transform duration-500 [transform-style:preserve-3d]
-          ${flipped ? "[transform:rotateY(180deg)]" : ""}
-          md:group-hover:[transform:rotateY(180deg)]
-        `}
+        className="md:hidden w-full cursor-pointer select-none rounded-2xl border transition-shadow duration-300"
+        style={{ boxShadow: `0 4px 24px ${color.glow}`, borderColor: color.accent + "4d" }}
+        onClick={toggle}
+        role="button"
+        aria-pressed={flipped}
+        tabIndex={0}
+        onKeyDown={e => (e.key === "Enter" || e.key === " ") && toggle()}
       >
-        {/* ── FRENTE ─────────────────────────────────────────── */}
-        <div
-          ref={frontRef}
-          className={`absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-2xl border bg-[var(--bg-surface)] p-4 [backface-visibility:hidden] transition-shadow duration-300 ${color.border}`}
-          style={{ boxShadow: `0 4px 24px ${color.glow}` }}
-        >
+        {!flipped ? (
+          /* Frente mobile */
           <div
-            className="pointer-events-none absolute inset-0 rounded-2xl opacity-30"
-            style={{ background: `radial-gradient(ellipse 70% 60% at 50% 40%, ${color.glow}, transparent)` }}
-          />
-          <div className={`relative z-10 ${color.icon}`}>
-            <Icon size={36} />
-          </div>
-          <h3 className="relative z-10 text-center text-sm font-bold leading-tight text-[var(--text-primary)] md:text-base">
-            {t(service.title)}
-          </h3>
-          <span
-            className="absolute bottom-2 right-3 text-[9px] font-medium uppercase tracking-wider opacity-40 md:hidden"
-            style={{ color: color.accent }}
+            className="relative flex flex-col items-center justify-center gap-3 rounded-2xl bg-[var(--bg-surface)] p-5"
           >
-            Toca para ver más
-          </span>
-        </div>
+            <div
+              className="pointer-events-none absolute inset-0 rounded-2xl opacity-30"
+              style={{ background: `radial-gradient(ellipse 70% 60% at 50% 40%, ${color.glow}, transparent)` }}
+            />
+            <div className={`relative z-10 ${color.icon}`}>
+              <Icon size={36} />
+            </div>
+            <h3 className="relative z-10 text-center text-sm font-bold leading-tight text-[var(--text-primary)]">
+              {t(service.title)}
+            </h3>
+            <span
+              className="text-[9px] font-medium uppercase tracking-wider opacity-40"
+              style={{ color: color.accent }}
+            >
+              Toca para ver más
+            </span>
+          </div>
+        ) : (
+          /* Reverso mobile */
+          <div
+            className={`relative flex flex-col items-start gap-2 rounded-2xl border bg-gradient-to-br p-5 ${color.back} ${color.border}`}
+          >
+            <div
+              className="pointer-events-none absolute right-3 top-3 opacity-15"
+              style={{ color: color.accent }}
+            >
+              <Icon size={40} />
+            </div>
+            <h4
+              className="text-[10px] font-bold uppercase tracking-wider"
+              style={{ color: color.accent }}
+            >
+              {t(service.title)}
+            </h4>
+            <p className="relative z-10 text-[11px] leading-relaxed text-white/85">
+              {t(service.description)}
+            </p>
+            <span
+              className="mt-1 text-[9px] font-medium uppercase tracking-wider opacity-40"
+              style={{ color: color.accent }}
+            >
+              Toca para volver
+            </span>
+          </div>
+        )}
+      </div>
 
-        {/* ── REVERSO ────────────────────────────────────────── */}
+      {/* ── DESKTOP: flip 3D con hover ── */}
+      <div
+        className="group hidden md:block w-full cursor-pointer select-none [perspective:1000px]"
+        style={{ height: 160 }}
+        role="button"
+        aria-pressed={false}
+        tabIndex={0}
+        onKeyDown={e => (e.key === "Enter" || e.key === " ") && toggle()}
+      >
         <div
-          ref={backRef}
-          className={`absolute inset-0 flex flex-col items-start justify-center rounded-2xl border bg-gradient-to-br p-4 [backface-visibility:hidden] [transform:rotateY(180deg)] ${color.back} ${color.border}`}
+          className="relative h-full w-full transition-transform duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]"
         >
+          {/* Frente desktop */}
           <div
-            className="pointer-events-none absolute right-3 top-3 opacity-15"
-            style={{ color: color.accent }}
+            className={`absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-2xl border bg-[var(--bg-surface)] p-4 [backface-visibility:hidden] transition-shadow duration-300 ${color.border}`}
+            style={{ boxShadow: `0 4px 24px ${color.glow}` }}
           >
-            <Icon size={40} />
+            <div
+              className="pointer-events-none absolute inset-0 rounded-2xl opacity-30"
+              style={{ background: `radial-gradient(ellipse 70% 60% at 50% 40%, ${color.glow}, transparent)` }}
+            />
+            <div className={`relative z-10 ${color.icon}`}>
+              <Icon size={36} />
+            </div>
+            <h3 className="relative z-10 text-center text-sm font-bold leading-tight text-[var(--text-primary)] md:text-base">
+              {t(service.title)}
+            </h3>
           </div>
-          <h4
-            className="mb-2 text-[10px] font-bold uppercase tracking-wider"
-            style={{ color: color.accent }}
+
+          {/* Reverso desktop */}
+          <div
+            className={`absolute inset-0 flex flex-col items-start justify-center rounded-2xl border bg-gradient-to-br p-4 [backface-visibility:hidden] [transform:rotateY(180deg)] ${color.back} ${color.border}`}
           >
-            {t(service.title)}
-          </h4>
-          <p className="relative z-10 text-[11px] leading-relaxed text-white/85">
-            {t(service.description)}
-          </p>
+            <div
+              className="pointer-events-none absolute right-3 top-3 opacity-15"
+              style={{ color: color.accent }}
+            >
+              <Icon size={40} />
+            </div>
+            <h4
+              className="mb-2 text-[10px] font-bold uppercase tracking-wider"
+              style={{ color: color.accent }}
+            >
+              {t(service.title)}
+            </h4>
+            <p className="relative z-10 text-[11px] leading-relaxed text-white/85">
+              {t(service.description)}
+            </p>
+          </div>
         </div>
       </div>
     </motion.div>

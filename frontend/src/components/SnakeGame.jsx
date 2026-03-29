@@ -180,6 +180,10 @@ export default function SnakeGame() {
       ArrowRight: DIR.RIGHT, d: DIR.RIGHT, D: DIR.RIGHT,
     };
     function handleKey(e) {
+      // No interceptar teclas cuando hay un campo de texto enfocado
+      const tag = document.activeElement?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || document.activeElement?.isContentEditable) return;
+
       if (e.code === "Space") {
         e.preventDefault();
         togglePause();
