@@ -113,7 +113,7 @@ export default function Contact() {
             {/* Perfiles sociales */}
             <div className="bg-[var(--bg-surface)] backdrop-blur-md p-6 md:p-8 rounded-2xl border border-[var(--border-color)] hover:border-[var(--accent-secondary)]/30 transition-all duration-300 shadow-[var(--card-shadow)] flex-1 flex flex-col">
               <h3 className="typo-title text-xl font-bold text-[var(--text-primary)] mb-6">{t('contact.profiles_title')}</h3>
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 flex-1 place-items-center text-center h-full min-h-[90px]">
+              <div className="grid grid-cols-3 gap-4 flex-1 place-items-center text-center h-full min-h-[90px]">
                 <a href="https://www.linkedin.com/in/guadalupe-cano-moyano/" target="_blank" rel="noopener noreferrer"
                   className="flex flex-col items-center justify-center p-4 bg-[var(--bg-elevated)] rounded-xl hover:bg-[#0077b5] hover:text-white transition-all duration-300 group border border-[var(--border-color)] hover:border-transparent">
                   <FaLinkedin className="text-5xl mb-2 text-[var(--text-muted)] group-hover:text-white transition-colors" />
