@@ -714,6 +714,56 @@ body.home-scroll-snap #main-content {
 }
 
 /* ============================================================
+   RICH EDITOR — colores adaptivos al tema (dark / light)
+   El editor usa `prose` de Tailwind Typography que hardcodea
+   colores en los elementos hijos. Este bloque los sobreescribe
+   con las variables CSS del sistema para que respeten el tema.
+   ============================================================ */
+
+.rich-editor-content .tiptap,
+.rich-editor-content .tiptap p,
+.rich-editor-content .tiptap li,
+.rich-editor-content .tiptap blockquote,
+.rich-editor-content .tiptap td,
+.rich-editor-content .tiptap dd {
+  color: var(--text-secondary);
+}
+
+.rich-editor-content .tiptap h1,
+.rich-editor-content .tiptap h2,
+.rich-editor-content .tiptap h3,
+.rich-editor-content .tiptap h4,
+.rich-editor-content .tiptap h5,
+.rich-editor-content .tiptap h6,
+.rich-editor-content .tiptap strong,
+.rich-editor-content .tiptap th {
+  color: var(--text-primary);
+}
+
+.rich-editor-content .tiptap em {
+  color: var(--text-primary);
+}
+
+.rich-editor-content .tiptap blockquote {
+  color: var(--text-muted);
+  border-left-color: var(--accent-primary);
+}
+
+.rich-editor-content .tiptap a {
+  color: var(--accent-primary);
+}
+
+.rich-editor-content .tiptap code:not(pre code) {
+  color: #22d3ee; /* cyan-400 — constante, se ve bien en ambos temas */
+  background-color: var(--bg-elevated);
+}
+
+/* Placeholder */
+.rich-editor-content .tiptap p.is-editor-empty:first-child::before {
+  color: var(--text-muted);
+}
+
+/* ============================================================
    RICH EDITOR — bloques de código con syntax highlight
    ============================================================ */
 

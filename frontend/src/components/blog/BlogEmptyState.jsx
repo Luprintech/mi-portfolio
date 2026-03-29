@@ -6,7 +6,7 @@ export function BlogEmptyState({ query, tag, onReset }) {
   const hasFilters = hasQuery || hasTag;
 
   let title = 'Aún no hay artículos publicados';
-  let message = 'Cuando haya nuevas publicaciones aparecerán aquí con el mismo formato editorial del blog.';
+  let message = '';
   const Icon = hasFilters ? SearchX : FileX;
 
   if (hasQuery && hasTag) {
@@ -45,12 +45,14 @@ export function BlogEmptyState({ query, tag, onReset }) {
           {title}
         </h2>
 
-        <p
-          className="mt-3 text-sm font-body"
-          style={{ color: 'var(--blog-text-secondary)' }}
-        >
-          {message}
-        </p>
+        {message && (
+          <p
+            className="mt-3 text-sm font-body"
+            style={{ color: 'var(--blog-text-secondary)' }}
+          >
+            {message}
+          </p>
+        )}
 
         {hasFilters && (
           <button

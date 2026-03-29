@@ -1877,6 +1877,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             >
                 {/* Columna central tipo Medium */}
                 <div className={`
+                    rich-editor-content
                     mx-auto px-6 py-10
                     prose ${isDark ? 'prose-invert' : ''} max-w-none
                     [&_.tiptap]:outline-none
