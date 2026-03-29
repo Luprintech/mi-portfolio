@@ -103,4 +103,8 @@ export const cmsApi = {
     createUser: (token, data)        => request('/api/bitacora/users', { token, method: 'POST', body: data }),
     updateUser: (token, id, data)    => request(`/api/bitacora/users/${id}`, { token, method: 'PUT', body: data }),
     deleteUser: (token, id)          => request(`/api/bitacora/users/${id}`, { token, method: 'DELETE' }),
+
+    // Mi perfil
+    changeMyPassword: (token, currentPassword, newPassword) =>
+        request('/api/bitacora/me/password', { token, method: 'PUT', body: { currentPassword, newPassword } }),
 };

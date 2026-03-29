@@ -28,6 +28,7 @@ const BitacoraImages         = lazy(() => import("../pages/cms/BitacoraImages"))
 const BitacoraChat           = lazy(() => import("../pages/cms/BitacoraChat"));
 const BitacoraCV             = lazy(() => import("../pages/cms/BitacoraCV"));
 const BitacoraUsers          = lazy(() => import("../pages/cms/BitacoraUsers"));
+const BitacoraMiPerfil       = lazy(() => import("../pages/cms/BitacoraMiPerfil"));
 
 // Loading fallback
 const PageLoader = () => (
@@ -87,6 +88,7 @@ export default function AppRoutes() {
               <Route path="cv"                      element={<BitacoraCV />} />
               <Route path="chat"                    element={<BitacoraChat />} />
               <Route path="usuarios"                element={<BitacoraUsers />} />
+              <Route path="mi-perfil"               element={<BitacoraMiPerfil />} />
             </Route>
           </Route>
 

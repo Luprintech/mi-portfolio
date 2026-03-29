@@ -1,16 +1,20 @@
 import { useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { cmsApi } from '../../lib/cmsApi';
 
 const CV_URL = '/CV_Guadalupe_Cano.pdf';
 
 export default function BitacoraCV() {
-    const { token } = useAuth();
+    const { token, isAdmin } = useAuth();
     const [uploading, setUploading]     = useState(false);
     const [message, setMessage]         = useState('');
     const [isError, setIsError]         = useState(false);
     const [cvUrl, setCvUrl]             = useState(CV_URL);
     const [previewKey, setPreviewKey]   = useState(0); // fuerza recarga del iframe
+
+    // Los editores no tienen acceso a esta sección
+    if (!isAdmin) return <Navigate to="/bitacora/inicio" replace />;
 
     async function handleUpload(e) {
         const file = e.target.files?.[0];

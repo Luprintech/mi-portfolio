@@ -67,4 +67,52 @@ router.get('/verify', verifyCmsToken, (req, res) => {
     res.json({ valid: true, username: req.user.username });
 });
 
+// ── PUT /api/bitacora/me/password — el usuario cambia su propia contraseña ────
+router.put('/me/password', verifyCmsToken, async (req, res) => {
+    const { currentPassword, newPassword } = req.body || {};
+
+    if (!currentPassword || !newPassword) {
+        return res.status(400).json({ error: 'Se requieren la contraseña actual y la nueva' });
+    }
+    if (typeof newPassword !== 'string' || newPassword.length < 8) {
+        return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 8 caracteres' });
+    }
+    if (currentPassword === newPassword) {
+        return res.status(400).json({ error: 'La nueva contraseña debe ser diferente a la actual' });
+    }
+
+    try {
+        const { rows } = await query(
+            'SELECT id, password_hash FROM cms_users WHERE username = $1 LIMIT 1',
+            [req.user.username]
+        );
+
+        if (!rows[0]) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+
+        const valid = await bcrypt.compare(currentPassword, rows[0].password_hash);
+        if (!valid) {
+            return res.status(401).json({ error: 'La contraseña actual no es correcta' });
+        }
+
+        const newHash = await bcrypt.hash(newPassword, 12);
+        await query(
+            'UPDATE cms_users SET password_hash = $1, updated_at = NOW() WHERE id = $2',
+            [newHash, rows[0].id]
+        );
+
+        authLogger.info('CMS user changed own password', {
+            requestId: req.requestId,
+            username: req.user.username,
+        });
+
+        res.set('Cache-Control', 'no-store');
+        res.json({ ok: true });
+    } catch (err) {
+        authLogger.error('Error changing password', { requestId: req.requestId, err });
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
 export default router;
