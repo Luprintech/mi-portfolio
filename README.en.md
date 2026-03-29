@@ -21,6 +21,7 @@ Main stack verified in this repository from `frontend/package.json`, `backend/pa
 ## Table of Contents
 
 - [Overview](#overview)
+- [Recent improvements](#recent-improvements)
 - [Verified stack](#verified-stack)
 - [Current architecture](#current-architecture)
 - [Repository structure](#repository-structure)
@@ -41,8 +42,10 @@ Main stack verified in this repository from `frontend/package.json`, `backend/pa
 
 - Public website built with React + Vite.
 - Private CMS embedded in the SPA under `/bitacora`.
+- Role-based access control in CMS (`admin` and `editor`) with differentiated permissions.
 - Express REST API for authentication, public content, contact, chat, and Open Graph metadata.
 - PostgreSQL persistence for posts and projects.
+- CMS user management stored in PostgreSQL (`cms_users`) with bcrypt-hashed passwords.
 - Editorial files and public assets stored on the filesystem (`posts/`, images, documents, audio, and `sitemap.xml`).
 - Deployment setup with Docker Compose, Nginx, and a shared content volume.
 
@@ -53,6 +56,16 @@ Main stack verified in this repository from `frontend/package.json`, `backend/pa
 3. The backend performs a one-time seed import from `frontend/public` when the database is empty.
 4. Image, document, and audio uploads are stored under `CONTENT_PATH/posts/...`.
 5. The backend regenerates `sitemap.xml` on startup and after changes to published posts.
+
+## Recent improvements
+
+- **Real CMS role model**: `requireAdmin` protection in backend and role-aware navigation in frontend. `editor` users are focused on post authoring and cannot execute admin-only actions.
+- **CMS user management**: API and UI to list, create, edit, activate/deactivate, and delete users from Bitacora.
+- **Account security**: authenticated users can change their own password via `PUT /api/bitacora/me/password`, with a dedicated "My profile" page in CMS.
+- **Multilingual projects**: `description_en` support wired through database and API, consumed by frontend based on active language.
+- **Blog i18n updates**: key listing/search/empty-state copy aligned between Spanish and English.
+- **Rich editor stability**: toolbar floating menus (text color, highlight, `+`, diagram, etc.) render outside the toolbar to avoid overflow clipping.
+- **Backend tests stabilized**: Vitest/Supertest suite updated for role middleware (`requireAdmin`) and validated in CI/local runs.
 
 ## Verified stack
 
@@ -99,7 +112,8 @@ frontend/public -> initial seed and local fallback when CONTENT_PATH is unset
 - `backend/lib/database.js` waits for PostgreSQL, ensures the schema, and runs the initial file import when needed.
 - `frontend/src/hooks/useProjects.js` and `frontend/src/pages/Blog.jsx` consume the public API instead of reading `public/` JSON files at runtime.
 - `backend/config/paths.js` resolves `CONTENT_PATH` and falls back to `frontend/public` locally.
-- `backend/config/cors.js` allows `localhost:5173`, production domains, and `FRONTEND_URL`.
+- `backend/config/cors.js` allows any `http://localhost:<port>` in development and restricts to explicit origins in production.
+- `backend/middleware/auth.js` exposes `requireAdmin` to protect administrative CMS operations.
 
 ## Repository structure
 
@@ -267,9 +281,16 @@ In practice, `frontend/public` is NO LONGER the operational runtime source of tr
 
 - `POST /api/bitacora/auth`
 - `GET /api/bitacora/verify`
+- `PUT /api/bitacora/me/password`
 - Post CRUD under `/api/bitacora/posts`
 - Project CRUD under `/api/bitacora/projects`
+- User CRUD under `/api/bitacora/users` (admin-only)
 - Image, document, and audio uploads under `/api/bitacora/*`
+
+### CMS permissions (summary)
+
+- **admin**: full access (users, projects, images, CV, and other administrative actions).
+- **editor**: focused on post workflows and own password management (`/bitacora/mi-perfil`).
 
 ## Docker and deployment
 
@@ -310,6 +331,7 @@ Current automation lives in `.github/workflows/ci.yml`.
 
 - The frontend uses Vitest + Testing Library.
 - The backend uses Vitest + Supertest and also keeps a legacy runner (`npm run test:legacy`).
+- Backend tests cover authentication, content routes, and CMS upload flows (including role-based access controls where applicable).
 - There is no automated deployment or release pipeline in this repository.
 
 ## Troubleshooting

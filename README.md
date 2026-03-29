@@ -21,6 +21,7 @@ Stack principal verificado en este repo segun `frontend/package.json`, `backend/
 ## Indice
 
 - [Vision general](#vision-general)
+- [Mejoras recientes](#mejoras-recientes)
 - [Stack verificado](#stack-verificado)
 - [Arquitectura actual](#arquitectura-actual)
 - [Estructura del repositorio](#estructura-del-repositorio)
@@ -41,8 +42,10 @@ Stack principal verificado en este repo segun `frontend/package.json`, `backend/
 
 - Web publica construida con React + Vite.
 - CMS privado integrado en la SPA bajo la ruta `/bitacora`.
+- Control de acceso por roles en CMS (`admin` y `editor`) con permisos diferenciados.
 - API REST en Express para autenticacion, contenido publico, contacto, chat y metadatos Open Graph.
 - Persistencia en PostgreSQL para posts y proyectos.
+- Gestion de usuarios CMS en PostgreSQL (`cms_users`) con contraseñas hasheadas con bcrypt.
 - Ficheros editoriales y assets publicos en filesystem (`posts/`, imagenes, documentos, audio y `sitemap.xml`).
 - Despliegue preparado con Docker Compose, Nginx y un volumen compartido para contenido.
 
@@ -53,6 +56,16 @@ Stack principal verificado en este repo segun `frontend/package.json`, `backend/
 3. El backend importa una sola vez el contenido seed desde `frontend/public` si la base de datos esta vacia.
 4. Las subidas de imagenes, documentos y audio se guardan en `CONTENT_PATH/posts/...`.
 5. El backend regenera `sitemap.xml` al arrancar y tras cambios en posts publicados.
+
+## Mejoras recientes
+
+- **CMS con roles reales**: `requireAdmin` en backend y navegacion condicionada en frontend. Los usuarios `editor` se enfocan en redaccion de posts y no pueden ejecutar acciones administrativas.
+- **Gestion de usuarios CMS**: endpoints y UI para listar, crear, editar, activar/desactivar y eliminar usuarios desde Bitacora.
+- **Seguridad de cuenta**: endpoint para que cualquier usuario autenticado cambie su propia contraseña (`PUT /api/bitacora/me/password`) y pantalla "Mi perfil" en el CMS.
+- **Proyectos multilenguaje**: soporte de `description_en` en base de datos y API, consumido por frontend segun idioma activo.
+- **Blog i18n**: textos clave del listado de blog y estados vacios alineados entre español e inglés.
+- **Editor enriquecido mas estable**: menus flotantes de toolbar (color, highlight, `+`, diagrama, etc.) renderizados fuera de la barra para evitar clipping por overflow.
+- **Tests backend estabilizados**: suite Vitest/Supertest actualizada para middlewares de rol (`requireAdmin`) y validada en CI/local.
 
 ## Stack verificado
 
@@ -99,7 +112,8 @@ frontend/public -> seed inicial y fallback local si no se define CONTENT_PATH
 - `backend/lib/database.js` espera a PostgreSQL, asegura el esquema y ejecuta la importacion inicial desde ficheros si procede.
 - `frontend/src/hooks/useProjects.js` y `frontend/src/pages/Blog.jsx` consumen la API publica, no los JSON del directorio `public/` en runtime.
 - `backend/config/paths.js` resuelve `CONTENT_PATH` y usa `frontend/public` como ruta por defecto en local.
-- `backend/config/cors.js` combina `localhost:5173`, dominios de produccion y `FRONTEND_URL` como origenes permitidos.
+- `backend/config/cors.js` permite cualquier `http://localhost:<puerto>` en desarrollo y restringe a dominios permitidos en produccion.
+- `backend/middleware/auth.js` expone `requireAdmin` para proteger operaciones administrativas del CMS.
 
 ## Estructura del repositorio
 
@@ -267,9 +281,16 @@ En otras palabras: `frontend/public` YA NO es la fuente operativa del sitio en r
 
 - `POST /api/bitacora/auth`
 - `GET /api/bitacora/verify`
+- `PUT /api/bitacora/me/password`
 - CRUD de posts en `/api/bitacora/posts`
 - CRUD de proyectos en `/api/bitacora/projects`
+- CRUD de usuarios en `/api/bitacora/users` (solo admin)
 - Uploads y gestion de imagenes, documentos y audio bajo `/api/bitacora/*`
+
+### Permisos CMS (resumen)
+
+- **admin**: acceso total (usuarios, proyectos, imagenes, CV, etc.).
+- **editor**: foco en gestion de posts y edicion de su propia contraseña (`/bitacora/mi-perfil`).
 
 ## Docker y despliegue
 
@@ -310,6 +331,7 @@ La automatizacion actual vive en `.github/workflows/ci.yml`.
 
 - El frontend usa Vitest + Testing Library.
 - El backend usa Vitest + Supertest y mantiene ademas un runner legacy (`npm run test:legacy`).
+- La suite de backend cubre autenticacion, rutas de contenido y uploads del CMS (incluyendo control de acceso por rol donde aplica).
 - No hay pipeline de despliegue ni publicacion automatica en este repositorio.
 
 ## Solucion de problemas

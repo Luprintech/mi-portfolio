@@ -793,7 +793,7 @@ const MermaidNode = Node.create({
 
 // ─── Paletas ──────────────────────────────────────────────────────────────────
 const TEXT_COLORS = [
-    '#ffffff','#e2e8f0','#94a3b8','#64748b',
+    '#000000','#ffffff','#e2e8f0','#94a3b8','#64748b',
     '#fde68a','#6ee7b7','#93c5fd','#f9a8d4',
     '#c4b5fd','#fb923c','#f87171','#34d399',
     '#38bdf8','#a78bfa','#e879f9','#10b981',
@@ -888,6 +888,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
     const [showAudioMenu,   setShowAudioMenu]   = useState(false);
     const [audioUrl,        setAudioUrl]        = useState('');
     const [showColorPick,   setShowColorPick]   = useState(false);
+    const [lastTextColor,   setLastTextColor]   = useState('#000000');
     const [showHighPick,    setShowHighPick]    = useState(false);
     const [showCalloutMenu, setShowCalloutMenu] = useState(false);
     const [showMermaidMenu, setShowMermaidMenu] = useState(false);
@@ -1513,16 +1514,49 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
 
                 {/* Color de texto — popup sobre el toolbar */}
                 <div ref={colorToolRef} className="relative" onMouseDown={e => e.stopPropagation()}>
-                    <ToolBtn onClick={() => {
-                        if (!showColorPick) updateFloatingMenuPosition('color', colorToolRef.current, 192);
-                        setShowColorPick(p => !p);
-                        setShowHighPick(false);
-                    }} title="Color de texto">
-                        <div className="flex flex-col items-center gap-0.5">
-                            <span className="text-xs font-bold leading-none">A</span>
-                            <div className="w-4 h-1 rounded-full" style={{ background: editor.getAttributes('textStyle').color || '#e2e8f0' }} />
-                        </div>
-                    </ToolBtn>
+                    <div
+                        className="flex h-8 shrink-0 overflow-hidden rounded-lg border border-[var(--border-color)] bg-[var(--bg-elevated)]"
+                        role="group"
+                        aria-label="Control de color de texto"
+                    >
+                        <button
+                            type="button"
+                            title={`Aplicar color ${lastTextColor}`}
+                            aria-label={`Aplicar color ${lastTextColor}`}
+                            onMouseDown={e => {
+                                e.preventDefault();
+                                editor.chain().focus().setColor(lastTextColor).run();
+                                setShowColorPick(false);
+                                setShowHighPick(false);
+                            }}
+                            className="flex h-full w-8 items-center justify-center text-[var(--text-muted)] transition-colors hover:bg-black/5 hover:text-[var(--text-primary)] dark:hover:bg-white/10"
+                        >
+                            <div className="flex flex-col items-center gap-0.5">
+                                <span className="text-xs font-bold leading-none">A</span>
+                                <div className="h-1 w-4 rounded-full border border-white/20" style={{ background: lastTextColor }} />
+                            </div>
+                        </button>
+
+                        <button
+                            type="button"
+                            title="Cambiar color de texto"
+                            aria-label="Cambiar color de texto"
+                            aria-haspopup="menu"
+                            aria-expanded={showColorPick ? 'true' : 'false'}
+                            onMouseDown={e => {
+                                e.preventDefault();
+                                if (!showColorPick) updateFloatingMenuPosition('color', colorToolRef.current, 192);
+                                setShowColorPick(p => !p);
+                                setShowHighPick(false);
+                            }}
+                            className="flex h-full w-5 items-center justify-center border-l border-[var(--border-color)] text-[var(--text-muted)] transition-colors hover:bg-black/5 hover:text-[var(--text-primary)] dark:hover:bg-white/10"
+                        >
+                            <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                        </button>
+                    </div>
+
                     {showColorPick && typeof document !== 'undefined' && createPortal(
                         <div
                             className="fixed z-[220] p-3 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-xl shadow-2xl w-48"
@@ -1530,7 +1564,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                             onMouseDown={e => e.stopPropagation()}
                         >
                             <button type="button" className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] mb-2 w-full text-left px-1"
-                                onClick={() => { editor.chain().focus().unsetColor().run(); setShowColorPick(false); }}>
+                                onClick={() => { editor.chain().focus().unsetColor().run(); setLastTextColor('#000000'); setShowColorPick(false); }}>
                                 Quitar color
                             </button>
                             <div className="grid grid-cols-5 gap-1.5 mb-2">
@@ -1538,14 +1572,18 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                                     <button key={c} type="button" title={c}
                                         className="w-6 h-6 rounded-md border-2 border-transparent hover:border-white/50 hover:scale-110 transition-all"
                                         style={{ background: c }}
-                                        onClick={() => { editor.chain().focus().setColor(c).run(); setShowColorPick(false); }}
+                                        onClick={() => { editor.chain().focus().setColor(c).run(); setLastTextColor(c); setShowColorPick(false); }}
                                     />
                                 ))}
                             </div>
                             <div className="flex items-center gap-2 pt-2 border-t border-white/10">
                                 <input type="color"
-                                    value={editor.getAttributes('textStyle').color || '#ffffff'}
-                                    onChange={e => editor.chain().focus().setColor(e.target.value).run()}
+                                    value={lastTextColor}
+                                    onChange={e => {
+                                        const nextColor = e.target.value;
+                                        setLastTextColor(nextColor);
+                                        editor.chain().focus().setColor(nextColor).run();
+                                    }}
                                     className="w-6 h-6 p-0 border-0 rounded cursor-pointer bg-transparent"
                                 />
                                 <span className="text-xs text-gray-400">Color personalizado</span>
