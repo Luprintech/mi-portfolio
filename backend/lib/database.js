@@ -348,6 +348,9 @@ async function ensureSchema() {
             ADD COLUMN IF NOT EXISTS toc_titles JSONB NOT NULL DEFAULT '[]'::jsonb;
 
         ALTER TABLE posts
+            ADD COLUMN IF NOT EXISTS show_toc BOOLEAN NOT NULL DEFAULT TRUE;
+
+        ALTER TABLE posts
             ADD COLUMN IF NOT EXISTS format VARCHAR(16);
 
         ALTER TABLE posts

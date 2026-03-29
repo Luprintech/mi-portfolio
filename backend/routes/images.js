@@ -325,7 +325,7 @@ router.post('/upload-cv', verifyCmsToken, requireAdmin, async (req, res, next) =
     }
 });
 
-router.get('/images', verifyCmsToken, requireAdmin, async (req, res, next) => {
+router.get('/images', verifyCmsToken, async (req, res, next) => {
     try {
         await fsExtra.ensureDir(IMAGES_DIR);
         const files = await fsExtra.readdir(IMAGES_DIR);

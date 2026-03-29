@@ -7,7 +7,8 @@ import Image from '@tiptap/extension-image';
 import Youtube from '@tiptap/extension-youtube';
 import TextAlign from '@tiptap/extension-text-align';
 import Highlight from '@tiptap/extension-highlight';
-import { TextStyleKit } from '@tiptap/extension-text-style';
+import { TextStyle } from '@tiptap/extension-text-style';
+import Color from '@tiptap/extension-color';
 import FontFamily from '@tiptap/extension-font-family';
 import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
@@ -887,6 +888,9 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
     const [youtubeUrl,      setYoutubeUrl]      = useState('');
     const [showAudioMenu,   setShowAudioMenu]   = useState(false);
     const [audioUrl,        setAudioUrl]        = useState('');
+    const [showImageMenu,   setShowImageMenu]   = useState(false);
+    const [availableImages, setAvailableImages] = useState([]);
+    const [loadingImages,   setLoadingImages]   = useState(false);
     const [showColorPick,   setShowColorPick]   = useState(false);
     const [lastTextColor,   setLastTextColor]   = useState('#000000');
     const [showHighPick,    setShowHighPick]    = useState(false);
@@ -919,6 +923,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
     const colorToolRef = useRef(null);
     const highlightToolRef = useRef(null);
     const linkToolRef = useRef(null);
+    const imageToolRef = useRef(null);
     const youtubeToolRef = useRef(null);
     const audioToolRef = useRef(null);
     const calloutToolRef = useRef(null);
@@ -931,6 +936,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
         color: { top: 0, left: 0 },
         highlight: { top: 0, left: 0 },
         link: { top: 0, left: 0 },
+        image: { top: 0, left: 0 },
         youtube: { top: 0, left: 0 },
         audio: { top: 0, left: 0 },
         callout: { top: 0, left: 0 },
@@ -966,6 +972,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
         if (showColorPick) updateFloatingMenuPosition('color', colorToolRef.current, 192);
         if (showHighPick) updateFloatingMenuPosition('highlight', highlightToolRef.current, 176);
         if (showLinkMenu) updateFloatingMenuPosition('link', linkToolRef.current, 288);
+        if (showImageMenu) updateFloatingMenuPosition('image', imageToolRef.current, 352);
         if (showYoutubeMenu) updateFloatingMenuPosition('youtube', youtubeToolRef.current, 320);
         if (showAudioMenu) updateFloatingMenuPosition('audio', audioToolRef.current, 320);
         if (showCalloutMenu) updateFloatingMenuPosition('callout', calloutToolRef.current, 144);
@@ -976,6 +983,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
         showColorPick,
         showHighPick,
         showLinkMenu,
+        showImageMenu,
         showYoutubeMenu,
         showAudioMenu,
         showCalloutMenu,
@@ -989,6 +997,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
         const anyFloatingMenuOpen = showColorPick
             || showHighPick
             || showLinkMenu
+            || showImageMenu
             || showYoutubeMenu
             || showAudioMenu
             || showCalloutMenu
@@ -1016,6 +1025,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
         showColorPick,
         showHighPick,
         showLinkMenu,
+        showImageMenu,
         showYoutubeMenu,
         showAudioMenu,
         showCalloutMenu,
@@ -1045,6 +1055,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
     useEffect(() => {
         function close() {
             setShowLinkMenu(false);
+            setShowImageMenu(false);
             setShowYoutubeMenu(false);
             setShowAudioMenu(false);
             setShowColorPick(false);
@@ -1065,7 +1076,8 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             StarterKit.configure({ codeBlock: false }),
             createTechnicalCodeBlockExtension(lowlight),
             Underline,
-            TextStyleKit,
+            TextStyle,
+            Color,
             FontFamily.configure({ types: ['textStyle'] }),
             Highlight.configure({ multicolor: true }),
             TooltipMark,
@@ -1283,9 +1295,46 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
 
     const handleImageInputChange = useCallback(async (e) => {
         const file = e.target.files?.[0];
-        if (file) await handleImageFile(file);
+        if (file) {
+            await handleImageFile(file);
+            setShowImageMenu(false);
+        }
         e.target.value = '';
     }, [handleImageFile]);
+
+    const loadAvailableImages = useCallback(async () => {
+        if (!token) return;
+        setLoadingImages(true);
+        try {
+            const images = await cmsApi.getImages(token);
+            setAvailableImages(Array.isArray(images) ? images : []);
+        } catch (err) {
+            setUploadError(getUploadErrorMessage(err, 'No se han podido cargar las imágenes guardadas.'));
+            setAvailableImages([]);
+        } finally {
+            setLoadingImages(false);
+        }
+    }, [token]);
+
+    const openImageMenu = useCallback(() => {
+        updateFloatingMenuPosition('image', imageToolRef.current, 352);
+        setShowImageMenu(true);
+        setShowLinkMenu(false);
+        setShowYoutubeMenu(false);
+        setShowAudioMenu(false);
+        setShowInsertMenu(false);
+        setShowEmojiPicker(false);
+        void loadAvailableImages();
+    }, [loadAvailableImages, updateFloatingMenuPosition]);
+
+    const insertExistingImage = useCallback((image) => {
+        if (!editor || !image?.url) return;
+        editor.chain().focus().setImage({
+            src: image.url,
+            alt: (image.filename || 'imagen').replace(/\.[^.]+$/, ''),
+        }).run();
+        setShowImageMenu(false);
+    }, [editor]);
 
     function applyLink() {
         if (!linkUrl) editor?.chain().focus().unsetLink().run();
@@ -1393,7 +1442,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
 
     // Slash menu action handler (for actions needing UI)
     function handleSlashAction(action) {
-        if (action === 'image') setTimeout(() => fileInputRef.current?.click(), 0);
+        if (action === 'image') setTimeout(() => openImageMenu(), 0);
         else if (action === 'youtube') setShowYoutubeMenu(true);
         else if (action === 'audio') setShowAudioMenu(true);
         else if (action === 'document') setTimeout(() => docInputRef.current?.click(), 0);
@@ -1676,6 +1725,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                         if (!showLinkMenu) updateFloatingMenuPosition('link', linkToolRef.current, 288);
                         setShowLinkMenu(p => !p);
                         setLinkUrl(editor.getAttributes('link').href || '');
+                        setShowImageMenu(false);
                         setShowYoutubeMenu(false);
                         setShowAudioMenu(false);
                     }} active={editor.isActive('link')} title="Enlace">
@@ -1697,9 +1747,69 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                 </div>
 
                 {/* Imagen */}
-                <ToolBtn onClick={() => fileInputRef.current?.click()} disabled={uploading} title="Subir imagen (o arrastra y suelta)">
-                    {uploading ? <div className="w-4 h-4 border-2 border-fuchsia-500/30 border-t-fuchsia-500 rounded-full animate-spin" /> : <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>}
-                </ToolBtn>
+                <div ref={imageToolRef} className="relative" onMouseDown={e => e.stopPropagation()}>
+                    <ToolBtn onClick={openImageMenu} disabled={uploading} title="Insertar imagen (galería o subir)">
+                        {uploading ? <div className="w-4 h-4 border-2 border-fuchsia-500/30 border-t-fuchsia-500 rounded-full animate-spin" /> : <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>}
+                    </ToolBtn>
+                    {showImageMenu && typeof document !== 'undefined' && createPortal(
+                        <div
+                            className="fixed z-[220] w-[min(22rem,calc(100vw-1.5rem))] rounded-xl border border-[var(--border-color)] bg-[var(--bg-elevated)] p-3 shadow-2xl"
+                            style={{ top: `${floatingMenuPosition.image.top}px`, left: `${floatingMenuPosition.image.left}px` }}
+                            onMouseDown={e => e.stopPropagation()}
+                        >
+                            <div className="mb-3 flex items-center justify-between gap-2">
+                                <h4 className="text-sm font-semibold text-[var(--text-primary)]">Insertar imagen</h4>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="rounded-md border border-[var(--border-color)] px-2 py-1 text-xs text-[var(--text-primary)] hover:bg-[var(--bg-surface)]"
+                                    >
+                                        Desde tu ordenador
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => void loadAvailableImages()}
+                                        className="rounded-md border border-[var(--border-color)] px-2 py-1 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                                    >
+                                        Recargar
+                                    </button>
+                                </div>
+                            </div>
+
+                            {loadingImages ? (
+                                <div className="py-4 text-center text-xs text-[var(--text-muted)]">Cargando imágenes…</div>
+                            ) : availableImages.length === 0 ? (
+                                <div className="py-4 text-center text-xs text-[var(--text-muted)]">
+                                    No hay imágenes guardadas todavía.
+                                </div>
+                            ) : (
+                                <div className="grid max-h-64 grid-cols-3 gap-2 overflow-y-auto pr-1">
+                                    {availableImages.map((img) => (
+                                        <button
+                                            key={img.filename || img.url}
+                                            type="button"
+                                            onClick={() => insertExistingImage(img)}
+                                            className="group overflow-hidden rounded-lg border border-[var(--border-color)] bg-[var(--bg-surface)] text-left"
+                                            title={img.filename || img.url}
+                                        >
+                                            <img
+                                                src={img.url}
+                                                alt={img.filename || 'Imagen guardada'}
+                                                className="h-20 w-full object-cover transition-transform duration-150 group-hover:scale-105"
+                                                loading="lazy"
+                                            />
+                                            <span className="block truncate px-1.5 py-1 text-[10px] text-[var(--text-muted)]">
+                                                {img.filename || img.url}
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>,
+                        document.body,
+                    )}
+                </div>
                 <input ref={fileInputRef} type="file" accept={IMAGE_INPUT_ACCEPT} className="hidden" onChange={handleImageInputChange} />
 
                 {/* YouTube */}
@@ -1707,6 +1817,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                     <ToolBtn onClick={() => {
                         if (!showYoutubeMenu) updateFloatingMenuPosition('youtube', youtubeToolRef.current, 320);
                         setShowYoutubeMenu(p => !p);
+                        setShowImageMenu(false);
                         setShowLinkMenu(false);
                         setShowAudioMenu(false);
                     }} title="Vídeo YouTube">
@@ -1731,6 +1842,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                     <ToolBtn onClick={() => {
                         if (!showAudioMenu) updateFloatingMenuPosition('audio', audioToolRef.current, 320);
                         setShowAudioMenu(p => !p);
+                        setShowImageMenu(false);
                         setShowLinkMenu(false);
                         setShowYoutubeMenu(false);
                     }} title="Insertar audio">
