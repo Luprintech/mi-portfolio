@@ -399,6 +399,12 @@ export function sanitizeProjectInput(input, { partial = false } = {}) {
         else data.description = description;
     }
 
+    if (input.description_en !== undefined) {
+        const descriptionEn = normalizeText(input.description_en, { maxLength: 2000 });
+        if (descriptionEn === null) errors.push('La descripcion en inglés es demasiado larga.');
+        else data.description_en = descriptionEn;
+    }
+
     if (input.tech !== undefined) {
         const tech = normalizeList(input.tech, { maxItems: 16, maxLengthPerItem: 50 });
         if (!tech) errors.push('La lista de tecnologias no es valida.');

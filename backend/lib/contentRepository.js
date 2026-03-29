@@ -593,6 +593,7 @@ export async function createProject(data) {
             id,
             title,
             description,
+            description_en,
             tech,
             github,
             demo,
@@ -601,13 +602,14 @@ export async function createProject(data) {
             category,
             sort_order
         ) VALUES (
-            $1, $2, $3, $4::jsonb, $5, $6, $7, $8, $9, $10
+            $1, $2, $3, $4, $5::jsonb, $6, $7, $8, $9, $10, $11
         )
         RETURNING *`,
         [
             data.id,
             data.title,
             data.description || '',
+            data.description_en || '',
             JSON.stringify(data.tech || []),
             data.github || '',
             data.demo || '',
@@ -628,6 +630,7 @@ export async function updateProject(id, patch) {
     const merged = {
         title: patch.title ?? currentRow.title,
         description: patch.description ?? currentRow.description,
+        description_en: patch.description_en ?? currentRow.description_en ?? '',
         tech: patch.tech ?? getStringArray(currentRow.tech),
         github: patch.github ?? currentRow.github,
         demo: patch.demo ?? currentRow.demo,
@@ -640,12 +643,13 @@ export async function updateProject(id, patch) {
         `UPDATE projects
          SET title = $2,
              description = $3,
-             tech = $4::jsonb,
-             github = $5,
-             demo = $6,
-             image = $7,
-             featured = $8,
-             category = $9,
+             description_en = $4,
+             tech = $5::jsonb,
+             github = $6,
+             demo = $7,
+             image = $8,
+             featured = $9,
+             category = $10,
              updated_at = NOW()
          WHERE id = $1
          RETURNING *`,
@@ -653,6 +657,7 @@ export async function updateProject(id, patch) {
             id,
             merged.title,
             merged.description,
+            merged.description_en,
             JSON.stringify(merged.tech || []),
             merged.github,
             merged.demo,

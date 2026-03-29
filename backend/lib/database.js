@@ -408,6 +408,9 @@ async function ensureSchema() {
         CREATE INDEX IF NOT EXISTS idx_projects_sort_order
             ON projects (sort_order ASC, created_at ASC);
 
+        ALTER TABLE projects
+            ADD COLUMN IF NOT EXISTS description_en TEXT NOT NULL DEFAULT '';
+
         -- ── Tabla de usuarios CMS ──────────────────────────────────────────────
         CREATE TABLE IF NOT EXISTS cms_users (
             id         BIGSERIAL    PRIMARY KEY,
