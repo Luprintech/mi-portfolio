@@ -1,6 +1,8 @@
 import { ChevronDown } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export function BlogPagination({ hasMore, onLoadMore, loading }) {
+  const { t } = useTranslation();
   if (!hasMore) return null;
 
   return (
@@ -9,7 +11,7 @@ export function BlogPagination({ hasMore, onLoadMore, loading }) {
         type="button"
         onClick={onLoadMore}
         disabled={loading}
-        aria-label={loading ? 'Cargando más artículos del blog' : 'Cargar más artículos del blog'}
+        aria-label={loading ? t('blog.loading_more') : t('blog.load_more')}
         aria-busy={loading}
         className="group relative px-10 py-4 font-headline font-bold overflow-hidden rounded-lg transition-transform duration-300 motion-safe:hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-secondary)] disabled:opacity-60 disabled:cursor-not-allowed"
         style={{ color: 'var(--blog-text-primary)' }}
@@ -24,7 +26,7 @@ export function BlogPagination({ hasMore, onLoadMore, loading }) {
         />
         {/* Content */}
         <span className="relative flex items-center gap-2">
-          {loading ? 'Cargando más artículos...' : 'Mostrar 6 artículos más'}
+          {loading ? t('blog.loading_more') : t('blog.load_more')}
           {!loading && <ChevronDown className="h-5 w-5" aria-hidden="true" />}
         </span>
       </button>

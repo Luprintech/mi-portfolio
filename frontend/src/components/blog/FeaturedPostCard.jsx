@@ -1,17 +1,19 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-
-const formatDate = (dateString) =>
-  new Date(`${dateString}T00:00:00`).toLocaleDateString('es-ES', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+import { useTranslation } from 'react-i18next';
 
 const getReadTime = (post) => Math.max(4, Number(post.readingTime) || 4);
 
 export function FeaturedPostCard({ post }) {
+  const { t, i18n } = useTranslation();
   if (!post) return null;
+
+  const formatDate = (dateString) =>
+    new Date(`${dateString}T00:00:00`).toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'es-ES', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
 
   const hasCover = Boolean(post.coverImage || post.ogImage);
   const coverSrc = post.coverImage || post.ogImage;
@@ -93,13 +95,13 @@ export function FeaturedPostCard({ post }) {
                     boxShadow: '0 0 8px color-mix(in srgb, var(--accent-secondary) 10%, transparent)',
                   }}
                 >
-                  Destacado
+                  {t('blog.featured_badge')}
                 </span>
                 <span
                   className="text-xs font-label uppercase tracking-widest"
                   style={{ color: 'var(--blog-text-muted)' }}
                 >
-                  {getReadTime(post)} min de lectura
+                  {t('blog.read_time', { count: getReadTime(post) })}
                 </span>
               </div>
 

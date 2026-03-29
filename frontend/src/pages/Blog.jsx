@@ -1,5 +1,6 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useTranslation } from 'react-i18next';
 import { publicRequest } from '../lib/publicApi';
 import { BlogEmptyState } from '../components/blog/BlogEmptyState';
 import { BlogFilterChips } from '../components/blog/BlogFilterChips';
@@ -124,10 +125,12 @@ function ErrorMessage({ error }) {
 // ── Blog ───────────────────────────────────────────────────────────────────────
 
 const Blog = () => {
+  const { t } = useTranslation();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTag, setActiveTag] = useState('Todos');
+  const filterAll = t('blog.filter_all');
+  const [activeTag, setActiveTag] = useState(filterAll);
   const [searchQuery, setSearchQuery] = useState('');
   const [visibleCount, setVisibleCount] = useState(POSTS_PER_PAGE);
   const deferredQuery = useDeferredValue(searchQuery);
@@ -160,14 +163,14 @@ const Blog = () => {
       .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'es'))
       .map(([label, count]) => ({ label, count }));
 
-    return [{ label: 'Todos', count: posts.length }, ...sortedTags];
-  }, [posts]);
+    return [{ label: filterAll, count: posts.length }, ...sortedTags];
+  }, [posts, filterAll]);
 
   const filtered = useMemo(() => {
     const q = deferredQuery.trim().toLowerCase();
 
     return posts.filter((post) => {
-      if (activeTag !== 'Todos' && !post.tags?.includes(activeTag)) {
+      if (activeTag !== filterAll && !post.tags?.includes(activeTag)) {
         return false;
       }
 
@@ -177,7 +180,7 @@ const Blog = () => {
 
       return [post.title, post.excerpt, ...(post.tags || [])].join(' ').toLowerCase().includes(q);
     });
-  }, [activeTag, deferredQuery, posts]);
+  }, [activeTag, deferredQuery, posts, filterAll]);
 
   // Reset visible count when filters change
   useEffect(() => {
@@ -195,11 +198,8 @@ const Blog = () => {
       style={{ background: 'var(--blog-bg)' }}
     >
       <Helmet>
-        <title>Lupe's Logbook | Guadalupe Cano - Desarrollo web e IA</title>
-        <meta
-          name="description"
-          content="Blog t\u00e9cnico de Guadalupe Cano sobre desarrollo web, inteligencia artificial, arquitectura, despliegue e infraestructura aplicada a proyectos reales."
-        />
+        <title>{t('blog.meta_title')}</title>
+        <meta name="description" content={t('blog.meta_desc')} />
         <link rel="canonical" href="https://guadalupecano.es/blog" />
       </Helmet>
 
@@ -238,7 +238,7 @@ const Blog = () => {
             {filtered.length > 0 && (
               <section
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-                aria-label="Art\u00edculos del blog"
+                aria-label={t('blog.articles_aria')}
               >
                 {paginated.map((post, index) => (
                   <PostCard key={post.slug} post={post} index={index} />
@@ -252,7 +252,7 @@ const Blog = () => {
                 tag={activeTag}
                 onReset={() => {
                   setSearchQuery('');
-                  setActiveTag('Todos');
+                  setActiveTag(filterAll);
                   setVisibleCount(POSTS_PER_PAGE);
                 }}
               />

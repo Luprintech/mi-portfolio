@@ -1,23 +1,26 @@
 import { SearchX, FileX } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export function BlogEmptyState({ query, tag, onReset }) {
+  const { t } = useTranslation();
+  const filterAll = t('blog.filter_all');
   const hasQuery = Boolean(query?.trim());
-  const hasTag = tag && tag !== 'Todos';
+  const hasTag = tag && tag !== filterAll;
   const hasFilters = hasQuery || hasTag;
 
-  let title = 'Aún no hay artículos publicados';
+  let title = t('blog.empty_no_posts');
   let message = '';
   const Icon = hasFilters ? SearchX : FileX;
 
   if (hasQuery && hasTag) {
-    title = 'No hay resultados para esta búsqueda';
-    message = `No encontré artículos para "${query}" dentro del tema ${tag}.`;
+    title = t('blog.empty_no_results');
+    message = t('blog.empty_query_tag', { query, tag });
   } else if (hasQuery) {
-    title = 'No hay resultados para esta búsqueda';
-    message = `No encontré artículos que coincidan con "${query}".`;
+    title = t('blog.empty_no_results');
+    message = t('blog.empty_query', { query });
   } else if (hasTag) {
-    title = 'No hay artículos en este tema';
-    message = `Todavía no hay publicaciones etiquetadas como ${tag}.`;
+    title = t('blog.empty_no_tag');
+    message = t('blog.empty_tag', { tag });
   }
 
   return (
@@ -73,7 +76,7 @@ export function BlogEmptyState({ query, tag, onReset }) {
               e.currentTarget.style.background = 'transparent';
             }}
           >
-            Limpiar filtros
+            {t('blog.empty_clear_filters')}
           </button>
         )}
       </div>

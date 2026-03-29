@@ -1,4 +1,8 @@
+import { useTranslation } from 'react-i18next';
+
 export function BlogHero() {
+  const { t } = useTranslation();
+
   return (
     <header className="pt-24 pb-12 px-4">
       <div className="mx-auto max-w-7xl">
@@ -40,7 +44,7 @@ export function BlogHero() {
           className="w-full text-lg leading-relaxed font-body text-justify md:text-left"
           style={{ color: 'var(--blog-text-secondary)' }}
         >
-          Aqu&iacute; documento lo que aprendo construyendo: decisiones t&eacute;cnicas, errores &uacute;tiles y cosas que ojal&aacute; hubiera encontrado en un blog cuando las necesitaba.
+          {t('blog.hero_subtitle')}
         </p>
       </div>
     </header>

@@ -322,7 +322,25 @@
   },
   "blog": {
     "title": "Logbook under construction",
-    "desc": "Soon I will share technical articles and structured notes here."
+    "desc": "Soon I will share technical articles and structured notes here.",
+    "hero_subtitle": "Here I document what I learn while building: technical decisions, useful mistakes, and things I wish I had found in a blog when I needed them.",
+    "featured_badge": "Featured",
+    "read_time": "{{count}} min read",
+    "search_placeholder": "Search articles by topic, technology...",
+    "search_aria": "Search article",
+    "articles_aria": "Blog articles",
+    "filter_all": "All",
+    "load_more": "Load more articles",
+    "meta_title": "Logbook | Guadalupe Cano — Web development & AI",
+    "meta_desc": "Guadalupe Cano's technical blog on web development, artificial intelligence, architecture, deployment and infrastructure applied to real projects.",
+    "empty_no_posts": "No articles published yet",
+    "empty_no_results": "No results for this search",
+    "empty_no_tag": "No articles in this topic",
+    "empty_query_tag": "No articles found for \"{{query}}\" within the topic {{tag}}.",
+    "empty_query": "No articles matching \"{{query}}\" were found.",
+    "empty_tag": "There are no posts tagged as {{tag}} yet.",
+    "empty_clear_filters": "Clear filters",
+    "loading_more": "Loading more articles..."
   },
   "footer": {
     "rights": "All rights reserved."

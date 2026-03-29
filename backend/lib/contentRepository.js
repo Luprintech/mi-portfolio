@@ -249,6 +249,7 @@ function mapProjectRow(row) {
         id: row.id,
         title: row.title,
         description: row.description || '',
+        description_en: row.description_en || '',
         tech: getStringArray(row.tech),
         github: row.github || '',
         demo: row.demo || '',

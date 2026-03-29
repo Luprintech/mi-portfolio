@@ -324,7 +324,25 @@
   },
   "blog": {
     "title": "Bitácora en construcción",
-    "desc": "Próximamente compartiré aquí artículos técnicos y notas estructuradas."
+    "desc": "Próximamente compartiré aquí artículos técnicos y notas estructuradas.",
+    "hero_subtitle": "Aquí documento lo que aprendo construyendo: decisiones técnicas, errores útiles y cosas que ojalá hubiera encontrado en un blog cuando las necesitaba.",
+    "featured_badge": "Destacado",
+    "read_time": "{{count}} min de lectura",
+    "search_placeholder": "Buscar artículos por tema, tecnología...",
+    "search_aria": "Buscar artículo",
+    "articles_aria": "Artículos del blog",
+    "filter_all": "Todos",
+    "load_more": "Ver más artículos",
+    "meta_title": "Bitácora | Guadalupe Cano — Desarrollo web e IA",
+    "meta_desc": "Blog técnico de Guadalupe Cano sobre desarrollo web, inteligencia artificial, arquitectura, despliegue e infraestructura aplicada a proyectos reales.",
+    "empty_no_posts": "Aún no hay artículos publicados",
+    "empty_no_results": "No hay resultados para esta búsqueda",
+    "empty_no_tag": "No hay artículos en este tema",
+    "empty_query_tag": "No encontré artículos para \"{{query}}\" dentro del tema {{tag}}.",
+    "empty_query": "No encontré artículos que coincidan con \"{{query}}\".",
+    "empty_tag": "Todavía no hay publicaciones etiquetadas como {{tag}}.",
+    "empty_clear_filters": "Limpiar filtros",
+    "loading_more": "Cargando más artículos..."
   },
   "footer": {
     "rights": "Todos los derechos reservados."

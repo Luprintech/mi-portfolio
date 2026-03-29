@@ -1,12 +1,6 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-
-const formatDate = (dateString) =>
-  new Date(`${dateString}T00:00:00`).toLocaleDateString('es-ES', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  }).toUpperCase();
+import { useTranslation } from 'react-i18next';
 
 const FALLBACK_GRADIENTS = [
   'linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)',
@@ -25,6 +19,14 @@ function getGradientIndex(tags) {
 }
 
 export function PostCard({ post, index }) {
+  const { i18n } = useTranslation();
+  const formatDate = (dateString) =>
+    new Date(`${dateString}T00:00:00`).toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'es-ES', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    }).toUpperCase();
+
   const gradientIdx = getGradientIndex(post.tags);
   const hasCover = Boolean(post.coverImage || post.ogImage);
   const coverSrc = post.coverImage || post.ogImage;

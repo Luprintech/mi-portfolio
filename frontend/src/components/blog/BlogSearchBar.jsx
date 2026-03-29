@@ -1,6 +1,8 @@
 import { Search } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export function BlogSearchBar({ searchQuery, onSearchChange }) {
+  const { t } = useTranslation();
   return (
     <div className="relative group w-full">
       {/* Gradient glow border — idle 20% → focus 50% */}
@@ -21,8 +23,8 @@ export function BlogSearchBar({ searchQuery, onSearchChange }) {
         />
         <input
           type="search"
-          aria-label="Buscar artículo"
-          placeholder="Buscar artículos por tema, tecnología..."
+          aria-label={t('blog.search_aria')}
+          placeholder={t('blog.search_placeholder')}
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           className="w-full bg-transparent border-none focus:ring-0 focus:outline-none font-body py-3 placeholder:text-[var(--blog-text-muted)]"
