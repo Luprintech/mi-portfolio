@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 // GIPHY API Key - Configurable via entorno VITE_GIPHY_API_KEY
 // Obtener de https://developers.giphy.com/
@@ -18,10 +18,10 @@ export default function GifPicker({ onSelect, onClose }) {
   const searchTimeoutRef = useRef(null);
 
   // Dynamic API base depending on content type
-  const getApiBase = () =>
+  const getApiBase = useCallback(() =>
     contentType === 'stickers'
       ? 'https://api.giphy.com/v1/stickers'
-      : 'https://api.giphy.com/v1/gifs';
+      : 'https://api.giphy.com/v1/gifs', [contentType]);
 
   const categories = [
     { id: 'trending', label: 'Trending', emoji: '🔥' },
@@ -32,30 +32,7 @@ export default function GifPicker({ onSelect, onClose }) {
     { id: 'food', label: 'Comida', emoji: '🍕' },
   ];
 
-  useEffect(() => {
-    fetchTrending();
-  }, []);
-
-  useEffect(() => {
-    if (searchQuery.trim()) {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-      searchTimeoutRef.current = setTimeout(() => {
-        searchGifs(searchQuery);
-      }, 500);
-    } else {
-      setGifs([]);
-    }
-
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, [searchQuery]);
-
-  async function fetchTrending() {
+  const fetchTrending = useCallback(async () => {
     if (!hasGiphyKey) {
       setError('API key de GIPHY no configurada. Añade VITE_GIPHY_API_KEY en tu archivo .env');
       setLoading(false);
@@ -75,9 +52,9 @@ export default function GifPicker({ onSelect, onClose }) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [getApiBase]);
 
-  async function searchGifs(query) {
+  const searchGifs = useCallback(async (query) => {
     setLoading(true);
     try {
       const response = await fetch(
@@ -90,7 +67,30 @@ export default function GifPicker({ onSelect, onClose }) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [getApiBase]);
+
+  useEffect(() => {
+    fetchTrending();
+  }, [fetchTrending]);
+
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+      searchTimeoutRef.current = setTimeout(() => {
+        searchGifs(searchQuery);
+      }, 500);
+    } else {
+      setGifs([]);
+    }
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchGifs, searchQuery]);
 
   async function fetchByCategory(category) {
     if (category === 'trending') {

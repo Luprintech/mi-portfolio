@@ -367,7 +367,38 @@ function renderAnnotationOverlay(shape, keyPrefix = 'annotation') {
   return <rect {...common} x={(Number(shape.x) || 0) * 100} y={(Number(shape.y) || 0) * 100} width={(Number(shape.width) || 0) * 100} height={(Number(shape.height) || 0) * 100} rx="1.2" ry="1.2" />;
 }
 
-function ContentImage({ src, alt, caption, annotations = [], className = '', wrapperClassName = '' }) {
+function normalizeImageCornerRadius(value) {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? Math.max(0, Math.min(48, parsed)) : 0
+}
+
+function normalizeImageBorderWidth(value) {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? Math.max(0, Math.min(12, parsed)) : 0
+}
+
+function normalizeImageShadow(value) {
+  return ['none', 'soft', 'medium', 'strong'].includes(value) ? value : 'none'
+}
+
+function normalizeImageHover(value) {
+  return ['none', 'zoom', 'lift'].includes(value) ? value : 'none'
+}
+
+function getImageShadowValue(shadowStyle) {
+  switch (normalizeImageShadow(shadowStyle)) {
+    case 'soft':
+      return '0 12px 30px rgba(15, 23, 42, 0.14)'
+    case 'medium':
+      return '0 18px 42px rgba(15, 23, 42, 0.18)'
+    case 'strong':
+      return '0 24px 60px rgba(15, 23, 42, 0.24)'
+    default:
+      return 'none'
+  }
+}
+
+function ContentImage({ src, alt, caption, annotations = [], className = '', wrapperClassName = '', cornerRadius = 0, borderWidth = 0, borderColor = '', shadowStyle = 'none', hoverEffect = 'none' }) {
   const containerRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -394,10 +425,10 @@ function ContentImage({ src, alt, caption, annotations = [], className = '', wra
   return (
     <figure
       ref={containerRef}
-      className={joinClassNames('my-10', wrapperClassName)}
+      className={joinClassNames('group my-10 transition-transform duration-300', hoverEffect === 'lift' ? 'hover:-translate-y-1' : '', wrapperClassName)}
       style={{ contentVisibility: 'auto', containIntrinsicSize: '720px auto' }}
     >
-      <div className="relative overflow-hidden rounded-[1.5rem] border border-[var(--border-default)] bg-[var(--bg-surface)]">
+      <div className="relative overflow-hidden" style={{ borderRadius: `${cornerRadius}px`, border: borderWidth > 0 ? `${borderWidth}px solid ${borderColor || '#000000'}` : 'none', boxShadow: getImageShadowValue(shadowStyle) }}>
         {isVisible ? (
           <>
             <img
@@ -406,10 +437,11 @@ function ContentImage({ src, alt, caption, annotations = [], className = '', wra
               loading="lazy"
               decoding="async"
               fetchPriority="low"
-              className={joinClassNames('w-full object-cover', className)}
+              className={joinClassNames('block h-auto w-full transition-transform duration-300', hoverEffect === 'zoom' ? 'group-hover:scale-[1.02]' : '', className)}
+              style={{ borderRadius: `${cornerRadius}px` }}
             />
             {annotations.length > 0 ? (
-              <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+              <svg className="pointer-events-none absolute inset-0 h-full w-full" style={{ borderRadius: `${cornerRadius}px` }} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
                 {annotations.map(shape => renderAnnotationOverlay(shape, 'post-image'))}
               </svg>
             ) : null}
@@ -816,6 +848,11 @@ function renderNode(node, path) {
     const alt = img.getAttribute('alt') || '';
     const caption = figcaptionEl?.textContent?.trim() || img.getAttribute('data-caption') || '';
     const annotations = parseAnnotations(img.getAttribute('data-annotations') || node.getAttribute('data-annotations') || '');
+    const cornerRadius = normalizeImageCornerRadius(img.getAttribute('data-image-radius') || node.getAttribute('data-image-radius'));
+    const borderWidth = normalizeImageBorderWidth(img.getAttribute('data-border-width') || node.getAttribute('data-border-width'));
+    const borderColor = img.getAttribute('data-border-color') || node.getAttribute('data-border-color') || '';
+    const shadowStyle = normalizeImageShadow(img.getAttribute('data-shadow-style') || node.getAttribute('data-shadow-style'));
+    const hoverEffect = normalizeImageHover(img.getAttribute('data-hover-effect') || node.getAttribute('data-hover-effect'));
     const alignment = normalizeRichBlockAlignment(
       node.getAttribute('data-align') || img.getAttribute('data-align') || ''
     );
@@ -827,7 +864,11 @@ function renderNode(node, path) {
         alt={alt}
         caption={caption}
         annotations={annotations}
-        className="rounded-[1.5rem]"
+        cornerRadius={cornerRadius}
+        borderWidth={borderWidth}
+        borderColor={borderColor}
+        shadowStyle={shadowStyle}
+        hoverEffect={hoverEffect}
       />
     );
 
@@ -840,6 +881,11 @@ function renderNode(node, path) {
     // data-caption: pie de foto explícito (nuevo). Fallback a alt para posts legacy.
     const caption = node.getAttribute('data-caption') || alt;
     const annotations = parseAnnotations(node.getAttribute('data-annotations') || '');
+    const cornerRadius = normalizeImageCornerRadius(node.getAttribute('data-image-radius'));
+    const borderWidth = normalizeImageBorderWidth(node.getAttribute('data-border-width'));
+    const borderColor = node.getAttribute('data-border-color') || '';
+    const shadowStyle = normalizeImageShadow(node.getAttribute('data-shadow-style'));
+    const hoverEffect = normalizeImageHover(node.getAttribute('data-hover-effect'));
     const alignment = normalizeRichBlockAlignment(node.getAttribute('data-align') || node.style?.textAlign || '');
     const figure = (
       <ContentImage
@@ -848,7 +894,11 @@ function renderNode(node, path) {
         alt={alt}
         caption={caption}
         annotations={annotations}
-        className="rounded-[1.5rem]"
+        cornerRadius={cornerRadius}
+        borderWidth={borderWidth}
+        borderColor={borderColor}
+        shadowStyle={shadowStyle}
+        hoverEffect={hoverEffect}
       />
     );
 

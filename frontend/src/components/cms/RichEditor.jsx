@@ -138,9 +138,51 @@ const lowlight = createLowlight(common);
 mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
 
 const IMAGE_ANNOTATION_COLORS = ['#000000', '#ff4d4f', '#f59e0b', '#22c55e', '#06b6d4', '#8b5cf6'];
+const IMAGE_SHADOW_OPTIONS = [
+    { value: 'none', label: 'Sin sombra' },
+    { value: 'soft', label: 'Suave' },
+    { value: 'medium', label: 'Media' },
+    { value: 'strong', label: 'Fuerte' },
+];
+const IMAGE_HOVER_OPTIONS = [
+    { value: 'none', label: 'Sin hover' },
+    { value: 'zoom', label: 'Zoom' },
+    { value: 'lift', label: 'Elevar' },
+];
 
 function getTextAnnotationPixelSize(fontSize) {
     return Math.max(16, Math.round((Number(fontSize) || 5) * 4.8));
+}
+
+function normalizeImageCornerRadius(value) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? Math.max(0, Math.min(48, parsed)) : 0;
+}
+
+function normalizeImageBorderWidth(value) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? Math.max(0, Math.min(12, parsed)) : 0;
+}
+
+function normalizeImageShadow(value) {
+    return ['none', 'soft', 'medium', 'strong'].includes(value) ? value : 'none';
+}
+
+function normalizeImageHover(value) {
+    return ['none', 'zoom', 'lift'].includes(value) ? value : 'none';
+}
+
+function getImageShadowValue(shadowStyle) {
+    switch (normalizeImageShadow(shadowStyle)) {
+        case 'soft':
+            return '0 12px 30px rgba(15, 23, 42, 0.14)';
+        case 'medium':
+            return '0 18px 42px rgba(15, 23, 42, 0.18)';
+        case 'strong':
+            return '0 24px 60px rgba(15, 23, 42, 0.24)';
+        default:
+            return 'none';
+    }
 }
 
 function clamp01(value) {
@@ -346,6 +388,7 @@ function ResizableImageView({ node, updateAttributes, selected, deleteNode }) {
     const [selectedAnnotationId, setSelectedAnnotationId] = useState(null);
     const [annotationPanelPosition, setAnnotationPanelPosition] = useState({ x: 12, y: 64 });
     const [draftAnnotation, setDraftAnnotation] = useState(null);
+    const [imageToolbarStyle, setImageToolbarStyle] = useState(null);
     const startData = useRef(null);
     const annotations = useMemo(
         () => parseImageAnnotations(node.attrs.annotations).map(normalizeAnnotationShape).filter(Boolean),
@@ -358,6 +401,16 @@ function ResizableImageView({ node, updateAttributes, selected, deleteNode }) {
 
     const width  = node.attrs.width  || 'auto';
     const height = node.attrs.height || 'auto';
+    const imageCornerRadius = normalizeImageCornerRadius(node.attrs.cornerRadius);
+    const imageBorderWidth = normalizeImageBorderWidth(node.attrs.borderWidth);
+    const imageBorderColor = node.attrs.borderColor || '#000000';
+    const imageShadow = normalizeImageShadow(node.attrs.shadowStyle);
+    const imageHover = normalizeImageHover(node.attrs.hoverEffect);
+    const imageFrameStyle = {
+        borderRadius: `${imageCornerRadius}px`,
+        border: imageBorderWidth > 0 ? `${imageBorderWidth}px solid ${imageBorderColor}` : 'none',
+        boxShadow: getImageShadowValue(imageShadow),
+    };
 
     const commitAnnotations = useCallback((nextAnnotations) => {
         updateAttributes({ annotations: nextAnnotations });
@@ -387,6 +440,13 @@ function ResizableImageView({ node, updateAttributes, selected, deleteNode }) {
     }, [annotations, selectedAnnotationId]);
 
     useEffect(() => {
+        if (selected) return;
+        setAnnotationMode(false);
+        setDraftAnnotation(null);
+        setSelectedAnnotationId(null);
+    }, [selected]);
+
+    useEffect(() => {
         if (selectedAnnotation?.color) {
             setAnnotationColor(selectedAnnotation.color);
         }
@@ -414,6 +474,36 @@ function ResizableImageView({ node, updateAttributes, selected, deleteNode }) {
         return () => window.removeEventListener('keydown', handleDeleteSelectedAnnotation);
     }, [removeAnnotationById, selectedAnnotationId]);
 
+    useEffect(() => {
+        if (!selected) {
+            setImageToolbarStyle(null);
+            return undefined;
+        }
+
+        function updateImageToolbarPosition() {
+            const editorRoot = containerRef.current?.closest('[data-rich-editor-root="true"]');
+            const toolbar = editorRoot?.querySelector('[data-rich-editor-toolbar="true"]');
+            if (!toolbar) return;
+
+            const rect = toolbar.getBoundingClientRect();
+            setImageToolbarStyle({
+                position: 'fixed',
+                top: rect.bottom + 8,
+                left: rect.left,
+                width: rect.width,
+            });
+        }
+
+        updateImageToolbarPosition();
+        window.addEventListener('resize', updateImageToolbarPosition);
+        window.addEventListener('scroll', updateImageToolbarPosition, true);
+
+        return () => {
+            window.removeEventListener('resize', updateImageToolbarPosition);
+            window.removeEventListener('scroll', updateImageToolbarPosition, true);
+        };
+    }, [selected]);
+
     function getNormalizedCoordinates(event) {
         const rect = overlayRef.current?.getBoundingClientRect();
         if (!rect || !rect.width || !rect.height) return null;
@@ -424,7 +514,7 @@ function ResizableImageView({ node, updateAttributes, selected, deleteNode }) {
     }
 
     function handleAnnotationPointerDown(event) {
-        if (!annotationMode) return;
+        if (!selected || !annotationMode) return;
         event.preventDefault();
         event.stopPropagation();
 
@@ -602,26 +692,15 @@ function ResizableImageView({ node, updateAttributes, selected, deleteNode }) {
         setResizing(true);
 
         function onMove(ev) {
-            const { corner, startX, startY, startW, startH, ratio } = startData.current;
+            const { corner, startX, startY, startW, ratio } = startData.current;
             let dx = ev.clientX - startX;
             let dy = ev.clientY - startY;
 
-            let newW, newH;
-            if (corner === 'br') {
-                newW = Math.max(80, startW + dx);
-                newH = Math.max(40, startH + dy);
-            } else if (corner === 'bl') {
-                newW = Math.max(80, startW - dx);
-                newH = Math.max(40, startH + dy);
-            } else if (corner === 'tr') {
-                newW = Math.max(80, startW + dx);
-                newH = Math.max(40, startH - dy);
-            } else {
-                newW = Math.max(80, startW - dx);
-                newH = Math.max(40, startH - dy);
-            }
-            // Mantener proporción con Shift
-            if (ev.shiftKey) newH = Math.round(newW / ratio);
+            const widthDirection = corner === 'br' || corner === 'tr' ? 1 : -1;
+            const dominantDelta = Math.abs(dx) >= Math.abs(dy) * ratio ? dx : dy * ratio;
+            const nextWidth = startW + dominantDelta * widthDirection;
+            const newW = Math.max(80, nextWidth);
+            const newH = Math.max(40, Math.round(newW / ratio));
 
             updateAttributes({ width: Math.round(newW), height: Math.round(newH) });
         }
@@ -650,11 +729,13 @@ function ResizableImageView({ node, updateAttributes, selected, deleteNode }) {
             <div
                 ref={containerRef}
                 className={`relative inline-block group ${selected ? 'ring-2 ring-fuchsia-500 ring-offset-2 ring-offset-transparent' : ''}`}
-                style={{ cursor: resizing ? 'nwse-resize' : 'default' }}
+                style={{ cursor: resizing ? 'nwse-resize' : 'default', ...imageFrameStyle }}
             >
+                {selected && imageToolbarStyle ? createPortal(
                 <div
                     contentEditable={false}
-                    className="absolute left-3 top-3 z-20 flex flex-wrap items-center gap-1.5 rounded-xl border border-white/10 bg-slate-950/85 px-2 py-1.5 text-[10px] text-slate-200 shadow-lg backdrop-blur"
+                    className="z-[110] flex flex-wrap items-center gap-1.5 rounded-xl border border-white/10 bg-slate-950/95 px-2 py-1.5 text-[10px] text-slate-200 shadow-2xl backdrop-blur"
+                    style={imageToolbarStyle}
                     onMouseDown={e => e.stopPropagation()}
                 >
                     <button
@@ -662,6 +743,7 @@ function ResizableImageView({ node, updateAttributes, selected, deleteNode }) {
                         onClick={() => {
                             setAnnotationMode(current => !current);
                             setDraftAnnotation(null);
+                            setSelectedAnnotationId(null);
                         }}
                         className={`rounded-md px-2 py-1 font-semibold transition-colors ${annotationMode ? 'bg-fuchsia-500 text-white' : 'bg-white/5 hover:bg-white/10'}`}
                     >
@@ -713,7 +795,38 @@ function ResizableImageView({ node, updateAttributes, selected, deleteNode }) {
                     </label>
                     <button type="button" onClick={removeLastAnnotation} className="rounded-md px-2 py-1 bg-white/5 hover:bg-white/10">Deshacer</button>
                     <button type="button" onClick={clearAnnotations} className="rounded-md px-2 py-1 bg-white/5 hover:bg-white/10">Limpiar</button>
-                </div>
+                    <div className="h-4 w-px bg-white/10" />
+                    <label className="flex items-center gap-2 rounded-md bg-white/5 px-2 py-1 text-[11px]">
+                        <span>Radio</span>
+                        <input type="range" min="0" max="48" step="2" value={imageCornerRadius} onChange={e => updateAttributes({ cornerRadius: Number(e.target.value) })} className="w-20" />
+                        <span className="font-mono">{imageCornerRadius}px</span>
+                    </label>
+                    <label className="flex items-center gap-2 rounded-md bg-white/5 px-2 py-1 text-[11px]">
+                        <span>Borde</span>
+                        <input type="range" min="0" max="12" step="1" value={imageBorderWidth} onChange={e => updateAttributes({ borderWidth: Number(e.target.value) })} className="w-16" />
+                        <span className="font-mono">{imageBorderWidth}px</span>
+                    </label>
+                    <label className="flex items-center gap-2 rounded-md bg-white/5 px-2 py-1 text-[11px]">
+                        <span>Color borde</span>
+                        <input type="color" value={imageBorderColor} onChange={e => updateAttributes({ borderColor: e.target.value, borderWidth: imageBorderWidth || 1 })} className="h-6 w-8 cursor-pointer rounded border-0 bg-transparent p-0" />
+                    </label>
+                    <label className="flex items-center gap-2 rounded-md bg-white/5 px-2 py-1 text-[11px]">
+                        <span>Sombra</span>
+                        <select value={imageShadow} onChange={e => updateAttributes({ shadowStyle: e.target.value })} className="rounded-md border border-white/10 bg-slate-900 px-2 py-1 text-[11px] text-slate-100 outline-none">
+                            {IMAGE_SHADOW_OPTIONS.map(option => (
+                                <option key={option.value} value={option.value}>{option.label}</option>
+                            ))}
+                        </select>
+                    </label>
+                    <label className="flex items-center gap-2 rounded-md bg-white/5 px-2 py-1 text-[11px]">
+                        <span>Hover</span>
+                        <select value={imageHover} onChange={e => updateAttributes({ hoverEffect: e.target.value })} className="rounded-md border border-white/10 bg-slate-900 px-2 py-1 text-[11px] text-slate-100 outline-none">
+                            {IMAGE_HOVER_OPTIONS.map(option => (
+                                <option key={option.value} value={option.value}>{option.label}</option>
+                            ))}
+                        </select>
+                    </label>
+                </div>, document.body) : null}
                 {selectedAnnotation?.type === 'text' ? (
                     <div
                         contentEditable={false}
@@ -795,8 +908,8 @@ function ResizableImageView({ node, updateAttributes, selected, deleteNode }) {
                         <p className="mt-3 text-[11px] text-slate-400">Consejo: arrastra el texto directamente sobre la captura para recolocarlo.</p>
                     </div>
                 ) : null}
-                <img
-                    src={node.attrs.src}
+                    <img
+                        src={node.attrs.src}
                     alt={node.attrs.alt || ''}
                     title={node.attrs.title || ''}
                     loading="lazy"
@@ -806,13 +919,21 @@ function ResizableImageView({ node, updateAttributes, selected, deleteNode }) {
                         height: height !== 'auto' ? `${height}px` : 'auto',
                         maxWidth: '100%',
                         display: 'block',
+                        borderRadius: `${imageCornerRadius}px`,
                     }}
-                    className="rounded-2xl shadow-2xl"
-                    draggable={false}
-                />
+                        className={imageHover === 'zoom' ? 'transition-transform duration-300 hover:scale-[1.02]' : imageHover === 'lift' ? 'transition-transform duration-300 hover:-translate-y-1' : ''}
+                        draggable={false}
+                        onPointerDown={() => {
+                            if (!selected) return;
+                            if (!annotationMode) {
+                                setSelectedAnnotationId(null);
+                            }
+                        }}
+                    />
                 <svg
                     ref={overlayRef}
-                    className={`absolute inset-0 h-full w-full rounded-2xl ${annotationMode ? 'cursor-crosshair pointer-events-auto' : 'pointer-events-none'}`}
+                    className={`absolute inset-0 h-full w-full ${(selected && annotationMode) ? 'cursor-crosshair pointer-events-auto' : 'pointer-events-none'}`}
+                    style={{ borderRadius: `${imageCornerRadius}px` }}
                     viewBox="0 0 100 100"
                     preserveAspectRatio="none"
                     onPointerDown={handleAnnotationPointerDown}
@@ -827,7 +948,7 @@ function ResizableImageView({ node, updateAttributes, selected, deleteNode }) {
                     }))}
                     {draftAnnotation ? renderImageAnnotation(draftAnnotation, 'editor-image-draft') : null}
                 </svg>
-                <div className="pointer-events-none absolute inset-0 z-10 rounded-2xl">
+                <div className="pointer-events-none absolute inset-0 z-10" style={{ borderRadius: `${imageCornerRadius}px` }}>
                     {annotations.filter(shape => shape.type === 'text').map(shape => (
                         <button
                             key={shape.id}
@@ -988,6 +1109,31 @@ const ResizableImageExtension = Image.extend({
             ...this.parent?.(),
             width:  { default: null },
             height: { default: null },
+            cornerRadius: {
+                default: 0,
+                parseHTML: element => normalizeImageCornerRadius(element.getAttribute('data-image-radius')),
+                renderHTML: attributes => attributes.cornerRadius ? { 'data-image-radius': String(normalizeImageCornerRadius(attributes.cornerRadius)) } : {},
+            },
+            borderWidth: {
+                default: 0,
+                parseHTML: element => normalizeImageBorderWidth(element.getAttribute('data-border-width')),
+                renderHTML: attributes => attributes.borderWidth ? { 'data-border-width': String(normalizeImageBorderWidth(attributes.borderWidth)) } : {},
+            },
+            borderColor: {
+                default: '',
+                parseHTML: element => element.getAttribute('data-border-color') || '',
+                renderHTML: attributes => attributes.borderColor ? { 'data-border-color': attributes.borderColor } : {},
+            },
+            shadowStyle: {
+                default: 'none',
+                parseHTML: element => normalizeImageShadow(element.getAttribute('data-shadow-style')),
+                renderHTML: attributes => normalizeImageShadow(attributes.shadowStyle) !== 'none' ? { 'data-shadow-style': normalizeImageShadow(attributes.shadowStyle) } : {},
+            },
+            hoverEffect: {
+                default: 'none',
+                parseHTML: element => normalizeImageHover(element.getAttribute('data-hover-effect')),
+                renderHTML: attributes => normalizeImageHover(attributes.hoverEffect) !== 'none' ? { 'data-hover-effect': normalizeImageHover(attributes.hoverEffect) } : {},
+            },
             // caption: pie de foto editable, separado de alt (que es accesibilidad).
             caption: {
                 default: '',
@@ -2229,6 +2375,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
     return (
         <div 
             ref={editorContainerRef}
+            data-rich-editor-root="true"
             className={`flex flex-col rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)]
             ${fullscreen ? 'fixed inset-0 z-50 rounded-none' : ''}`}
         >
@@ -2239,6 +2386,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             {/* ── TOOLBAR ─────────────────────────────────────────────────── */}
             <div 
                 ref={toolbarRef}
+                data-rich-editor-toolbar="true"
                 className={`flex flex-wrap items-center gap-1 px-2 py-1.5 border-b border-[var(--border-color)] bg-[var(--bg-surface)] transition-all overflow-x-auto ${
                     toolbarFixed ? 'shadow-2xl z-[100]' : 'relative z-20 rounded-t-2xl'
                 }`}
