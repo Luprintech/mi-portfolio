@@ -137,14 +137,453 @@ const lowlight = createLowlight(common);
 
 mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
 
+const IMAGE_ANNOTATION_COLORS = ['#000000', '#ff4d4f', '#f59e0b', '#22c55e', '#06b6d4', '#8b5cf6'];
+
+function getTextAnnotationPixelSize(fontSize) {
+    return Math.max(16, Math.round((Number(fontSize) || 5) * 4.8));
+}
+
+function clamp01(value) {
+    return Math.max(0, Math.min(1, value));
+}
+
+function parseImageAnnotations(value) {
+    if (Array.isArray(value)) return value;
+    if (!value) return [];
+    try {
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch {
+        return [];
+    }
+}
+
+function createAnnotationId() {
+    return `annotation-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function normalizeAnnotationShape(shape) {
+    if (!shape || typeof shape !== 'object') return null;
+
+    const type = ['rect', 'circle', 'arrow', 'text'].includes(shape.type) ? shape.type : 'rect';
+    const color = typeof shape.color === 'string' && shape.color ? shape.color : '#ff4d4f';
+    const strokeWidth = Number(shape.strokeWidth);
+
+    if (type === 'text') {
+        const fontSize = Number(shape.fontSize);
+        const text = typeof shape.text === 'string' ? shape.text.trim() : '';
+        if (!text) return null;
+
+        return {
+            id: shape.id || createAnnotationId(),
+            type,
+            color,
+            text,
+            fontSize: Number.isFinite(fontSize) && fontSize > 0 ? fontSize : 5,
+            fontWeight: shape.fontWeight === '400' || shape.fontWeight === 'normal' ? '400' : '700',
+            fontStyle: shape.fontStyle === 'italic' ? 'italic' : 'normal',
+            textDecoration: shape.textDecoration === 'underline' ? 'underline' : 'none',
+            x: clamp01(Number(shape.x) || 0),
+            y: clamp01(Number(shape.y) || 0),
+        };
+    }
+
+    if (type === 'arrow') {
+        return {
+            id: shape.id || createAnnotationId(),
+            type,
+            color,
+            strokeWidth: Number.isFinite(strokeWidth) && strokeWidth > 0 ? strokeWidth : 3,
+            x: clamp01(Number(shape.x) || 0),
+            y: clamp01(Number(shape.y) || 0),
+            x2: clamp01(Number(shape.x2) || 0),
+            y2: clamp01(Number(shape.y2) || 0),
+        };
+    }
+
+    return {
+        id: shape.id || createAnnotationId(),
+        type,
+        color,
+        strokeWidth: Number.isFinite(strokeWidth) && strokeWidth > 0 ? strokeWidth : 3,
+        x: clamp01(Number(shape.x) || 0),
+        y: clamp01(Number(shape.y) || 0),
+        width: clamp01(Number(shape.width) || 0),
+        height: clamp01(Number(shape.height) || 0),
+    };
+}
+
+function renderImageAnnotation(shape, keyPrefix = 'annotation', options = {}) {
+    if (!shape) return null;
+    const { selected = false, onSelect = null, interactive = false } = options;
+    const strokeWidth = Math.max(2, Number(shape.strokeWidth) || 3);
+    const common = {
+        key: `${keyPrefix}-${shape.id}`,
+        stroke: shape.color || '#ff4d4f',
+        strokeWidth,
+        fill: 'transparent',
+        vectorEffect: 'non-scaling-stroke',
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+    };
+    const selectionStroke = '#22d3ee';
+    const interactionProps = interactive && typeof onSelect === 'function'
+        ? {
+            onPointerDown: (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                onSelect(event, shape);
+            },
+            style: { cursor: 'pointer' },
+        }
+        : {};
+
+    if (shape.type === 'text') {
+        return (
+            <g key={`${keyPrefix}-${shape.id}`} {...interactionProps}>
+                <text
+                    x={(shape.x || 0) * 100}
+                    y={(shape.y || 0) * 100}
+                    fill={shape.color || '#000000'}
+                    fontSize={Number(shape.fontSize) || 5}
+                    fontWeight={shape.fontWeight || '700'}
+                    fontStyle={shape.fontStyle || 'normal'}
+                    textDecoration={shape.textDecoration || 'none'}
+                    paintOrder="stroke"
+                    stroke={selected ? selectionStroke : 'rgba(255,255,255,0.92)'}
+                    strokeWidth={selected ? '1.8' : '1.1'}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    dominantBaseline="hanging"
+                >
+                    {shape.text || ''}
+                </text>
+            </g>
+        );
+    }
+
+    if (shape.type === 'arrow') {
+        const x1 = shape.x * 100;
+        const y1 = shape.y * 100;
+        const x2 = shape.x2 * 100;
+        const y2 = shape.y2 * 100;
+        const angle = Math.atan2(y2 - y1, x2 - x1);
+        const headLength = 3.8;
+        const headAngle = Math.PI / 7;
+        const arrowLeftX = x2 - headLength * Math.cos(angle - headAngle);
+        const arrowLeftY = y2 - headLength * Math.sin(angle - headAngle);
+        const arrowRightX = x2 - headLength * Math.cos(angle + headAngle);
+        const arrowRightY = y2 - headLength * Math.sin(angle + headAngle);
+
+        return (
+            <g key={`${keyPrefix}-${shape.id}`} {...interactionProps}>
+                {selected ? <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={selectionStroke} strokeWidth={strokeWidth + 3} fill="transparent" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" /> : null}
+                <line {...common} x1={x1} y1={y1} x2={x2} y2={y2} />
+                <polygon
+                    points={`${x2},${y2} ${arrowLeftX},${arrowLeftY} ${arrowRightX},${arrowRightY}`}
+                    fill={shape.color || '#ff4d4f'}
+                    stroke="none"
+                />
+                <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="transparent" strokeWidth={Math.max(12, strokeWidth + 8)} vectorEffect="non-scaling-stroke" strokeLinecap="round" />
+            </g>
+        );
+    }
+
+    if (shape.type === 'circle') {
+        return (
+            <g key={`${keyPrefix}-${shape.id}`} {...interactionProps}>
+                {selected ? (
+                    <ellipse
+                        cx={(shape.x + (shape.width || 0) / 2) * 100}
+                        cy={(shape.y + (shape.height || 0) / 2) * 100}
+                        rx={((shape.width || 0) / 2) * 100}
+                        ry={((shape.height || 0) / 2) * 100}
+                        stroke={selectionStroke}
+                        strokeWidth={strokeWidth + 3}
+                        fill="transparent"
+                        vectorEffect="non-scaling-stroke"
+                    />
+                ) : null}
+                <ellipse
+                    {...common}
+                    cx={(shape.x + (shape.width || 0) / 2) * 100}
+                    cy={(shape.y + (shape.height || 0) / 2) * 100}
+                    rx={((shape.width || 0) / 2) * 100}
+                    ry={((shape.height || 0) / 2) * 100}
+                />
+                <ellipse
+                    cx={(shape.x + (shape.width || 0) / 2) * 100}
+                    cy={(shape.y + (shape.height || 0) / 2) * 100}
+                    rx={((shape.width || 0) / 2) * 100}
+                    ry={((shape.height || 0) / 2) * 100}
+                    stroke="transparent"
+                    strokeWidth={Math.max(12, strokeWidth + 8)}
+                    fill="transparent"
+                    vectorEffect="non-scaling-stroke"
+                />
+            </g>
+        );
+    }
+
+    return (
+        <g key={`${keyPrefix}-${shape.id}`} {...interactionProps}>
+            {selected ? <rect x={shape.x * 100} y={shape.y * 100} width={(shape.width || 0) * 100} height={(shape.height || 0) * 100} rx="1.2" ry="1.2" stroke={selectionStroke} strokeWidth={strokeWidth + 3} fill="transparent" vectorEffect="non-scaling-stroke" /> : null}
+            <rect {...common} x={shape.x * 100} y={shape.y * 100} width={(shape.width || 0) * 100} height={(shape.height || 0) * 100} rx="1.2" ry="1.2" />
+            <rect x={shape.x * 100} y={shape.y * 100} width={(shape.width || 0) * 100} height={(shape.height || 0) * 100} rx="1.2" ry="1.2" stroke="transparent" strokeWidth={Math.max(12, strokeWidth + 8)} fill="transparent" vectorEffect="non-scaling-stroke" />
+        </g>
+    );
+}
+
 // ─── ResizableImage — nodo React con handles de resize ────────────────────────
 function ResizableImageView({ node, updateAttributes, selected, deleteNode }) {
     const containerRef = useRef(null);
+    const overlayRef = useRef(null);
     const [resizing, setResizing]   = useState(false);
+    const [captionFocused, setCaptionFocused] = useState(false);
+    const [annotationMode, setAnnotationMode] = useState(false);
+    const [annotationTool, setAnnotationTool] = useState('rect');
+    const [annotationColor, setAnnotationColor] = useState('#ff4d4f');
+    const [selectedAnnotationId, setSelectedAnnotationId] = useState(null);
+    const [annotationPanelPosition, setAnnotationPanelPosition] = useState({ x: 12, y: 64 });
+    const [draftAnnotation, setDraftAnnotation] = useState(null);
     const startData = useRef(null);
+    const annotations = useMemo(
+        () => parseImageAnnotations(node.attrs.annotations).map(normalizeAnnotationShape).filter(Boolean),
+        [node.attrs.annotations],
+    );
+    const selectedAnnotation = useMemo(
+        () => annotations.find(shape => shape.id === selectedAnnotationId) || null,
+        [annotations, selectedAnnotationId],
+    );
 
     const width  = node.attrs.width  || 'auto';
     const height = node.attrs.height || 'auto';
+
+    const commitAnnotations = useCallback((nextAnnotations) => {
+        updateAttributes({ annotations: nextAnnotations });
+    }, [updateAttributes]);
+
+    const updateAnnotationById = useCallback((annotationId, updater) => {
+        if (!annotationId) return;
+        const nextAnnotations = annotations.map(shape => {
+            if (shape.id !== annotationId) return shape;
+            const nextShape = typeof updater === 'function' ? updater(shape) : { ...shape, ...updater };
+            return normalizeAnnotationShape(nextShape);
+        }).filter(Boolean);
+        commitAnnotations(nextAnnotations);
+    }, [annotations, commitAnnotations]);
+
+    const removeAnnotationById = useCallback((annotationId) => {
+        if (!annotationId) return;
+        commitAnnotations(annotations.filter(shape => shape.id !== annotationId));
+        setSelectedAnnotationId(current => current === annotationId ? null : current);
+    }, [annotations, commitAnnotations]);
+
+    useEffect(() => {
+        if (!selectedAnnotationId) return;
+        if (!annotations.some(shape => shape.id === selectedAnnotationId)) {
+            setSelectedAnnotationId(null);
+        }
+    }, [annotations, selectedAnnotationId]);
+
+    useEffect(() => {
+        if (selectedAnnotation?.color) {
+            setAnnotationColor(selectedAnnotation.color);
+        }
+    }, [selectedAnnotation]);
+
+    useEffect(() => {
+        if (!selectedAnnotationId) return undefined;
+
+        function handleDeleteSelectedAnnotation(event) {
+            const target = event.target;
+            const isEditableTarget = target instanceof HTMLElement && (
+                target.tagName === 'INPUT' ||
+                target.tagName === 'TEXTAREA' ||
+                target.isContentEditable
+            );
+
+            if (isEditableTarget) return;
+            if (event.key !== 'Delete' && event.key !== 'Supr') return;
+
+            event.preventDefault();
+            removeAnnotationById(selectedAnnotationId);
+        }
+
+        window.addEventListener('keydown', handleDeleteSelectedAnnotation);
+        return () => window.removeEventListener('keydown', handleDeleteSelectedAnnotation);
+    }, [removeAnnotationById, selectedAnnotationId]);
+
+    function getNormalizedCoordinates(event) {
+        const rect = overlayRef.current?.getBoundingClientRect();
+        if (!rect || !rect.width || !rect.height) return null;
+        return {
+            x: clamp01((event.clientX - rect.left) / rect.width),
+            y: clamp01((event.clientY - rect.top) / rect.height),
+        };
+    }
+
+    function handleAnnotationPointerDown(event) {
+        if (!annotationMode) return;
+        event.preventDefault();
+        event.stopPropagation();
+
+        const start = getNormalizedCoordinates(event);
+        if (!start) return;
+
+        if (annotationTool === 'text') {
+            const nextTextAnnotation = normalizeAnnotationShape({
+                id: createAnnotationId(),
+                type: 'text',
+                color: '#000000',
+                fontSize: 5,
+                fontWeight: '700',
+                fontStyle: 'normal',
+                textDecoration: 'none',
+                text: 'Texto',
+                x: start.x,
+                y: start.y,
+            });
+
+            if (nextTextAnnotation) {
+                commitAnnotations([...annotations, nextTextAnnotation]);
+                setSelectedAnnotationId(nextTextAnnotation.id);
+            }
+
+            return;
+        }
+
+        const nextDraft = annotationTool === 'arrow'
+            ? { id: createAnnotationId(), type: 'arrow', color: annotationColor, strokeWidth: 3, x: start.x, y: start.y, x2: start.x, y2: start.y }
+            : { id: createAnnotationId(), type: annotationTool, color: annotationColor, strokeWidth: 3, x: start.x, y: start.y, width: 0, height: 0 };
+
+        setDraftAnnotation(nextDraft);
+
+        function onMove(moveEvent) {
+            const current = getNormalizedCoordinates(moveEvent);
+            if (!current) return;
+
+            setDraftAnnotation(prev => {
+                if (!prev) return prev;
+                if (prev.type === 'arrow') {
+                    return { ...prev, x2: current.x, y2: current.y };
+                }
+
+                const x = Math.min(prev.x, current.x);
+                const y = Math.min(prev.y, current.y);
+                return {
+                    ...prev,
+                    x,
+                    y,
+                    width: Math.abs(current.x - prev.x),
+                    height: Math.abs(current.y - prev.y),
+                };
+            });
+        }
+
+        function onUp(upEvent) {
+            const end = getNormalizedCoordinates(upEvent);
+            setDraftAnnotation(prev => {
+                if (!prev || !end) return null;
+
+                const normalized = prev.type === 'arrow'
+                    ? normalizeAnnotationShape({ ...prev, x2: end.x, y2: end.y })
+                    : normalizeAnnotationShape({
+                        ...prev,
+                        x: Math.min(prev.x, end.x),
+                        y: Math.min(prev.y, end.y),
+                        width: Math.abs(end.x - prev.x),
+                        height: Math.abs(end.y - prev.y),
+                    });
+
+                const isMeaningful = normalized?.type === 'arrow'
+                    ? Math.abs((normalized.x2 || 0) - normalized.x) > 0.01 || Math.abs((normalized.y2 || 0) - normalized.y) > 0.01
+                    : (normalized?.width || 0) > 0.02 && (normalized?.height || 0) > 0.02;
+
+                if (normalized && isMeaningful) {
+                    commitAnnotations([...annotations, normalized]);
+                }
+
+                return null;
+            });
+
+            window.removeEventListener('pointermove', onMove);
+            window.removeEventListener('pointerup', onUp);
+        }
+
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp, { once: false });
+    }
+
+    function removeLastAnnotation() {
+        if (annotations.length === 0) return;
+        commitAnnotations(annotations.slice(0, -1));
+    }
+
+    function clearAnnotations() {
+        commitAnnotations([]);
+        setSelectedAnnotationId(null);
+    }
+
+    function startTextAnnotationDrag(event, annotationId) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const annotation = annotations.find(shape => shape.id === annotationId && shape.type === 'text');
+        const start = getNormalizedCoordinates(event);
+        if (!annotation || !start) return;
+
+        setSelectedAnnotationId(annotationId);
+
+        const deltaX = start.x - (annotation.x || 0);
+        const deltaY = start.y - (annotation.y || 0);
+
+        function onMove(moveEvent) {
+            const current = getNormalizedCoordinates(moveEvent);
+            if (!current) return;
+
+            updateAnnotationById(annotationId, prev => ({
+                ...prev,
+                x: clamp01(current.x - deltaX),
+                y: clamp01(current.y - deltaY),
+            }));
+        }
+
+        function onUp() {
+            window.removeEventListener('pointermove', onMove);
+            window.removeEventListener('pointerup', onUp);
+        }
+
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+    }
+
+    function startAnnotationPanelDrag(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const containerRect = containerRef.current?.getBoundingClientRect();
+        if (!containerRect) return;
+
+        const startX = event.clientX;
+        const startY = event.clientY;
+        const initialX = annotationPanelPosition.x;
+        const initialY = annotationPanelPosition.y;
+
+        function onMove(moveEvent) {
+            const nextX = Math.max(0, Math.min(containerRect.width - 220, initialX + (moveEvent.clientX - startX)));
+            const nextY = Math.max(0, Math.min(containerRect.height - 80, initialY + (moveEvent.clientY - startY)));
+            setAnnotationPanelPosition({ x: nextX, y: nextY });
+        }
+
+        function onUp() {
+            window.removeEventListener('pointermove', onMove);
+            window.removeEventListener('pointerup', onUp);
+        }
+
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+    }
 
     function startResize(e, corner) {
         e.preventDefault();
@@ -213,10 +652,155 @@ function ResizableImageView({ node, updateAttributes, selected, deleteNode }) {
                 className={`relative inline-block group ${selected ? 'ring-2 ring-fuchsia-500 ring-offset-2 ring-offset-transparent' : ''}`}
                 style={{ cursor: resizing ? 'nwse-resize' : 'default' }}
             >
+                <div
+                    contentEditable={false}
+                    className="absolute left-3 top-3 z-20 flex flex-wrap items-center gap-1.5 rounded-xl border border-white/10 bg-slate-950/85 px-2 py-1.5 text-[10px] text-slate-200 shadow-lg backdrop-blur"
+                    onMouseDown={e => e.stopPropagation()}
+                >
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setAnnotationMode(current => !current);
+                            setDraftAnnotation(null);
+                        }}
+                        className={`rounded-md px-2 py-1 font-semibold transition-colors ${annotationMode ? 'bg-fuchsia-500 text-white' : 'bg-white/5 hover:bg-white/10'}`}
+                    >
+                        {annotationMode ? 'Cerrar anotación' : 'Anotar'}
+                    </button>
+                    <div className="h-4 w-px bg-white/10" />
+                    {['rect', 'circle', 'arrow', 'text'].map(tool => (
+                        <button
+                            key={tool}
+                            type="button"
+                            onClick={() => { setAnnotationTool(tool); setAnnotationMode(true); }}
+                            className={`rounded-md px-2 py-1 uppercase tracking-wide transition-colors ${annotationTool === tool ? 'bg-cyan-500/20 text-cyan-200' : 'bg-white/5 hover:bg-white/10'}`}
+                        >
+                            {tool === 'rect' ? 'Rect' : tool === 'circle' ? 'Círculo' : tool === 'arrow' ? 'Flecha' : 'Texto'}
+                        </button>
+                    ))}
+                    <div className="flex items-center gap-1">
+                        {IMAGE_ANNOTATION_COLORS.map(color => (
+                            <button
+                                key={color}
+                                type="button"
+                                onClick={() => {
+                                    setAnnotationColor(color);
+                                    if (selectedAnnotation) {
+                                        updateAnnotationById(selectedAnnotation.id, { color });
+                                    }
+                                }}
+                                className={`h-4 w-4 rounded-full border ${annotationColor === color ? 'scale-110 border-white' : 'border-white/25'}`}
+                                style={{ backgroundColor: color }}
+                                aria-label={`Seleccionar color ${color}`}
+                            />
+                        ))}
+                    </div>
+                    <label className="flex items-center gap-2 rounded-md bg-white/5 px-2 py-1 text-[11px]">
+                        <span className="uppercase tracking-wide text-slate-300">Color</span>
+                        <input
+                            type="color"
+                            value={annotationColor}
+                            onChange={(event) => {
+                                const color = event.target.value;
+                                setAnnotationColor(color);
+                                if (selectedAnnotation) {
+                                    updateAnnotationById(selectedAnnotation.id, { color });
+                                }
+                            }}
+                            className="h-6 w-8 cursor-pointer rounded border-0 bg-transparent p-0"
+                            aria-label="Seleccionar cualquier color para la anotación"
+                        />
+                    </label>
+                    <button type="button" onClick={removeLastAnnotation} className="rounded-md px-2 py-1 bg-white/5 hover:bg-white/10">Deshacer</button>
+                    <button type="button" onClick={clearAnnotations} className="rounded-md px-2 py-1 bg-white/5 hover:bg-white/10">Limpiar</button>
+                </div>
+                {selectedAnnotation?.type === 'text' ? (
+                    <div
+                        contentEditable={false}
+                        className="absolute z-20 w-[min(92vw,420px)] rounded-2xl border border-white/10 bg-slate-950/92 p-3 text-xs text-slate-100 shadow-2xl backdrop-blur"
+                        style={{ left: `${annotationPanelPosition.x}px`, top: `${annotationPanelPosition.y}px` }}
+                        onMouseDown={e => e.stopPropagation()}
+                    >
+                        <div
+                            className="mb-2 flex cursor-move items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-2.5 py-2"
+                            onPointerDown={startAnnotationPanelDrag}
+                        >
+                            <p className="font-semibold text-cyan-200">Editar texto anotado</p>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => removeAnnotationById(selectedAnnotation.id)}
+                                    className="rounded-md border border-red-400/25 bg-red-500/10 px-2 py-1 text-[11px] font-semibold text-red-200 hover:bg-red-500/20"
+                                >
+                                    Eliminar
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedAnnotationId(null)}
+                                    className="flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/5 text-sm font-bold text-slate-200 hover:bg-white/10"
+                                    aria-label="Cerrar editor de anotación"
+                                >
+                                    ×
+                                </button>
+                            </div>
+                        </div>
+                        <label className="mb-3 block">
+                            <span className="mb-1 block text-[11px] uppercase tracking-wide text-slate-400">Texto</span>
+                            <input
+                                type="text"
+                                value={selectedAnnotation.text || ''}
+                                onChange={e => updateAnnotationById(selectedAnnotation.id, { text: e.target.value || 'Texto' })}
+                                className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400/50"
+                                placeholder="Escribe la anotación"
+                            />
+                        </label>
+                        <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto] md:items-end">
+                            <label className="block">
+                                <span className="mb-1 block text-[11px] uppercase tracking-wide text-slate-400">Tamaño</span>
+                                <input
+                                    type="range"
+                                    min="3"
+                                    max="10"
+                                    step="0.5"
+                                    value={selectedAnnotation.fontSize || 5}
+                                    onChange={e => updateAnnotationById(selectedAnnotation.id, { fontSize: Number(e.target.value) })}
+                                    className="w-full"
+                                />
+                                <span className="mt-1 block text-[11px] text-slate-400">{Number(selectedAnnotation.fontSize || 5).toFixed(1)}</span>
+                            </label>
+                            <div className="flex flex-wrap gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => updateAnnotationById(selectedAnnotation.id, { fontWeight: selectedAnnotation.fontWeight === '700' ? '400' : '700' })}
+                                    className={`rounded-md px-2.5 py-2 font-bold ${selectedAnnotation.fontWeight === '700' ? 'bg-cyan-500/20 text-cyan-200' : 'bg-white/5 hover:bg-white/10'}`}
+                                >
+                                    B
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => updateAnnotationById(selectedAnnotation.id, { fontStyle: selectedAnnotation.fontStyle === 'italic' ? 'normal' : 'italic' })}
+                                    className={`rounded-md px-2.5 py-2 italic ${selectedAnnotation.fontStyle === 'italic' ? 'bg-cyan-500/20 text-cyan-200' : 'bg-white/5 hover:bg-white/10'}`}
+                                >
+                                    I
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => updateAnnotationById(selectedAnnotation.id, { textDecoration: selectedAnnotation.textDecoration === 'underline' ? 'none' : 'underline' })}
+                                    className={`rounded-md px-2.5 py-2 underline ${selectedAnnotation.textDecoration === 'underline' ? 'bg-cyan-500/20 text-cyan-200' : 'bg-white/5 hover:bg-white/10'}`}
+                                >
+                                    U
+                                </button>
+                            </div>
+                        </div>
+                        <p className="mt-3 text-[11px] text-slate-400">Consejo: arrastra el texto directamente sobre la captura para recolocarlo.</p>
+                    </div>
+                ) : null}
                 <img
                     src={node.attrs.src}
                     alt={node.attrs.alt || ''}
                     title={node.attrs.title || ''}
+                    loading="lazy"
+                    decoding="async"
                     style={{
                         width:  width  !== 'auto' ? `${width}px`  : 'auto',
                         height: height !== 'auto' ? `${height}px` : 'auto',
@@ -226,6 +810,56 @@ function ResizableImageView({ node, updateAttributes, selected, deleteNode }) {
                     className="rounded-2xl shadow-2xl"
                     draggable={false}
                 />
+                <svg
+                    ref={overlayRef}
+                    className={`absolute inset-0 h-full w-full rounded-2xl ${annotationMode ? 'cursor-crosshair pointer-events-auto' : 'pointer-events-none'}`}
+                    viewBox="0 0 100 100"
+                    preserveAspectRatio="none"
+                    onPointerDown={handleAnnotationPointerDown}
+                >
+                    {annotations.filter(shape => shape.type !== 'text').map(shape => renderImageAnnotation(shape, 'editor-image', {
+                        selected: selectedAnnotationId === shape.id,
+                        interactive: true,
+                        onSelect: (_event, selectedShape) => {
+                            setSelectedAnnotationId(selectedShape.id);
+                            setAnnotationMode(true);
+                        },
+                    }))}
+                    {draftAnnotation ? renderImageAnnotation(draftAnnotation, 'editor-image-draft') : null}
+                </svg>
+                <div className="pointer-events-none absolute inset-0 z-10 rounded-2xl">
+                    {annotations.filter(shape => shape.type === 'text').map(shape => (
+                        <button
+                            key={shape.id}
+                            type="button"
+                            onPointerDown={event => startTextAnnotationDrag(event, shape.id)}
+                            onClick={event => {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                setSelectedAnnotationId(shape.id);
+                                setAnnotationMode(true);
+                            }}
+                            className="pointer-events-auto absolute bg-transparent p-0 text-left leading-none transition-opacity hover:opacity-85"
+                            style={{
+                                left: `${(shape.x || 0) * 100}%`,
+                                top: `${(shape.y || 0) * 100}%`,
+                                color: shape.color || '#000000',
+                                fontSize: `${getTextAnnotationPixelSize(shape.fontSize)}px`,
+                                fontWeight: shape.fontWeight || '700',
+                                fontStyle: shape.fontStyle || 'normal',
+                                textDecoration: shape.textDecoration || 'none',
+                                textShadow: selectedAnnotationId === shape.id
+                                    ? '0 0 1px #22d3ee, 0 0 10px rgba(34,211,238,0.35)'
+                                    : '0 0 1px rgba(255,255,255,0.72)',
+                                transform: 'translate(0, 0)',
+                                pointerEvents: 'auto',
+                                background: 'transparent',
+                            }}
+                        >
+                            {shape.text}
+                        </button>
+                    ))}
+                </div>
                 {/* Handles de resize — visibles al seleccionar o hacer hover */}
                 <div className={`${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
                     <div className={`${handleStyle} top-[-6px] left-[-6px]  cursor-nwse-resize`} onMouseDown={e => startResize(e, 'tl')} />
@@ -233,9 +867,28 @@ function ResizableImageView({ node, updateAttributes, selected, deleteNode }) {
                     <div className={`${handleStyle} bottom-[-6px] left-[-6px]  cursor-nesw-resize`} onMouseDown={e => startResize(e, 'bl')} />
                     <div className={`${handleStyle} bottom-[-6px] right-[-6px] cursor-nwse-resize`} onMouseDown={e => startResize(e, 'br')} />
                 </div>
-                {node.attrs.alt && (
-                    <p className="text-xs text-center text-gray-500 mt-2 italic">{node.attrs.alt}</p>
-                )}
+            </div>
+            {/* Pie de foto editable — separado del alt (accesibilidad). */}
+            <div
+                contentEditable={false}
+                className="w-full mt-2"
+                onMouseDown={e => e.stopPropagation()}
+            >
+                <input
+                    type="text"
+                    value={node.attrs.caption || ''}
+                    placeholder="Añadir pie de foto…"
+                    onFocus={() => setCaptionFocused(true)}
+                    onBlur={() => setCaptionFocused(false)}
+                    onChange={e => updateAttributes({ caption: e.target.value })}
+                    className={`w-full text-xs text-center italic bg-transparent outline-none transition-all
+                        placeholder-gray-600 text-gray-400
+                        ${captionFocused
+                            ? 'border-b border-fuchsia-500/60 pb-0.5'
+                            : 'border-b border-transparent hover:border-gray-600/40 pb-0.5'}
+                    `}
+                    style={{ caretColor: 'var(--text-primary)' }}
+                />
             </div>
         </RichBlockFrame>
     );
@@ -335,11 +988,46 @@ const ResizableImageExtension = Image.extend({
             ...this.parent?.(),
             width:  { default: null },
             height: { default: null },
+            // caption: pie de foto editable, separado de alt (que es accesibilidad).
+            caption: {
+                default: '',
+                parseHTML: element => {
+                    // Soporte para HTML nuevo (<figure><img><figcaption>) y legacy (data-caption).
+                    const fig = element.closest?.('figure');
+                    return fig?.querySelector('figcaption')?.textContent?.trim()
+                        || element.getAttribute('data-caption')
+                        || '';
+                },
+                renderHTML: attributes => attributes.caption
+                    ? { 'data-caption': attributes.caption }
+                    : {},
+            },
+            annotations: {
+                default: [],
+                parseHTML: element => parseImageAnnotations(element.getAttribute('data-annotations')),
+                renderHTML: attributes => {
+                    const annotations = parseImageAnnotations(attributes.annotations);
+                    return annotations.length ? { 'data-annotations': JSON.stringify(annotations) } : {};
+                },
+            },
             textAlign: createRichBlockTextAlignAttribute(),
         };
     },
-    renderHTML({ HTMLAttributes }) {
-        return ['img', mergeAttributes(getRichBlockHtmlAttributes(HTMLAttributes, HTMLAttributes.textAlign))];
+    renderHTML({ node, HTMLAttributes }) {
+        const baseAttrs = getRichBlockHtmlAttributes(HTMLAttributes, node.attrs.textAlign);
+        const imgAttrs  = mergeAttributes(baseAttrs);
+
+        if (node.attrs.caption) {
+            // Emitir <figure> con <figcaption> cuando hay pie de foto.
+            return [
+                'figure',
+                { class: 'image-figure', 'data-align': imgAttrs['data-align'] || '' },
+                ['img', imgAttrs],
+                ['figcaption', {}, node.attrs.caption],
+            ];
+        }
+
+        return ['img', imgAttrs];
     },
     addNodeView() {
         return ReactNodeViewRenderer(ResizableImageView);
@@ -1302,6 +1990,59 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
         e.target.value = '';
     }, [handleImageFile]);
 
+    const applyTextColor = useCallback((color) => {
+        if (!editor) return;
+
+        if (!editor.isActive('codeBlock')) {
+            editor.chain().focus().setColor(color).run();
+            return;
+        }
+
+        const { state, view } = editor;
+        const { from, to, empty } = state.selection;
+        const textStyleMark = state.schema.marks.textStyle;
+
+        if (!textStyleMark) return;
+        if (empty) {
+            editor.chain().focus().setColor(color).run();
+            return;
+        }
+
+        const currentAttrs = editor.getAttributes('textStyle') || {};
+        const nextAttrs = { ...currentAttrs, color };
+        const tr = state.tr.removeMark(from, to, textStyleMark).addMark(from, to, textStyleMark.create(nextAttrs));
+        view.dispatch(tr);
+        view.focus();
+    }, [editor]);
+
+    const clearTextColor = useCallback(() => {
+        if (!editor) return;
+
+        if (!editor.isActive('codeBlock')) {
+            editor.chain().focus().unsetColor().run();
+            return;
+        }
+
+        const { state, view } = editor;
+        const { from, to, empty } = state.selection;
+        const textStyleMark = state.schema.marks.textStyle;
+
+        if (!textStyleMark) return;
+        if (empty) {
+            editor.chain().focus().unsetColor().run();
+            return;
+        }
+
+        const currentAttrs = editor.getAttributes('textStyle') || {};
+        const { color: _unusedColor, ...restAttrs } = currentAttrs;
+        let tr = state.tr.removeMark(from, to, textStyleMark);
+        if (Object.keys(restAttrs).length > 0) {
+            tr = tr.addMark(from, to, textStyleMark.create(restAttrs));
+        }
+        view.dispatch(tr);
+        view.focus();
+    }, [editor]);
+
     const loadAvailableImages = useCallback(async () => {
         if (!token) return;
         setLoadingImages(true);
@@ -1574,7 +2315,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                             aria-label={`Aplicar color ${lastTextColor}`}
                             onMouseDown={e => {
                                 e.preventDefault();
-                                editor.chain().focus().setColor(lastTextColor).run();
+                                applyTextColor(lastTextColor);
                                 setShowColorPick(false);
                                 setShowHighPick(false);
                             }}
@@ -1613,7 +2354,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                             onMouseDown={e => e.stopPropagation()}
                         >
                             <button type="button" className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] mb-2 w-full text-left px-1"
-                                onClick={() => { editor.chain().focus().unsetColor().run(); setLastTextColor('#000000'); setShowColorPick(false); }}>
+                                onClick={() => { clearTextColor(); setLastTextColor('#000000'); setShowColorPick(false); }}>
                                 Quitar color
                             </button>
                             <div className="grid grid-cols-5 gap-1.5 mb-2">
@@ -1621,7 +2362,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                                     <button key={c} type="button" title={c}
                                         className="w-6 h-6 rounded-md border-2 border-transparent hover:border-white/50 hover:scale-110 transition-all"
                                         style={{ background: c }}
-                                        onClick={() => { editor.chain().focus().setColor(c).run(); setLastTextColor(c); setShowColorPick(false); }}
+                                        onClick={() => { applyTextColor(c); setLastTextColor(c); setShowColorPick(false); }}
                                     />
                                 ))}
                             </div>
@@ -1631,7 +2372,7 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                                     onChange={e => {
                                         const nextColor = e.target.value;
                                         setLastTextColor(nextColor);
-                                        editor.chain().focus().setColor(nextColor).run();
+                                        applyTextColor(nextColor);
                                     }}
                                     className="w-6 h-6 p-0 border-0 rounded cursor-pointer bg-transparent"
                                 />
@@ -2134,43 +2875,6 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
                 </div>
             </div>
 
-            {/* ── TOOLBAR CONTEXTUAL DE CODE BLOCK ───────────────────────── */}
-            {editor.isActive('codeBlock') && (
-                <div className="flex flex-wrap items-center gap-2 px-3 py-1.5 border-b border-[var(--border-color)] bg-[var(--bg-elevated)] text-xs">
-                    <span className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mr-1">Codigo:</span>
-                    <select
-                        className="h-7 px-2 rounded bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-secondary)] text-xs focus:outline-none focus:border-fuchsia-500/60 cursor-pointer"
-                        value={editor.getAttributes('codeBlock').language || 'javascript'}
-                        onChange={e => editor.chain().focus().updateAttributes('codeBlock', { language: e.target.value }).run()}
-                    >
-                        {CODE_LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
-                    </select>
-                    <select
-                        className="h-7 px-2 rounded bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-secondary)] text-xs focus:outline-none focus:border-fuchsia-500/60 cursor-pointer"
-                        value={editor.getAttributes('codeBlock').variant || 'plain'}
-                        onChange={e => editor.chain().focus().updateAttributes('codeBlock', { variant: e.target.value }).run()}
-                    >
-                        {CODE_VARIANTS.map(variant => <option key={variant.value} value={variant.value}>{variant.label}</option>)}
-                    </select>
-                    <input
-                        type="text"
-                        value={codeBlockMeta.filename}
-                        onChange={e => updateCodeBlockMetadata({ filename: e.target.value })}
-                        placeholder="archivo.ext"
-                        className="h-7 min-w-[120px] rounded border border-[var(--border-color)] bg-[var(--bg-primary)] px-2 text-xs text-[var(--text-secondary)] outline-none focus:border-fuchsia-500/60"
-                    />
-                    <input
-                        type="text"
-                        value={codeBlockMeta.title}
-                        onChange={e => updateCodeBlockMetadata({ title: e.target.value })}
-                        placeholder="Titulo opcional"
-                        className="h-7 min-w-[160px] rounded border border-[var(--border-color)] bg-[var(--bg-primary)] px-2 text-xs text-[var(--text-secondary)] outline-none focus:border-fuchsia-500/60"
-                    />
-                    <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().toggleCodeBlock().run(); }}
-                        className="px-2 py-1 rounded hover:bg-red-500/10 text-red-400 transition-colors ml-auto">Quitar bloque</button>
-                </div>
-            )}
-
             {/* ── TOOLBAR CONTEXTUAL DE TABLA (ahora BubbleMenu flotante) ──────────────────────────────── */}
 
             {uploadError && (
@@ -2186,11 +2890,56 @@ export default function RichEditor({ value, onChange, token, fullscreen, onToggl
             )}
 
             {/* ── ÁREA DE EDICIÓN ──────────────────────────────────────────── */}
+            {/* overflow-y-auto + max-height acotado: crea scroll interno independiente del scroll de página.
+                En fullscreen: ocupa toda la pantalla disponible.
+                En modo normal: altura máxima de 72 vh para que el toolbar y la barra de estado sean visibles
+                y el usuario pueda seguir scrollando la página para acceder a Metadatos, SEO, Revisiones, etc. */}
             <div
                 ref={editorScrollRef}
-                className={`flex-1 overflow-y-auto bg-[var(--bg-primary)] focus-within:outline-none ${markdownMode ? 'hidden' : ''}`}
-                style={{ minHeight: fullscreen ? 'calc(100vh - 120px)' : '420px' }}
+                className={`overflow-y-auto bg-[var(--bg-primary)] focus-within:outline-none ${markdownMode ? 'hidden' : ''}`}
+                style={{
+                    minHeight: fullscreen ? 'calc(100vh - 120px)' : '420px',
+                    maxHeight: fullscreen ? 'calc(100vh - 120px)' : '72vh',
+                }}
             >
+                {/* ── TOOLBAR CONTEXTUAL DE CODE BLOCK (sticky dentro del área de scroll) ─── */}
+                {/* Posicionado como primer hijo del contenedor con scroll, con sticky top-0,
+                    para que permanezca visible al hacer scroll hacia abajo dentro del editor. */}
+                {editor.isActive('codeBlock') && (
+                    <div className="flex flex-wrap items-center gap-2 px-3 py-1.5 border-b border-[var(--border-color)] bg-[var(--bg-elevated)] text-xs sticky top-0 z-30">
+                        <span className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mr-1">Codigo:</span>
+                        <select
+                            className="h-7 px-2 rounded bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-secondary)] text-xs focus:outline-none focus:border-fuchsia-500/60 cursor-pointer"
+                            value={editor.getAttributes('codeBlock').language || 'javascript'}
+                            onChange={e => editor.chain().focus().updateAttributes('codeBlock', { language: e.target.value }).run()}
+                        >
+                            {CODE_LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+                        </select>
+                        <select
+                            className="h-7 px-2 rounded bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-secondary)] text-xs focus:outline-none focus:border-fuchsia-500/60 cursor-pointer"
+                            value={editor.getAttributes('codeBlock').variant || 'plain'}
+                            onChange={e => editor.chain().focus().updateAttributes('codeBlock', { variant: e.target.value }).run()}
+                        >
+                            {CODE_VARIANTS.map(variant => <option key={variant.value} value={variant.value}>{variant.label}</option>)}
+                        </select>
+                        <input
+                            type="text"
+                            value={codeBlockMeta.filename}
+                            onChange={e => updateCodeBlockMetadata({ filename: e.target.value })}
+                            placeholder="archivo.ext"
+                            className="h-7 min-w-[120px] rounded border border-[var(--border-color)] bg-[var(--bg-primary)] px-2 text-xs text-[var(--text-secondary)] outline-none focus:border-fuchsia-500/60"
+                        />
+                        <input
+                            type="text"
+                            value={codeBlockMeta.title}
+                            onChange={e => updateCodeBlockMetadata({ title: e.target.value })}
+                            placeholder="Titulo opcional"
+                            className="h-7 min-w-[160px] rounded border border-[var(--border-color)] bg-[var(--bg-primary)] px-2 text-xs text-[var(--text-secondary)] outline-none focus:border-fuchsia-500/60"
+                        />
+                        <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().toggleCodeBlock().run(); }}
+                            className="px-2 py-1 rounded hover:bg-red-500/10 text-red-400 transition-colors ml-auto">Quitar bloque</button>
+                    </div>
+                )}
                 {/* Columna central tipo Medium */}
                 <div className={`
                     rich-editor-content

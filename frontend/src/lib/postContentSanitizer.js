@@ -9,6 +9,7 @@ const SANITIZER_OPTIONS = {
         'controls',
         'data-accordion',
         'data-align',
+        'data-annotations',
         'data-bg',
         'data-border-color',
         'data-block',

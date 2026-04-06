@@ -559,7 +559,9 @@ export default function BitacoraPostEditor() {
     const excerptLen = form.excerpt.length;
 
     return (
-        <div className={`min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] p-3 md:p-6 transition-colors duration-300 ${fullscreen ? 'overflow-hidden' : ''}`}>
+        // overflow-hidden solo en fullscreen; en modo normal la página puede scrollear
+        // independientemente del scroll interno del editor (que tiene su propio max-h + overflow-y-auto).
+        <div className={`min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] p-3 md:p-6 transition-colors duration-300 ${fullscreen ? 'overflow-hidden' : 'overflow-auto'}`}>
 
             {/* ── Header ───────────────────────────────────────────────────── */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 max-w-7xl mx-auto">

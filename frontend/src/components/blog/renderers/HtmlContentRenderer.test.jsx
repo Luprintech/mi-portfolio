@@ -36,6 +36,19 @@ const richHtmlFixture = `
 
 describe('HtmlContentRenderer', () => {
   beforeEach(() => {
+    globalThis.IntersectionObserver = class {
+      constructor(callback) {
+        this.callback = callback;
+      }
+
+      observe() {
+        this.callback([{ isIntersecting: true, intersectionRatio: 1 }]);
+      }
+
+      disconnect() {}
+      unobserve() {}
+    };
+
     window.matchMedia = vi.fn().mockImplementation((query) => ({
       matches: false,
       media: query,
@@ -105,7 +118,7 @@ describe('HtmlContentRenderer', () => {
 
     const renderedDocument = container.querySelector('[data-rendered-block="document"]');
     const renderedGrid = container.querySelector('[data-rendered-block="image-grid"]');
-    const centeredFigure = screen.getByAltText('Hero alineado').closest('figure');
+    const centeredFigure = screen.getByText('Hero alineado').closest('figure');
     const fallbackDocument = screen.getAllByText('Fallback')[0].closest('[data-rendered-block="document"]');
 
     expect(renderedDocument?.parentElement).toHaveClass('justify-end');
@@ -186,6 +199,28 @@ describe('HtmlContentRenderer', () => {
     expect(cta.style.background).toBe('rgb(37, 99, 235)');
     expect(cta.style.borderRadius).toBe('18px');
     expect(container.querySelector('a[data-content-button][data-align="center"]')).not.toBeNull();
+  });
+
+  it('renderiza anotaciones de texto sobre capturas publicadas', () => {
+    render(
+      <HtmlContentRenderer
+        content={`
+          <img
+            src="/posts/images/anotada.webp"
+            alt="Captura anotada"
+            data-annotations='[{"id":"label-1","type":"text","text":"API aquí","color":"#22c55e","fontSize":6,"fontWeight":"400","fontStyle":"italic","textDecoration":"underline","x":0.18,"y":0.22}]'
+          />
+        `}
+      />
+    );
+
+    expect(screen.getByAltText('Captura anotada')).toBeInTheDocument();
+    const annotation = screen.getByText('API aquí');
+    expect(annotation).toBeInTheDocument();
+    expect(annotation.tagName.toLowerCase()).toBe('text');
+    expect(annotation).toHaveAttribute('font-style', 'italic');
+    expect(annotation).toHaveAttribute('font-weight', '400');
+    expect(annotation).toHaveAttribute('text-decoration', 'underline');
   });
 
   it('normaliza enlaces externos de CTA sin protocolo para no romper la redireccion publicada', () => {

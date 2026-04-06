@@ -31,7 +31,7 @@ El objetivo habitual de los cambios es mantener coherentes estas dos capas sin r
 ## Estructura útil
 
 - `frontend/src/`: componentes, páginas, rutas y utilidades de la SPA.
-- `frontend/public/projects.json`: fuente de verdad actual para los proyectos mostrados en la web.
+- `frontend/public/projects.json`: seed inicial de proyectos (solo se importa si la BD está vacía; runtime usa PostgreSQL).
 - `frontend/public/posts/index.json`: índice del blog.
 - `frontend/public/posts/*.md`: contenido Markdown de los posts.
 - `frontend/public/posts/images/`: imágenes embebidas en posts.
@@ -59,9 +59,9 @@ Desde `frontend/`:
 Desde `backend/`:
 
 - Instalar dependencias: `npm install`
-- Arranque local actual: `node server.js`
-
-Nota importante: el `README.md` menciona `npm start`, pero `backend/package.json` no define ese script ahora mismo. Si necesitas arrancar el backend, usa `node server.js` salvo que primero añadas y verifiques un script oficial.
+- Arranque local: `npm start` (ejecuta `node server.js`)
+- Validación de sintaxis: `npm run check`
+- Tests: `npm test` (Vitest + Supertest)
 
 ### Docker
 
@@ -89,9 +89,10 @@ El backend termina el proceso al arrancar si faltan:
 
 ## Fuente de verdad del contenido
 
-- La web pública consume proyectos desde `frontend/public/projects.json` mediante `frontend/src/hooks/useProjects.js`.
-- El blog público consume `frontend/public/posts/index.json` y los `.md` dentro de `frontend/public/posts/`.
-- El CMS escribe sobre esas estructuras a través del backend y `CONTENT_PATH`.
+- **Runtime actual**: posts y proyectos viven en PostgreSQL. La web pública los consume desde `GET /api/posts` y `GET /api/projects`, no desde los JSON estáticos.
+- **Seed inicial**: `frontend/public/projects.json` y `frontend/public/posts/index.json` son importados una única vez si la base de datos está vacía. No son la fuente operativa en runtime.
+- **Assets editoriales**: imágenes, documentos y audio se guardan en `CONTENT_PATH/posts/...` (en local apunta por defecto a `frontend/public`).
+- El CMS escribe sobre la base de datos y el filesystem a través del backend y `CONTENT_PATH`.
 
 Importante: `frontend/src/data/webProjects.js` y `frontend/src/data/README.md` parecen legado y no son la fuente de verdad de la UI actual. Antes de editar datos, comprueba si el cambio debe ir en `frontend/public/projects.json` en lugar de ahí.
 
@@ -101,7 +102,7 @@ Importante: `frontend/src/data/webProjects.js` y `frontend/src/data/README.md` p
 - Mantén compatibilidad entre frontend y backend cuando cambies payloads del CMS.
 - No cambies slugs públicos (`/blog/:slug`, `/bitacora/...`) sin revisar enlaces, sitemap y navegación.
 - Si cambias orígenes del frontend, actualiza también `backend/config/cors.js`.
-- Si cambias uploads o rutas estáticas, mantén alineados `backend/routes/images.js` y los `express.static` de `backend/server.js`.
+- Si cambias uploads o rutas estáticas, mantén alineados `backend/routes/images.js` y los `express.static` de `backend/app.js`.
 - No subas secretos reales a `.env`, commits o ejemplos.
 
 ## Validación mínima antes de cerrar cambios
@@ -111,7 +112,7 @@ Importante: `frontend/src/data/webProjects.js` y `frontend/src/data/README.md` p
 - Si tocas backend: arranca con `node server.js` y verifica `GET /api/health`.
 - Si tocas CMS o contenido: prueba el flujo afectado de extremo a extremo.
 
-Limitación actual: no existe una suite real de tests para backend; `npm test` en `backend/` es solo un placeholder que falla.
+Limitación actual: el backend tiene Vitest + Supertest (`npm test`), pero no hay pipeline de despliegue automatizado.
 
 ## Zonas delicadas
 

@@ -15,15 +15,31 @@ export function useReadingProgress() {
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
+    let rafId = 0;
+
+    const calculateProgress = () => {
+      rafId = 0;
       const scrollTop = window.scrollY;
       const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      setReadProgress(docHeight > 0 ? Math.min(100, (scrollTop / docHeight) * 100) : 0);
-      setShowScrollTop(scrollTop > SCROLL_TOP_THRESHOLD);
+      const nextProgress = docHeight > 0 ? Math.min(100, (scrollTop / docHeight) * 100) : 0;
+      const nextShowScrollTop = scrollTop > SCROLL_TOP_THRESHOLD;
+
+      setReadProgress((current) => Math.abs(current - nextProgress) > 0.5 ? nextProgress : current);
+      setShowScrollTop((current) => current !== nextShowScrollTop ? nextShowScrollTop : current);
+    };
+
+    const handleScroll = () => {
+      if (rafId) return;
+      rafId = window.requestAnimationFrame(calculateProgress);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    calculateProgress();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafId) window.cancelAnimationFrame(rafId);
+    };
   }, []);
 
   return { readProgress, showScrollTop };

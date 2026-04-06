@@ -1,4 +1,4 @@
-import { createElement, Fragment, useMemo, useState, useRef } from 'react';
+import { createElement, Fragment, useEffect, useMemo, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { sanitizePostContent } from '../../../lib/postContentSanitizer';
 import { resolveContentLinkAttributes } from '../../../lib/contentLinkUtils';
@@ -284,6 +284,145 @@ function renderChildren(node, path) {
   return Array.from(node.childNodes || []).map((child, index) => renderNode(child, `${path}-${index}`));
 }
 
+function parseAnnotations(value = '') {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function renderAnnotationOverlay(shape, keyPrefix = 'annotation') {
+  if (!shape) return null;
+  const stroke = shape.color || '#ff4d4f';
+  const strokeWidth = Math.max(2, Number(shape.strokeWidth) || 3);
+  const common = {
+    key: `${keyPrefix}-${shape.id || Math.random().toString(36).slice(2)}`,
+    stroke,
+    strokeWidth,
+    fill: 'transparent',
+    vectorEffect: 'non-scaling-stroke',
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+  };
+
+  if (shape.type === 'text') {
+    return (
+      <text
+        key={common.key}
+        x={(Number(shape.x) || 0) * 100}
+        y={(Number(shape.y) || 0) * 100}
+        fill={stroke}
+        fontSize={Number(shape.fontSize) || 5}
+        fontWeight={shape.fontWeight || '700'}
+        fontStyle={shape.fontStyle || 'normal'}
+        textDecoration={shape.textDecoration || 'none'}
+        paintOrder="stroke"
+        stroke="rgba(15,23,42,0.92)"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        dominantBaseline="hanging"
+      >
+        {typeof shape.text === 'string' ? shape.text : ''}
+      </text>
+    );
+  }
+
+  if (shape.type === 'arrow') {
+    const x1 = (Number(shape.x) || 0) * 100;
+    const y1 = (Number(shape.y) || 0) * 100;
+    const x2 = (Number(shape.x2) || 0) * 100;
+    const y2 = (Number(shape.y2) || 0) * 100;
+    const angle = Math.atan2(y2 - y1, x2 - x1);
+    const headLength = 3.8;
+    const headAngle = Math.PI / 7;
+    const arrowLeftX = x2 - headLength * Math.cos(angle - headAngle);
+    const arrowLeftY = y2 - headLength * Math.sin(angle - headAngle);
+    const arrowRightX = x2 - headLength * Math.cos(angle + headAngle);
+    const arrowRightY = y2 - headLength * Math.sin(angle + headAngle);
+
+    return (
+      <g key={common.key}>
+        <line {...common} x1={x1} y1={y1} x2={x2} y2={y2} />
+        <polygon points={`${x2},${y2} ${arrowLeftX},${arrowLeftY} ${arrowRightX},${arrowRightY}`} fill={stroke} stroke="none" />
+      </g>
+    );
+  }
+
+  if (shape.type === 'circle') {
+    return (
+      <ellipse
+        {...common}
+        cx={((Number(shape.x) || 0) + (Number(shape.width) || 0) / 2) * 100}
+        cy={((Number(shape.y) || 0) + (Number(shape.height) || 0) / 2) * 100}
+        rx={((Number(shape.width) || 0) / 2) * 100}
+        ry={((Number(shape.height) || 0) / 2) * 100}
+      />
+    );
+  }
+
+  return <rect {...common} x={(Number(shape.x) || 0) * 100} y={(Number(shape.y) || 0) * 100} width={(Number(shape.width) || 0) * 100} height={(Number(shape.height) || 0) * 100} rx="1.2" ry="1.2" />;
+}
+
+function ContentImage({ src, alt, caption, annotations = [], className = '', wrapperClassName = '' }) {
+  const containerRef = useRef(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') {
+      setIsVisible(true);
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some(entry => entry.isIntersecting || entry.intersectionRatio > 0)) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '400px 0px' },
+    );
+
+    if (containerRef.current) observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <figure
+      ref={containerRef}
+      className={joinClassNames('my-10', wrapperClassName)}
+      style={{ contentVisibility: 'auto', containIntrinsicSize: '720px auto' }}
+    >
+      <div className="relative overflow-hidden rounded-[1.5rem] border border-[var(--border-default)] bg-[var(--bg-surface)]">
+        {isVisible ? (
+          <>
+            <img
+              src={src}
+              alt={alt}
+              loading="lazy"
+              decoding="async"
+              fetchPriority="low"
+              className={joinClassNames('w-full object-cover', className)}
+            />
+            {annotations.length > 0 ? (
+              <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                {annotations.map(shape => renderAnnotationOverlay(shape, 'post-image'))}
+              </svg>
+            ) : null}
+          </>
+        ) : (
+          <div className="aspect-[16/10] w-full bg-[linear-gradient(135deg,rgba(15,23,42,0.9),rgba(30,41,59,0.75))]" aria-hidden="true" />
+        )}
+      </div>
+      {caption ? <figcaption className="mt-3 text-center text-sm italic text-[var(--text-muted)]">{caption}</figcaption> : null}
+    </figure>
+  );
+}
+
 function inferLanguageFromClassName(className = '') {
   const languageToken = String(className || '').split(/\s+/).find(token => token.startsWith('language-'));
   return languageToken ? languageToken.replace('language-', '') : '';
@@ -303,6 +442,8 @@ function buildCodeBlockProps(node) {
     filename: node.getAttribute('data-filename') || nestedCode?.getAttribute('data-filename') || '',
     title: node.getAttribute('data-title') || nestedCode?.getAttribute('data-title') || '',
     variant: node.getAttribute('data-variant') || nestedCode?.getAttribute('data-variant') || '',
+    rawHtml: nestedCode?.innerHTML || '',
+    preserveFormatting: Boolean(nestedCode?.querySelector('[style*="color"], [data-color], span[style]')),
   };
 }
 
@@ -666,14 +807,49 @@ function renderNode(node, path) {
     return <p key={path} className="mb-6 text-[1.02rem] leading-8 text-justify text-[var(--text-secondary)]">{renderChildren(node, path)}</p>;
   }
 
+  // ── <figure class="image-figure"> — emitido por ResizableImageExtension cuando hay caption ──
+  if (tagName === 'figure' && node.classList?.contains('image-figure')) {
+    const img = node.querySelector('img');
+    const figcaptionEl = node.querySelector('figcaption');
+    if (!img) return null;
+
+    const alt = img.getAttribute('alt') || '';
+    const caption = figcaptionEl?.textContent?.trim() || img.getAttribute('data-caption') || '';
+    const annotations = parseAnnotations(img.getAttribute('data-annotations') || node.getAttribute('data-annotations') || '');
+    const alignment = normalizeRichBlockAlignment(
+      node.getAttribute('data-align') || img.getAttribute('data-align') || ''
+    );
+
+    const figure = (
+      <ContentImage
+        key={path}
+        src={img.getAttribute('src') || ''}
+        alt={alt}
+        caption={caption}
+        annotations={annotations}
+        className="rounded-[1.5rem]"
+      />
+    );
+
+    if (!getBlockWrapperClassName(alignment)) return figure;
+    return <div key={`${path}-wrap`} className={getBlockWrapperClassName(alignment)}>{figure}</div>;
+  }
+
   if (tagName === 'img') {
     const alt = node.getAttribute('alt') || '';
+    // data-caption: pie de foto explícito (nuevo). Fallback a alt para posts legacy.
+    const caption = node.getAttribute('data-caption') || alt;
+    const annotations = parseAnnotations(node.getAttribute('data-annotations') || '');
     const alignment = normalizeRichBlockAlignment(node.getAttribute('data-align') || node.style?.textAlign || '');
     const figure = (
-      <figure key={path} className="my-10">
-        <img src={node.getAttribute('src') || ''} alt={alt} loading={node.getAttribute('loading') || 'lazy'} className="w-full rounded-[1.5rem] border border-[var(--border-default)] bg-[var(--bg-surface)] object-cover" />
-        {alt ? <figcaption className="mt-3 text-center text-sm italic text-[var(--text-muted)]">{alt}</figcaption> : null}
-      </figure>
+      <ContentImage
+        key={path}
+        src={node.getAttribute('src') || ''}
+        alt={alt}
+        caption={caption}
+        annotations={annotations}
+        className="rounded-[1.5rem]"
+      />
     );
 
     if (!getBlockWrapperClassName(alignment)) return figure;

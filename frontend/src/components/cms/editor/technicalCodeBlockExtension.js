@@ -22,6 +22,14 @@ function normalizeCodeVariant(variant, language) {
 
 export function createTechnicalCodeBlockExtension(lowlight) {
     return CodeBlockLowlight.extend({
+        // Permitir marcas inline (Color, TextStyle, etc.) dentro del bloque de código.
+        // CodeBlockLowlight hereda de CodeBlock cuyo content por defecto es 'text*',
+        // lo que impide aplicar marcas. Cambiamos a 'inline*' para habilitarlas.
+        content: 'inline*',
+        // CodeBlock también bloquea marks con `marks: ''`.
+        // Permitimos cualquier mark inline para que Color/TextStyle se serialicen y persistan.
+        marks: '_',
+
         addAttributes() {
             return {
                 ...this.parent?.(),

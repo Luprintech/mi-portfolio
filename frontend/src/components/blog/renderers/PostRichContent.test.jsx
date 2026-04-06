@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 
 vi.mock('./HtmlContentRenderer', () => ({
   default: ({ content }) => <div data-testid="html-renderer">{content}</div>,
@@ -15,6 +15,19 @@ import DocumentBlock from './DocumentBlock';
 
 describe('PostRichContent', () => {
   beforeEach(() => {
+    globalThis.IntersectionObserver = class {
+      constructor(callback) {
+        this.callback = callback;
+      }
+
+      observe() {
+        this.callback([{ isIntersecting: true, intersectionRatio: 1 }]);
+      }
+
+      disconnect() {}
+      unobserve() {}
+    };
+
     window.matchMedia = vi.fn().mockImplementation((query) => ({
       matches: false,
       media: query,
@@ -27,7 +40,7 @@ describe('PostRichContent', () => {
     }));
   });
 
-  it('prioriza el renderer html-first cuando existe contentHtml', () => {
+  it('prioriza el renderer html-first cuando existe contentHtml', async () => {
     render(
       <PostRichContent
         post={{
@@ -38,11 +51,13 @@ describe('PostRichContent', () => {
       />
     );
 
-    expect(screen.getByTestId('html-renderer')).toHaveTextContent('<h2>Renderer comun</h2>');
+    await waitFor(() => {
+      expect(screen.getByTestId('html-renderer')).toHaveTextContent('<h2>Renderer comun</h2>');
+    });
     expect(screen.queryByTestId('markdown-renderer')).not.toBeInTheDocument();
   });
 
-  it('cae en markdown legacy cuando el post no trae html canonico', () => {
+  it('cae en markdown legacy cuando el post no trae html canonico', async () => {
     render(
       <PostRichContent
         post={{
@@ -52,13 +67,28 @@ describe('PostRichContent', () => {
       />
     );
 
-    expect(screen.getByTestId('markdown-renderer')).toHaveTextContent('## Fallback legacy');
+    await waitFor(() => {
+      expect(screen.getByTestId('markdown-renderer')).toHaveTextContent('## Fallback legacy');
+    });
     expect(screen.queryByTestId('html-renderer')).not.toBeInTheDocument();
   });
 });
 
 describe('rich blocks', () => {
   beforeEach(() => {
+    globalThis.IntersectionObserver = class {
+      constructor(callback) {
+        this.callback = callback;
+      }
+
+      observe() {
+        this.callback([{ isIntersecting: true, intersectionRatio: 1 }]);
+      }
+
+      disconnect() {}
+      unobserve() {}
+    };
+
     window.matchMedia = vi.fn().mockImplementation((query) => ({
       matches: query === '(max-width: 767px)',
       media: query,

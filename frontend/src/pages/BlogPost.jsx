@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import { ChevronUp, ArrowRight } from 'lucide-react';
 import { buildShareLinks, extractHeadings } from '../components/blog/markdownComponents';
@@ -88,15 +87,8 @@ const BlogPost = () => {
         aria-label="Progreso de lectura"
       />
 
-      <div className="pointer-events-none absolute inset-0 bg-noise opacity-[0.03] mix-blend-overlay" />
-
       <article className="relative z-10 w-full">
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45 }}
-          className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12"
-        >
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12">
           <PostHeader postMeta={postMeta} />
 
           <div className={`mt-10 grid gap-8 lg:gap-12 ${hasToc ? 'lg:grid-cols-[minmax(0,1fr)_300px]' : 'mx-auto max-w-4xl'} lg:items-start`}>
@@ -136,26 +128,20 @@ const BlogPost = () => {
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
       </article>
 
       {/* Scroll-to-top */}
-      <AnimatePresence>
-        {showScrollTop && (
-          <motion.button
-            key="scroll-top"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.2 }}
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            aria-label="Volver al inicio"
-            className="fixed bottom-8 right-8 z-40 flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border-default)] bg-[var(--bg-elevated)]/90 text-[var(--text-secondary)] shadow-lg backdrop-blur-sm transition-colors hover:border-[var(--accent-secondary)]/30 hover:text-[var(--accent-secondary)]"
-          >
-            <ChevronUp className="h-5 w-5" aria-hidden="true" />
-          </motion.button>
-        )}
-      </AnimatePresence>
+      {showScrollTop ? (
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          aria-label="Volver al inicio"
+          className="fixed bottom-8 right-8 z-40 flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border-default)] bg-[var(--bg-elevated)]/90 text-[var(--text-secondary)] shadow-lg backdrop-blur-sm transition-all duration-200 hover:border-[var(--accent-secondary)]/30 hover:text-[var(--accent-secondary)]"
+        >
+          <ChevronUp className="h-5 w-5" aria-hidden="true" />
+        </button>
+      ) : null}
     </div>
   );
 };

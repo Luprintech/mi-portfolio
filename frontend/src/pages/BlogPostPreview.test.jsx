@@ -1,6 +1,20 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+
+vi.mock('../components/blog/renderers/MarkdownLegacyRenderer', () => ({
+  default: ({ content }) => (
+    <>
+      <h2>Heading legacy</h2>
+      <p>{content.includes('Texto heredado.') ? 'Texto heredado.' : content}</p>
+    </>
+  ),
+}));
+
+vi.mock('../components/shared/PdfPreview', () => ({
+  default: ({ title }) => <div data-rendered-pdf-preview="true">{title}</div>,
+}));
+
 import BlogPostPreview from './BlogPostPreview';
 import PostContent from '../components/blog/PostContent';
 
@@ -20,6 +34,19 @@ const richPostFixture = {
 describe('BlogPostPreview', () => {
   beforeEach(() => {
     sessionStorage.clear();
+    globalThis.IntersectionObserver = class {
+      constructor(callback) {
+        this.callback = callback;
+      }
+
+      observe() {
+        this.callback([{ isIntersecting: true, intersectionRatio: 1 }]);
+      }
+
+      disconnect() {}
+      unobserve() {}
+    };
+
     window.matchMedia = vi.fn().mockImplementation((query) => ({
       matches: false,
       media: query,
@@ -47,13 +74,22 @@ describe('BlogPostPreview', () => {
       expect(screen.getByText('VISTA PREVIA — Este post aún no está publicado')).toBeInTheDocument();
     });
 
-    expect(screen.getAllByText('Bloque compartido')).toHaveLength(2);
+    await waitFor(() => {
+      expect(previewRender.container.querySelectorAll('[data-rendered-block="image-grid"]')).toHaveLength(1);
+    });
+
+    await waitFor(() => {
+      expect(publicRender.container.querySelectorAll('[data-rendered-block="image-grid"]')).toHaveLength(1);
+    });
+
     expect(previewRender.container.querySelectorAll('[data-rendered-block="image-grid"]')).toHaveLength(1);
     expect(publicRender.container.querySelectorAll('[data-rendered-block="image-grid"]')).toHaveLength(1);
     expect(previewRender.container.querySelectorAll('[data-rendered-block="document"]')).toHaveLength(1);
     expect(publicRender.container.querySelectorAll('[data-rendered-block="document"]')).toHaveLength(1);
     expect(previewRender.container.querySelectorAll('[data-rendered-block="code"]')).toHaveLength(1);
     expect(publicRender.container.querySelectorAll('[data-rendered-block="code"]')).toHaveLength(1);
+    expect(previewRender.container).toHaveTextContent('Bloque compartido');
+    expect(publicRender.container).toHaveTextContent('Bloque compartido');
     expect(screen.getAllByText('deploy.sh')).toHaveLength(2);
   });
 

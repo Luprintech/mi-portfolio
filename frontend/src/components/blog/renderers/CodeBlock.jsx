@@ -66,6 +66,15 @@ function getLanguageLabel(language = '') {
   return normalized === 'bash' ? 'Bash' : normalized;
 }
 
+function escapeHtml(value = '') {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
 function highlightCode(code, language) {
   const normalized = normalizeLanguage(language);
   if (normalized && hljs.getLanguage(normalized)) {
@@ -101,11 +110,17 @@ export default function CodeBlock({
   filename = '',
   title = '',
   variant = 'plain',
+  rawHtml = '',
+  preserveFormatting = false,
 }) {
   const [copyState, setCopyState] = useState('idle');
   const resolvedVariant = resolveVariant(variant, language);
   const resolvedLanguage = normalizeLanguage(language);
-  const highlightedCode = useMemo(() => highlightCode(code, resolvedLanguage), [code, resolvedLanguage]);
+  const highlightedCode = useMemo(() => {
+    if (preserveFormatting && rawHtml) return rawHtml;
+    if (resolvedVariant === 'terminal') return escapeHtml(code);
+    return highlightCode(code, resolvedLanguage);
+  }, [code, preserveFormatting, rawHtml, resolvedLanguage, resolvedVariant]);
   const showChrome = resolvedVariant === 'terminal';
 
   async function handleCopy() {
@@ -120,7 +135,11 @@ export default function CodeBlock({
   }
 
   return (
-    <section className="terminal-window relative mb-8 overflow-hidden rounded-[1.25rem] border border-[var(--border-default)]" data-rendered-block="code">
+    <section
+      className="terminal-window relative mb-8 overflow-hidden rounded-[1.25rem] border border-[var(--border-default)]"
+      data-rendered-block="code"
+      style={{ contentVisibility: 'auto', containIntrinsicSize: '320px auto' }}
+    >
       <div className={`flex flex-wrap items-center justify-between gap-3 border-b border-white/5 px-4 py-3 ${showChrome ? 'terminal-window__header' : 'bg-[var(--bg-code-header)]/85'}`}>
         <div className="flex min-w-0 items-center gap-3">
           {showChrome && (
@@ -151,7 +170,7 @@ export default function CodeBlock({
 
       <pre className="terminal-window__body overflow-x-auto bg-[var(--bg-code)] p-5">
         <code
-          className={`hljs language-${resolvedLanguage || 'plaintext'} block text-sm leading-7`}
+          className={`${preserveFormatting ? '' : 'hljs'} language-${resolvedLanguage || 'plaintext'} block text-sm leading-7`}
           dangerouslySetInnerHTML={{ __html: highlightedCode }}
         />
       </pre>

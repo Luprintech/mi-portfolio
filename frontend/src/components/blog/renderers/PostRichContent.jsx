@@ -1,6 +1,12 @@
+import { lazy, Suspense } from 'react';
 import { inferPostContentFields } from '../../../lib/postContentSource';
-import HtmlContentRenderer from './HtmlContentRenderer';
-import MarkdownLegacyRenderer from './MarkdownLegacyRenderer';
+
+const HtmlContentRenderer = lazy(() => import('./HtmlContentRenderer'));
+const MarkdownLegacyRenderer = lazy(() => import('./MarkdownLegacyRenderer'));
+
+function PostContentFallback() {
+  return <div className="min-h-[320px] w-full rounded-[1.5rem] bg-[var(--bg-surface)]/55" aria-hidden="true" />;
+}
 
 export default function PostRichContent({ post = {}, format, contentHtml, legacyMarkdown, content }) {
   const resolved = inferPostContentFields({
@@ -12,11 +18,19 @@ export default function PostRichContent({ post = {}, format, contentHtml, legacy
   });
 
   if (resolved.format === 'html' && resolved.contentHtml) {
-    return <HtmlContentRenderer content={resolved.contentHtml} />;
+    return (
+      <Suspense fallback={<PostContentFallback />}>
+        <HtmlContentRenderer content={resolved.contentHtml} />
+      </Suspense>
+    );
   }
 
   if (resolved.legacyMarkdown) {
-    return <MarkdownLegacyRenderer content={resolved.legacyMarkdown} />;
+    return (
+      <Suspense fallback={<PostContentFallback />}>
+        <MarkdownLegacyRenderer content={resolved.legacyMarkdown} />
+      </Suspense>
+    );
   }
 
   return null;
