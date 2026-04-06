@@ -6,8 +6,8 @@ import { Eye, Zap, BookOpen } from "lucide-react";
 
 const STORY_STEPS = [
   { year: "2011", color: "from-fuchsia-500 to-violet-500", titleKey: "story_block_1_title", bodyKey: "story_short_1" },
-  { year: "2015", color: "from-violet-500 to-cyan-500",    titleKey: "story_block_2_title", bodyKey: "story_short_2" },
-  { year: "Hoy",  color: "from-cyan-400  to-emerald-400",  titleKey: "story_block_3_title", bodyKey: "story_short_3" },
+  { year: "2015", color: "from-violet-500 to-cyan-500", titleKey: "story_block_2_title", bodyKey: "story_short_2" },
+  { yearKey: "story_year_present", color: "from-cyan-400  to-emerald-400", titleKey: "story_block_3_title", bodyKey: "story_short_3" },
 ];
 
 const DIFF_POINTS = [
@@ -29,18 +29,20 @@ const fadeUp = {
 // ─── Componente ───────────────────────────────────────────────────────────────
 
 export default function ProfileStorySection({ id, className = "" }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const currentLanguage = i18n.resolvedLanguage || i18n.language || "es";
 
   return (
     <div
+      key={currentLanguage}
       id={id}
-      className={`relative flex h-full w-full items-center justify-center overflow-hidden ${className}`.trim()}
+      className={`relative flex w-full items-center justify-center ${className}`.trim()}
     >
       {/* Fondo ambiental */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_20%_50%,rgba(232,121,249,0.07),transparent_65%)]" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_50%_45%_at_80%_55%,rgba(34,211,238,0.07),transparent_65%)]" />
 
-        <div className="relative z-10 mx-auto flex h-full w-full max-w-[1060px] flex-col justify-center gap-6 py-6 md:gap-10">
+        <div className="relative z-10 mx-auto flex w-full max-w-[1060px] flex-col justify-center gap-6 py-6 md:gap-10">
 
         {/* ── Frase apertura ───────────────────────────────────────── */}
         <motion.div
@@ -57,7 +59,7 @@ export default function ProfileStorySection({ id, className = "" }) {
             }
           `}</style>
           <p
-            className="mx-auto max-w-2xl text-lg font-semibold leading-snug md:text-xl lg:text-2xl"
+            className="mx-auto max-w-[min(100%,42rem)] px-4 text-balance break-words text-base font-semibold leading-[1.35] sm:px-6 sm:text-lg md:text-xl lg:max-w-3xl lg:text-[1.75rem]"
             style={{
               backgroundImage: "linear-gradient(110deg,#e879f9 0%,#22d3ee 38%,rgba(255,255,255,0.9) 50%,#22d3ee 62%,#e879f9 100%)",
               backgroundSize: "200% auto",
@@ -97,7 +99,7 @@ export default function ProfileStorySection({ id, className = "" }) {
               {/* Línea vertical */}
               <div className="absolute left-[17px] top-4 bottom-4 w-px bg-gradient-to-b from-fuchsia-500/40 via-violet-500/30 to-amber-400/20" />
 
-              {STORY_STEPS.map(({ year, color, titleKey, bodyKey, upcoming }, i) => (
+              {STORY_STEPS.map(({ year, yearKey, color, titleKey, bodyKey, upcoming }, i) => (
                 <motion.div
                   key={titleKey}
                   variants={fadeUp}
@@ -109,9 +111,9 @@ export default function ProfileStorySection({ id, className = "" }) {
                 >
                   {/* Nodo */}
                   <div className="relative z-10 shrink-0">
-                    <div className={`flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br ${color} ${upcoming ? "opacity-60 ring-2 ring-dashed ring-amber-400/50" : "shadow-[0_0_10px_rgba(139,92,246,0.25)]"}`}>
-                      <span className="text-[9px] font-black text-white leading-none">{year}</span>
-                    </div>
+                      <div className={`flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br ${color} ${upcoming ? "opacity-60 ring-2 ring-dashed ring-amber-400/50" : "shadow-[0_0_10px_rgba(139,92,246,0.25)]"}`}>
+                      <span className="text-[9px] font-black text-white leading-none">{yearKey ? t(`about.${yearKey}`) : year}</span>
+                      </div>
                   </div>
 
                   {/* Contenido */}
@@ -157,7 +159,7 @@ export default function ProfileStorySection({ id, className = "" }) {
             </div>
 
             {/* Bloques numerados */}
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3">
               {DIFF_POINTS.map(({ n, Icon, color, glow, titleKey, bodyKey }, i) => (
                 <motion.div
                   key={titleKey}
@@ -166,7 +168,7 @@ export default function ProfileStorySection({ id, className = "" }) {
                   whileInView="visible"
                   viewport={{ once: true }}
                   custom={i + 2}
-                  className="group relative flex gap-5 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--border-color)]/80"
+                  className="group relative flex gap-4 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--border-color)]/80"
                   style={{
                     "--glow": glow,
                   }}
@@ -179,18 +181,18 @@ export default function ProfileStorySection({ id, className = "" }) {
 
                   {/* Número + icono */}
                   <div className="shrink-0 flex flex-col items-center gap-1 pt-0.5">
-                    <span className="text-2xl font-black leading-none text-[var(--border-color)] group-hover:text-[var(--text-muted)] transition-colors md:text-3xl">
+                    <span className="text-xl font-black leading-none text-[var(--border-color)] transition-colors group-hover:text-[var(--text-muted)] md:text-2xl">
                       {n}
                     </span>
-                    <Icon className={`h-5 w-5 ${color}`} strokeWidth={1.8} />
+                    <Icon className={`h-4.5 w-4.5 ${color} md:h-5 md:w-5`} strokeWidth={1.8} />
                   </div>
 
                   {/* Texto */}
                   <div className="flex-1 min-w-0">
-                    <h3 className={`text-base font-bold ${color} md:text-lg`}>
+                    <h3 className={`text-[0.95rem] font-bold leading-snug ${color} md:text-base`}>
                       {t(`about.${titleKey}`)}
                     </h3>
-                    <p className="mt-1.5 text-sm leading-relaxed text-[var(--text-secondary)]">
+                    <p className="mt-1 text-[0.92rem] leading-relaxed text-[var(--text-secondary)] md:text-sm">
                       {t(`about.${bodyKey}`)}
                     </p>
                   </div>

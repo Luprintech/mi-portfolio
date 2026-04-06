@@ -38,7 +38,8 @@ const timelineDotVariants = {
 };
 
 export default function Timeline() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const currentLanguage = i18n.resolvedLanguage || i18n.language || 'es';
 
   const events = [
     { year: "2005", title: t("timeline.e1_title"), desc: t("timeline.e1_desc") },
@@ -49,7 +50,7 @@ export default function Timeline() {
   ];
 
   return (
-    <div className="relative z-10 mx-auto flex w-full max-w-[1040px] flex-col justify-center">
+    <div key={currentLanguage} className="relative z-10 mx-auto flex w-full max-w-[1040px] flex-col justify-center">
       <Motion.h2
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
